@@ -18,8 +18,8 @@
 
             <!-- Exact 350px width layout matching internal system view rules -->
             <div class="w-[350px] max-w-[60%] flex items-center">
-                <img src="/images/header-logo.webp" alt="ContractorSpecialties Logo" class="w-full h-10 object-contain object-left">
-            </div>
+           <!-- We stripped h-10, expanded max-h to 14, and let the width stretch out naturally -->
+<img src="/images/header-logo.webp" alt="ContractorSpecialties Logo" class="w-full h-auto max-h-14 object-left"> </div>
 
             <div class="flex items-center gap-4">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -130,8 +130,8 @@
 
             <!-- Left Area Anchor Node -->
             <div class="md:col-span-4 flex flex-col items-center md:items-start gap-4">
-                <img src="/images/footer-logo.webp" alt="CS Platform Identity" class="w-20 h-20 rounded-xl bg-slate-900 border border-slate-800 object-contain p-2 shadow-md">
-                <div class="text-xs font-medium text-slate-500 text-center md:text-left">
+               <!-- Dropped the inner padding entirely and jacked up the scale boundaries to a crisp 140px square footprint -->
+<img src="/images/footer-logo.webp" alt="CS Platform Identity" class="w-36 h-36 rounded-2xl bg-slate-900 border border-slate-800 object-cover shadow-lg"> <div class="text-xs font-medium text-slate-500 text-center md:text-left">
                     &copy; 2026 ContractorSpecialties.<br>
                     All structural data channels active.
                 </div>
