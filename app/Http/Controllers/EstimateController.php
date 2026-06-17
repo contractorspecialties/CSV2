@@ -13,6 +13,33 @@ use Illuminate\Support\Str;
 class EstimateController extends Controller
 {
     /**
+     * Render the interactive multi-row estimation canvas workspace.
+     */
+    public function create(Request $request)
+    {
+        $companyId = Auth::user()->company_id;
+
+        // Pull active directory records sorted for standard lookup matching
+        $customers = Customer::where('company_id', $companyId)
+            ->orderBy('last_name', 'asc')
+            ->orderBy('first_name', 'asc')
+            ->get();
+
+        // Safe extraction wrapper to prevent crashes if pricebook tables aren't built yet
+        $pricebookItems = [];
+        if (class_exists('\App\Models\Pricebook')) {
+            $pricebookItems = \App\Models\Pricebook::where('company_id', $companyId)->get();
+        } elseif (DB::connection()->getSchemaBuilder()->hasTable('pricebooks')) {
+            $pricebookItems = DB::table('pricebooks')->where('company_id', $companyId)->get();
+        }
+
+        // Intercept query parameters if accessing builder directly from a specific customer profile link
+        $preselectedCustomerId = $request->query('customer_id');
+
+        return view('estimates.create', compact('customers', 'pricebookItems', 'preselectedCustomerId'));
+    }
+
+    /**
      * Commit the dynamic multi-row estimation matrix and map inline customers safely.
      */
     public function store(Request $request)
