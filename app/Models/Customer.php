@@ -14,17 +14,15 @@ class Customer extends Model
     protected $guarded = [];
 
     /**
-     * Enforce dynamic application table prefix boundaries upon object assembly.
+     * Dynamically return the correctly prefixed table name across all execution contexts.
      */
-    public function __construct(array $attributes = [])
+    public function getTable(): string
     {
-        parent::__construct($attributes);
-
-        $defaultConnection = config('database.default', 'sqlite');
+        $defaultConnection = config('database.default', 'mysql');
         $configuredPrefix = config("database.connections.{$defaultConnection}.prefix");
         $prefix = !empty($configuredPrefix) ? $configuredPrefix : 'sc_';
 
-        $this->setTable($prefix . 'customers');
+        return $prefix . 'customers';
     }
 
     /**
