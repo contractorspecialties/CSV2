@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-100 text-slate-900">
+<html lang="en" class="h-full bg-slate-50 text-slate-900">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ContractorSpecialties | Professional Tools for Small Field Businesses</title>
+    <!-- Tailwind CSS CDN for instant presentation rendering -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Alpine.js Core for front-end interface mechanics -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
@@ -23,44 +25,43 @@
 
             <div class="flex items-center gap-4">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span class="text-[10px] font-mono font-black uppercase text-slate-500 tracking-widest hidden sm:inline">System Connection Secure</span>
+                <span class="text-[10px] font-mono font-black uppercase text-slate-500 tracking-widest hidden sm:inline">Secure Access Route</span>
             </div>
         </div>
     </header>
 
-    <!-- MAIN PRODUCT VISION & VALUE STRATEGY GRID -->
-    <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-12 md:py-16 space-y-16">
+    <!-- MAIN MARKETING INTAKE & SYSTEM PRESENTATION CORE -->
+    <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-12 md:py-16 space-y-20">
 
-        <!-- Hero Pitch Zone -->
+        <!-- HERO SEGMENT: HEADLINE, SUB-HEADLINE & FRICTIONLESS LOGIN NODE -->
         <section class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+
+            <!-- Left Value Matrix Pitch Column -->
             <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
-                <div class="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 text-white rounded-full text-xs font-black uppercase tracking-wider">
-                    ⚡ Professional Infrastructure Engine
-                </div>
-                <h1 class="text-4xl sm:text-5xl font-black text-slate-950 tracking-tight leading-tight uppercase">
-                    The same tools as your <br class="hidden sm:inline">
-                    biggest competition. <br>
-                    <span class="text-[#f58613]">Priced for real business.</span>
+                <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-950 tracking-tight leading-tight uppercase">
+                    Professional Tools for Small Field Businesses — <br>
+                    <span class="text-[#f58613]">Without the Ridiculous Price Tag</span>
                 </h1>
                 <p class="text-base sm:text-lg text-slate-600 font-medium max-w-xl mx-auto lg:mx-0 leading-relaxed">
-                    Large exterior companies dominate local markets because they possess dedicated administrative and software budgets. We leveled the playing field. Get identical estimating precision, seamless mobile payment workflows, and automated customer review generation—minus the corporate bloat.
+                    Estimate, invoice, message customers, manage jobs, and get paid — all from one simple tool built for the owner who still answers the phone.
                 </p>
             </div>
 
-            <!-- Solid White Workspace Entry Hub Card Box -->
-            <div class="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xl relative">
+            <!-- Right Passwordless Access Card Node -->
+            <div id="access-hub" class="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xl relative">
                 <div class="absolute -top-3 -right-3 w-12 h-12 rounded-xl bg-slate-900 text-[#f58613] border border-slate-800 flex items-center justify-center text-xl shadow-md font-bold">
                     🔑
                 </div>
 
                 <div class="space-y-2 border-b border-slate-100 pb-4 mb-6">
-                    <h3 class="text-xl font-black text-slate-950 uppercase tracking-tight">Contractor Entry</h3>
-                    <p class="text-xs text-slate-500 font-medium">Input your business account email. Our system will immediately issue a secure passwordless link directly to your inbox.</p>
+                    <h3 class="text-xl font-black text-slate-950 uppercase tracking-tight">Get Your Secure Access Link</h3>
+                    <p class="text-xs text-slate-500 font-medium font-semibold">No passwords. No setup fees. No commitment. Just tools that make your business run smoother.</p>
                 </div>
 
+                <!-- Session Messaging Interfaces -->
                 @if($errors->any())
                     <div class="p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-xs font-bold mb-4">
-                        Please provide a valid registered contractor email address.
+                        Please provide a valid registered account email address.
                     </div>
                 @endif
 
@@ -70,10 +71,11 @@
                     </div>
                 @endif
 
+                <!-- Form Execution Link Vector -->
                 <form action="{{ route('magic.send') }}" method="POST" class="space-y-4">
                     @csrf
                     <div>
-                        <label for="email" class="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5">Registered Email Address</label>
+                        <label for="email" class="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5">Your Account Email</label>
                         <input type="email" id="email" name="email" required autocomplete="email" placeholder="name@yourcompany.com"
                                class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-sm font-bold text-slate-950 placeholder:text-slate-400 focus:outline-none focus:border-[#f58613] focus:ring-1 focus:ring-[#f58613] shadow-inner">
                     </div>
@@ -85,95 +87,174 @@
             </div>
         </section>
 
-        <!-- CORE FEATURE MATRIX GRID -->
-        <section class="grid grid-cols-1 md:grid-cols-3 gap-8 border-t border-slate-200 pt-12">
-
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 space-y-3 shadow-sm">
-                <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-xl">📋</div>
-                <h4 class="font-black text-base text-slate-950 uppercase tracking-tight">Standardized Bidding</h4>
-                <p class="text-xs text-slate-600 font-semibold leading-relaxed">
-                    Build job templates within your private company pricebook. Protect your bottom-line markups and output completely uniform, professional project estimates directly from your phone while standing in the customer's driveway.
-                </p>
+        <!-- SECTION 1: WHAT IT DOES (Full CPP Tool Suite — Clean, Sharp, and Human) -->
+        <section class="space-y-8 border-t border-slate-200 pt-16">
+            <div class="text-center max-w-xl mx-auto">
+                <h2 class="text-2xl font-black text-slate-950 uppercase tracking-tight">Everything You Need to Run the Field</h2>
+                <p class="text-xs text-slate-500 font-medium">Simple, professional workflows designed to remove friction from your day‑to‑day operations.</p>
             </div>
 
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 space-y-3 shadow-sm">
-                <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-xl">⚡</div>
-                <h4 class="font-black text-base text-slate-950 uppercase tracking-tight">Instant Text-to-Pay</h4>
-                <p class="text-xs text-slate-600 font-semibold leading-relaxed">
-                    Homeowners pay through a secure link delivered straight to their mobile device. They approve line-item details, supply a digital touchscreen signature, and settle invoices via Stripe without complex registration steps or app downloads.
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+                <!-- Feature Box 1 -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                    <span class="text-xl block">Build Estimates in Minutes</span>
+                    <p class="text-xs text-slate-600 font-semibold leading-relaxed">
+                        No spreadsheets. No guesswork. No “I’ll get that to you tonight” lies. Just clean, consistent estimates built from your standardized pricebook.
+                    </p>
+                </div>
+
+                <!-- Feature Box 2 -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                    <span class="text-xl block">Convert Estimates to Invoices Instantly</span>
+                    <p class="text-xs text-slate-600 font-semibold leading-relaxed">
+                        One tap. No retyping. No double entry. You’ve got better things to do — like actually doing the job.
+                    </p>
+                </div>
+
+                <!-- Feature Box 3 -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                    <span class="text-xl block">Quick Messaging to Customers</span>
+                    <p class="text-xs text-slate-600 font-semibold leading-relaxed">
+                        Send updates, reminders, approvals, and payment links right from the field. Fast communication = fewer cancellations and fewer “just checking in” texts.
+                    </p>
+                </div>
+
+                <!-- Feature Box 4 -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                    <span class="text-xl block">Capture and Send Job Photos Instantly</span>
+                    <p class="text-xs text-slate-600 font-semibold leading-relaxed">
+                        Snap photos, mark them up, and attach them to estimates or invoices. Protect your margins. Protect your sanity. Protect yourself from “I didn’t agree to that.”
+                    </p>
+                </div>
+
+                <!-- Feature Box 5 -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                    <span class="text-xl block">Calendar Reminders & Job Tracking</span>
+                    <p class="text-xs text-slate-600 font-semibold leading-relaxed">
+                        Never forget a follow‑up, appointment, or scheduled job again. Your calendar finally works with you instead of against you.
+                    </p>
+                </div>
+
+                <!-- Feature Box 6 -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                    <span class="text-xl block">On‑the‑Spot Add‑On Invoices</span>
+                    <p class="text-xs text-slate-600 font-semibold leading-relaxed">
+                        Customer wants “one more thing” while you’re already there? Tap, add, send — and get paid before you leave.
+                    </p>
+                </div>
+
+                <!-- Feature Box 7 -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                    <span class="text-xl block">Text‑to‑Pay for Faster Cashflow</span>
+                    <p class="text-xs text-slate-600 font-semibold leading-relaxed">
+                        Your customer taps a secure link, signs, and pays. No portals. No apps. No chasing checks. Just money in the bank.
+                    </p>
+                </div>
+
+                <!-- Feature Box 8 -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+                    <span class="text-xl block">Automated Review Collection</span>
+                    <p class="text-xs text-slate-600 font-semibold leading-relaxed">
+                        After payment, the system sends a timed review request. You get more Google reviews without begging, bribing, or reminding.
+                    </p>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- SECTION 2: PROFILES (Clean, Integrated Business Showcase Platform) -->
+        <section class="bg-slate-900 rounded-3xl p-6 sm:p-10 text-white shadow-md grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+            <div class="md:col-span-8 space-y-3">
+                <span class="text-xs font-black uppercase text-[#f58613] tracking-widest block">Unified Lead Generation Layouts</span>
+                <h3 class="text-2xl sm:text-3xl font-black uppercase tracking-tight">Your Business Profile — Simple, Search‑Friendly, and Professional</h3>
+                <p class="text-sm text-slate-300 font-medium leading-relaxed">
+                    Every account includes a public profile that showcases your services, reviews, service area, and contact info. It’s SEO‑friendly, it's not a new website but it will be seen — it’s simply a clean, trustworthy place for customers to learn who you are.
                 </p>
             </div>
+            <div class="md:col-span-4 flex justify-center md:justify-end">
+                <div class="px-5 py-3 bg-slate-950 border border-slate-800 rounded-xl font-mono text-xs text-amber-400 font-bold shadow-inner">
+                    🌐 public-directory-node
+                </div>
+            </div>
+        </section>
 
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 space-y-3 shadow-sm">
-                <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-xl">🌐</div>
-                <h4 class="font-black text-base text-slate-950 uppercase tracking-tight">Public Search Profiles</h4>
-                <p class="text-xs text-slate-600 font-semibold leading-relaxed">
-                    Every active account maintains a clean, public SEO profile connected to our regional directories. It hosts verified project history and customer ratings, driving consistent organic leads straight to your communication pipeline.
+        <!-- SECTION 3 & 5: WHO IT'S FOR & PHILOSOPHY (Honest, Pure Workflow Execution) -->
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-12 border-t border-slate-200 pt-16 items-start">
+
+            <!-- Who It's For Grid Component -->
+            <div class="space-y-4">
+                <h3 class="text-xl font-black text-slate-950 uppercase tracking-tight">Built for the Small and Solo Contractor</h3>
+                <p class="text-sm text-slate-600 font-semibold leading-relaxed">
+                    Whether you’re a one "man" show, or have a small crew, you deserve the same tools the big companies use — without the big‑company overhead. We focus entirely on:
                 </p>
+                <ul class="text-xs text-slate-700 font-black space-y-2 font-mono uppercase pl-1">
+                    <li class="flex items-center gap-2"><span class="text-[#f58613]">▪</span> Speed</li>
+                    <li class="flex items-center gap-2"><span class="text-[#f58613]">▪</span> Simplicity</li>
+                    <li class="flex items-center gap-2"><span class="text-[#f58613]">▪</span> Profit protection</li>
+                    <li class="flex items-center gap-2"><span class="text-[#f58613]">▪</span> Real‑world workflows</li>
+                    <li class="flex items-center gap-2"><span class="text-[#f58613]">▪</span> Pricing that respects small business margins</li>
+                </ul>
+                <p class="text-xs text-slate-500 font-medium italic">No fluff. No bloat. No enterprise nonsense.</p>
+            </div>
+
+            <!-- The Operating Philosophy Grid Component -->
+            <div class="space-y-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 class="text-xl font-black text-slate-950 uppercase tracking-tight">We’re Here to Make Contractors More Profitable — Period</h3>
+                <p class="text-xs text-slate-600 font-semibold leading-relaxed">
+                    Not with dashboards you’ll never open. Not with features you don’t need. Not with pricing that punishes small business. Just simple, powerful tools that help you:
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-bold text-slate-900 pt-2">
+                    <div class="flex items-center gap-2">⚡ Win more jobs</div>
+                    <div class="flex items-center gap-2">⚡ Get paid faster</div>
+                    <div class="flex items-center gap-2">⚡ Protect your margins</div>
+                    <div class="flex items-center gap-2">⚡ Build your reputation</div>
+                    <div class="col-span-2 flex items-center gap-2">⚡ Grow at your pace</div>
+                </div>
             </div>
 
         </section>
 
-        <!-- TRANSPARENT CORPORATE PRICING MATRIX -->
-        <section class="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+        <!-- SECTION 4: PRICING (Honest Monthly Rates & Seasonal Wave Policy) -->
+        <section class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-8">
             <div class="text-center max-w-xl mx-auto space-y-2">
-                <h2 class="text-2xl font-black text-slate-950 uppercase tracking-tight">No-Nonsense Small Business Pricing</h2>
-                <p class="text-xs text-slate-500 font-medium">We don't play games with hidden fees or volatile percentage-cut models. Pick the bracket that matches your field headcount and scale indefinitely.</p>
+                <h2 class="text-2xl font-black text-slate-950 uppercase tracking-tight">Straightforward Monthly Pricing</h2>
+                <p class="text-xs text-slate-500 font-medium">Simple, honest access tiers constructed to respect small field operation parameters.</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-
-                <!-- Solo Account -->
-                <div class="border-2 border-slate-100 rounded-2xl p-6 space-y-4 relative bg-slate-50/50">
-                    <div class="space-y-1">
-                        <span class="inline-block bg-slate-900 text-white font-black text-[9px] uppercase tracking-wider px-2 py-0.5 rounded">Solo Operator</span>
-                        <h4 class="text-lg font-black text-slate-950 uppercase">Single User Access</h4>
-                    </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
+                <!-- Single User Frame -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-3">
+                    <span class="text-xs font-black bg-slate-900 text-white px-2.5 py-0.5 rounded-md uppercase tracking-wider inline-block">Solo Account</span>
                     <div class="flex items-baseline gap-1 font-mono">
                         <span class="text-3xl font-black text-slate-950">$24.95</span>
                         <span class="text-xs font-bold text-slate-400 uppercase">/ month</span>
                     </div>
-                    <ul class="text-xs text-slate-600 font-bold space-y-2 border-t border-slate-200/60 pt-4">
-                        <li class="flex items-center gap-2">✓ Full Mobile Pricebook Engine</li>
-                        <li class="flex items-center gap-2">✓ Unlimited Estimate & Text Dispatches</li>
-                        <li class="flex items-center gap-2">✓ Integrated Local SEO Directory Profile</li>
-                    </ul>
+                    <p class="text-xs text-slate-500 font-bold uppercase tracking-tight">Single User Access Parameters</p>
                 </div>
 
-                <!-- Small Crew Account -->
-                <div class="border-2 border-slate-950 rounded-2xl p-6 space-y-4 relative bg-white shadow-md ring-2 ring-slate-950/5">
-                    <div class="absolute -top-2.5 right-4 bg-[#f58613] text-white font-black text-[9px] uppercase tracking-widest px-2.5 py-0.5 rounded-full">
-                        Most Popular
-                    </div>
-                    <div class="space-y-1">
-                        <span class="inline-block bg-slate-900 text-white font-black text-[9px] uppercase tracking-wider px-2 py-0.5 rounded">Crew Mode</span>
-                        <h4 class="text-lg font-black text-slate-950 uppercase">Up to 5 Users</h4>
-                    </div>
+                <!-- Up to 5 Users Frame -->
+                <div class="bg-white border-2 border-slate-950 rounded-2xl p-6 space-y-3 shadow-md">
+                    <span class="text-xs font-black bg-[#f58613] text-white px-2.5 py-0.5 rounded-md uppercase tracking-wider inline-block">Crew Account</span>
                     <div class="flex items-baseline gap-1 font-mono">
                         <span class="text-3xl font-black text-slate-950">$39.95</span>
                         <span class="text-xs font-bold text-slate-400 uppercase">/ month</span>
                     </div>
-                    <ul class="text-xs text-slate-600 font-bold space-y-2 border-t border-slate-200/60 pt-4">
-                        <li class="flex items-center gap-2">✓ Everything in Solo Operator</li>
-                        <li class="flex items-center gap-2">✓ Shared Pricebook Matrix for Office & Field</li>
-                        <li class="flex items-center gap-2">✓ Individual Crew Sub-Logins & Assignment Trackers</li>
-                    </ul>
+                    <p class="text-xs text-slate-500 font-bold uppercase tracking-tight">Up to 5 Active Field Users</p>
                 </div>
-
             </div>
 
-            <!-- Dormancy Safety Net Policy Notice -->
-            <div class="max-w-2xl mx-auto bg-slate-50 border border-slate-200 p-4 rounded-xl text-center">
-                <span class="text-[10px] font-black uppercase text-[#f58613] tracking-widest block mb-1">🛡️ The Operational Safety Net Guarantee</span>
-                <p class="text-xs font-semibold text-slate-600 leading-normal">
-                    We support cyclical businesses. If your work encounters a seasonal slow period or your crew goes dormant and does not actively execute an estimate or receive a customer checkout payment through the platform during a billing cycle, your subscription fees are systematically waived for that month.
-                </p>
+            <div class="max-w-xl mx-auto text-center font-bold text-xs text-slate-500 leading-normal border-t border-slate-100 pt-6">
+                More than 5? We’ll work out a fair rate when you’re ready. <br class="hidden sm:inline">
+                <span class="text-slate-900 block mt-2 font-black">
+                    And yes — if you don’t use it that month, it’s free. It’s our policy. Not a sales pitch.
+                </span>
             </div>
         </section>
 
     </main>
 
-    <!-- PITCH BLACK HIGH-CONTRAST COMPLIANCE FOOTER -->
+    <!-- CORPORATE PITCH BLACK COMPLIANCE FOOTER -->
     <footer class="border-t border-slate-900 bg-black text-slate-400 py-12">
         <div class="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
 
@@ -184,7 +265,7 @@
                 </div>
                 <div class="text-xs font-medium text-slate-500 text-center md:text-left mt-1">
                     &copy; 2026 ContractorSpecialties.<br>
-                    All corporate directories and security lines secure via sc_ tracking barriers.
+                    All corporate directories and communication lines secure.
                 </div>
             </div>
 
@@ -192,9 +273,9 @@
             <div class="md:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-6 text-xs font-bold uppercase tracking-wider md:pt-4">
                 <div class="flex flex-col gap-2.5">
                     <span class="text-[10px] text-slate-600 tracking-widest font-black">Tools & Engine</span>
-                    <a href="/estimates" class="text-slate-400 hover:text-[#f58613] transition-colors">Estimate Creator</a>
-                    <a href="/pricebook" class="text-slate-400 hover:text-[#f58613] transition-colors">Pricebook Matrix</a>
-                    <a href="/billing" class="text-slate-400 hover:text-[#f58613] transition-colors">Text-to-Pay Rails</a>
+                    <a href="#access-hub" class="text-slate-400 hover:text-[#f58613] transition-colors">Estimate Creator</a>
+                    <a href="#access-hub" class="text-slate-400 hover:text-[#f58613] transition-colors">Pricebook Matrix</a>
+                    <a href="#access-hub" class="text-slate-400 hover:text-[#f58613] transition-colors">Text-to-Pay Rails</a>
                 </div>
                 <div class="flex flex-col gap-2.5">
                     <span class="text-[10px] text-slate-600 tracking-widest font-black">Directories</span>
