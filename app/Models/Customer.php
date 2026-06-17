@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Customer extends Model
@@ -12,6 +13,9 @@ class Customer extends Model
 
     protected $guarded = [];
 
+    /**
+     * Enforce dynamic application table prefix boundaries upon object assembly.
+     */
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
@@ -23,8 +27,19 @@ class Customer extends Model
         $this->setTable($prefix . 'customers');
     }
 
+    /**
+     * Relationship mapping back to the anchoring parent corporate profile.
+     */
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
+    }
+
+    /**
+     * Relationship mapping to track historic and current service evaluations.
+     */
+    public function estimates(): HasMany
+    {
+        return $this->hasMany(Estimate::class);
     }
 }
