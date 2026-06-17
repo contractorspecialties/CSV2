@@ -2,20 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class User extends Authenticatable
+class Customer extends Model
 {
     use SoftDeletes;
 
     protected $guarded = [];
-
-    protected $hidden = [
-        'login_token',
-        'remember_token',
-    ];
 
     public function __construct(array $attributes = [])
     {
@@ -25,7 +20,7 @@ class User extends Authenticatable
         $configuredPrefix = config("database.connections.{$defaultConnection}.prefix");
         $prefix = !empty($configuredPrefix) ? $configuredPrefix : 'sc_';
 
-        $this->setTable($prefix . 'users');
+        $this->setTable($prefix . 'customers');
     }
 
     public function company(): BelongsTo
