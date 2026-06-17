@@ -20,21 +20,13 @@
         activeAppt: { id: '', title: '', date: '', notes: '', customerName: '' }
     }" class="contents">
 
-        <!-- MAIN WORKSPACE HEADER -->
+        <!-- STICKY CONTROL NAV HEADER -->
         <header class="bg-slate-950 border-b border-slate-900 sticky top-0 z-50 shadow-md">
             <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
 
-                <!-- Horizontal Logo & Brand Space -->
-                <div class="flex items-center gap-4">
-                    <!-- Scalable Horizontal Logo Placement Container -->
-                    <div class="flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-amber-400 font-mono text-xs tracking-widest uppercase font-black shadow-inner">
-                        <span>⚡</span>
-                        <span>CS_PLATFORM_LOGO</span>
-                    </div>
-
-                    <h2 class="font-black text-lg text-white tracking-tight hidden sm:block">
-                        Apex Exterior Specialists <span class="text-amber-500 text-xs font-mono font-normal ml-1 bg-slate-900 px-2 py-0.5 border border-slate-800 rounded">Solo Mode</span>
-                    </h2>
+                <!-- Expanded 350px Header Logo Target Frame -->
+                <div class="w-[350px] max-w-[60%] flex items-center">
+                    <img src="/images/header-logo.webp" alt="ContractorSpecialties Control Panel" class="w-full h-10 object-contain object-left">
                 </div>
 
                 <div class="flex items-center gap-4">
@@ -46,10 +38,10 @@
             </div>
         </header>
 
-        <!-- MAIN GRID FRAMEWORK STREAMS -->
+        <!-- MAIN FIELD SERVICE SYSTEM UTILITIES -->
         <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-8 space-y-8">
 
-            <!-- ACTION DECK -->
+            <!-- QUICK ACTIONS GRID -->
             <section class="grid grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4">
                 <a href="/estimates/create" class="relative flex flex-col items-center justify-center aspect-square bg-gradient-to-b from-amber-500 to-orange-500 rounded-2xl shadow-md border border-amber-600/30 active:scale-95 transition-all group overflow-hidden cursor-pointer">
                     <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">📝</span>
@@ -82,7 +74,7 @@
                 </a>
             </section>
 
-            <!-- CASH SNAPSHOTS -->
+            <!-- CASH SNAPSHOT TRENDS -->
             <section class="bg-slate-900 border border-slate-950 rounded-2xl text-white p-6 shadow-lg grid grid-cols-1 sm:grid-cols-3 gap-6 divide-y sm:divide-y-0 sm:divide-x divide-slate-800">
                 <div class="space-y-1">
                     <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Sent Bids</span>
@@ -101,7 +93,7 @@
                 </div>
             </section>
 
-            <!-- WEEKLY SCHEDULE GRID -->
+            <!-- VISUAL CALENDAR CHASSIS -->
             <section class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                     <h3 class="font-black text-base tracking-tight text-slate-950 uppercase flex items-center gap-2">
@@ -150,7 +142,7 @@
                 </div>
             </section>
 
-            <!-- DATABASE RECENT CUSTOMERS -->
+            <!-- DATABASE ROSTER STREAM INTERACTIVE ROWS -->
             <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -195,7 +187,7 @@
                     </div>
                 </div>
 
-                <!-- RIGHT COLUMN RUNNING SERVICES -->
+                <!-- RIGHT BLOCK RECURRING DATA LOOPS -->
                 <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between space-y-6">
                     <div class="space-y-4">
                         <div class="border-b border-slate-100 pb-3">
@@ -220,9 +212,7 @@
             </section>
         </main>
 
-        <!-- ================= MODALS ================= -->
-
-        <!-- QUICK BILL OVERLAY -->
+        <!-- MODAL OVERLAYS LAYER MATRIX -->
         <div x-show="showInvoiceModal" x-cloak style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
             <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
                 <div x-show="showInvoiceModal" x-transition.opacity class="fixed inset-0 bg-slate-950/75 backdrop-blur-2xl transition-opacity" @click="showInvoiceModal = false"></div>
@@ -263,7 +253,6 @@
             </div>
         </div>
 
-        <!-- HOMESCREEN APP SHORTCUT OVERLAY -->
         <div x-show="showInstallModal" x-cloak style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
             <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
                 <div x-show="showInstallModal" x-transition.opacity class="fixed inset-0 bg-slate-950/75 backdrop-blur-2xl transition-opacity" @click="showInstallModal = false"></div>
@@ -291,29 +280,38 @@
             </div>
         </div>
 
-        <!-- NEW DEEP SYSTEM FOOTER -->
-        <footer class="border-t border-slate-900 bg-slate-950 py-6 mt-auto">
-            <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <!-- REBUILT COMPLIANCE-DRIVEN DEEP FOOTER -->
+        <footer class="border-t border-slate-900 bg-slate-950 text-slate-400 py-12">
+            <div class="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
 
-                <!-- Horizontal Footer Logo Space -->
-                <div class="flex items-center gap-3">
-                    <div class="flex items-center gap-2 px-2.5 py-1 bg-slate-900 border border-slate-800 rounded text-slate-400 font-mono text-[10px] tracking-widest uppercase font-black">
-                        <span>⚡</span>
-                        <span>CS_SYSTEM_CORE_FOOTER</span>
-                    </div>
-                    <div class="text-xs text-slate-500 font-medium">
-                        &copy; 2026 ContractorSpecialties.
+                <!-- Left Column Area: Square Branding Token -->
+                <div class="md:col-span-4 flex flex-col items-center md:items-start gap-4">
+                    <img src="/images/footer-logo.webp" alt="CS Platform Identity" class="w-20 h-20 rounded-xl bg-slate-900 border border-slate-800 object-contain p-2 shadow-md">
+                    <div class="text-xs font-medium text-slate-500 text-center md:text-left">
+                        &copy; 2026 ContractorSpecialties.<br>
+                        All structural systems operational.
                     </div>
                 </div>
 
-                <!-- Strategic Partner / Subcontractor Entry Portals -->
-                <div class="flex items-center gap-4 text-xs font-bold uppercase tracking-wider">
-                    <a href="/login/partner" class="text-slate-500 hover:text-amber-500 transition-colors bg-slate-900/40 border border-slate-900 px-3 py-1.5 rounded-lg">
-                        General Contractor Portal
-                    </a>
-                    <a href="/login/subcontractor" class="text-slate-500 hover:text-amber-500 transition-colors bg-slate-900/40 border border-slate-900 px-3 py-1.5 rounded-lg">
-                        Crew Login
-                    </a>
+                <!-- Columns 2-4: Clean Legal & Partner Nav Columns -->
+                <div class="md:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-6 text-xs font-bold uppercase tracking-wider">
+                    <div class="flex flex-col gap-2.5">
+                        <span class="text-[10px] text-slate-600 tracking-widest font-black">Legal Channels</span>
+                        <a href="/privacy" class="text-slate-400 hover:text-amber-500 transition-colors">Privacy Policy</a>
+                        <a href="/terms" class="text-slate-400 hover:text-amber-500 transition-colors">Terms of Use</a>
+                        <a href="/compliance" class="text-slate-400 hover:text-amber-500 transition-colors">A2P Messaging Laws</a>
+                    </div>
+                    <div class="flex flex-col gap-2.5">
+                        <span class="text-[10px] text-slate-600 tracking-widest font-black">Grow With Us</span>
+                        <a href="/advertise" class="text-slate-400 hover:text-amber-500 transition-colors">Advertise with Us</a>
+                        <a href="/directories" class="text-slate-400 hover:text-amber-500 transition-colors">Lead Funnels</a>
+                        <a href="/support" class="text-slate-400 hover:text-amber-500 transition-colors">Help Desk Support</a>
+                    </div>
+                    <div class="flex flex-col gap-2.5 col-span-2 sm:col-span-1">
+                        <span class="text-[10px] text-slate-600 tracking-widest font-black">Secure Gateways</span>
+                        <a href="/login/partner" class="text-slate-500 hover:text-amber-400 transition-colors bg-slate-900/60 border border-slate-900 px-3 py-2 rounded-lg text-center truncate">General Contractor</a>
+                        <a href="/login/subcontractor" class="text-slate-500 hover:text-amber-400 transition-colors bg-slate-900/60 border border-slate-900 px-3 py-2 rounded-lg text-center truncate mt-1">Subcontractor Access</a>
+                    </div>
                 </div>
 
             </div>
