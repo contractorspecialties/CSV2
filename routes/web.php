@@ -4,7 +4,7 @@ use App\Http\Controllers\MagicAuthController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PricebookController;
-use App\Http\Controllers\QuoteController;
+use App\Http\Controllers\EstimateController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -34,14 +34,14 @@ Route::middleware(['auth'])->group(function () {
     // Pricebook Management
     Route::resource('pricebook', PricebookController::class)->only(['index', 'store', 'destroy']);
 
-    // Estimates & Job Operational Processing
-    Route::post('/estimates/{id}/blueprint', [QuoteController::class, 'saveBlueprint']);
-    Route::post('/estimates/{id}/text-dispatch', [QuoteController::class, 'sendEstimateSms']);
-    Route::post('/estimates/{id}/close-job', [QuoteController::class, 'closeJob']);
-    Route::resource('estimates', QuoteController::class);
+    // Estimates & Job Operational Processing (Unified under EstimateController)
+    Route::post('/estimates/{id}/blueprint', [EstimateController::class, 'saveBlueprint']);
+    Route::post('/estimates/{id}/text-dispatch', [EstimateController::class, 'sendEstimateSms']);
+    Route::post('/estimates/{id}/close-job', [EstimateController::class, 'closeJob']);
+    Route::resource('estimates', EstimateController::class);
 });
 
 // Homeowner Viewport Portal Frames
 Route::get('/portal', function () { return view('portal'); })->name('portal');
-Route::get('/portal/checkout/{token}', [QuoteController::class, 'checkout'])->name('portal.checkout');
-Route::get('/portal/success/{token}', [QuoteController::class, 'paymentSuccess'])->name('quotes.payment.success');
+Route::get('/portal/checkout/{token}', [EstimateController::class, 'checkout'])->name('portal.checkout');
+Route::get('/portal/success/{token}', [EstimateController::class, 'paymentSuccess'])->name('quotes.payment.success');
