@@ -17,9 +17,12 @@
         showInstallModal: false,
         showApptModal: false,
         selectedCustomer: '',
-        activeAppt: { id: '', title: '', date: '', notes: '', customerName: '' }
+        activeAppt: { id: '', title: '', date: '', notes: '', customerName: '' },
+        selectedDayJobs: [],
+        selectedDayName: ''
     }" class="contents">
 
+        <!-- PITCH BLACK HIGH-CONTRAST HEADER -->
         <header class="bg-black border-b border-slate-900 sticky top-0 z-50 shadow-md">
             <div class="max-w-6xl mx-auto px-4 h-24 flex items-center justify-between">
                 <div class="w-[400px] max-w-[65%] h-[100px] flex items-center">
@@ -35,6 +38,7 @@
             </div>
         </header>
 
+        <!-- UTILITY-FIRST LIGHT CONTENT LAYOUT -->
         <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-8 space-y-8">
 
             @if(session('status'))
@@ -44,6 +48,7 @@
                 </div>
             @endif
 
+            <!-- CONTROL ACTION TOOL DECK -->
             <section class="grid grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4">
                 <a href="/estimates/create" class="relative flex flex-col items-center justify-center aspect-square bg-gradient-to-b from-[#f58613] to-orange-600 rounded-2xl shadow-sm hover:shadow-md active:scale-95 transition-all group overflow-hidden cursor-pointer">
                     <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">📝</span>
@@ -76,6 +81,7 @@
                 </a>
             </section>
 
+            <!-- CASH SNAPSHOT METRICS -->
             <section class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-6 divide-y sm:divide-y-0 sm:divide-x divide-slate-200">
                 <div class="space-y-1">
                     <span class="text-xs font-black uppercase tracking-wider text-slate-400 block">Draft Bids</span>
@@ -94,6 +100,7 @@
                 </div>
             </section>
 
+            <!-- WORKFLOW SCHEDULE LIST (INTERACTIVE WINDOW) -->
             <section class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                     <h3 class="font-black text-sm tracking-tight text-slate-900 uppercase flex items-center gap-2">
@@ -104,25 +111,26 @@
 
                 <div class="grid grid-cols-2 sm:grid-cols-7 gap-2">
                     @foreach($daysOfWeek as $day)
-                        <div class="p-3 rounded-xl border flex flex-col justify-between h-24 transition-all
+                        <div @click="selectedDayJobs = {{ json_encode($day['appointments']) }}; selectedDayName = '{{ $day['full_date'] }}'; showApptModal = true;"
+                             class="p-3 rounded-xl border flex flex-col justify-between h-24 transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] group select-none
                             {{ $day['status'] === 'today' ? 'bg-[#f58613] border-[#f58613] text-white shadow-sm ring-2 ring-[#f58613]/20' : '' }}
                             {{ $day['status'] === 'past' ? 'bg-slate-50 border-slate-200 opacity-60 text-slate-400' : '' }}
-                            {{ $day['status'] === 'active' ? 'bg-slate-50 border-slate-200 hover:border-slate-400 text-slate-900' : '' }}
+                            {{ $day['status'] === 'active' ? 'bg-slate-50 border-slate-200 border-slate-200 text-slate-900' : '' }}
                             {{ $day['status'] === 'weekend' ? 'bg-slate-100/50 border-slate-200 text-slate-400 border-dashed' : '' }}
                         ">
                             <div class="flex justify-between items-baseline">
-                                <span class="text-xs font-black uppercase tracking-wider">{{ $day['name'] }}</span>
+                                <span class="text-xs font-black uppercase tracking-wider group-hover:text-slate-950 {{ $day['status'] === 'today' ? 'group-hover:text-black' : '' }}">{{ $day['name'] }}</span>
                                 <span class="text-lg font-mono font-black">{{ $day['num'] }}</span>
                             </div>
                             <div>
-                                @if($day['jobs'] > 0)
+                                @if($day['jobs_count'] > 0)
                                     <span class="text-[10px] font-black uppercase px-1.5 py-0.5 rounded block text-center truncate
                                         {{ $day['status'] === 'today' ? 'bg-black text-white' : 'bg-slate-900 text-white' }}
                                     ">
-                                        {{ $day['jobs'] }} {{ $day['jobs'] === 1 ? 'Job' : 'Jobs' }}
+                                        {{ $day['jobs_count'] }} {{ $day['jobs_count'] === 1 ? 'Job' : 'Jobs' }}
                                     </span>
                                 @else
-                                    <span class="text-[10px] font-bold text-slate-400 block text-center italic">Clear</span>
+                                    <span class="text-[10px] font-bold text-slate-400 block text-center italic group-hover:text-slate-600">Clear</span>
                                 @endif
                             </div>
                         </div>
@@ -130,6 +138,7 @@
                 </div>
             </section>
 
+            <!-- HIGH-REAL-ESTATE PIPELINE ESTIMATES LEDGER -->
             <section class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                     <h3 class="font-black text-xs text-slate-900 uppercase tracking-wider">Active Job Estimation Ledger</h3>
@@ -184,6 +193,7 @@
                 @endif
             </section>
 
+            <!-- DIRECTORY & LIVE CUSTOMER LOOPS -->
             <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -228,6 +238,7 @@
                     </div>
                 </div>
 
+                <!-- RESOURCE & REPEATING WORK MODULE -->
                 <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between space-y-6">
                     <div class="space-y-4">
                         <div class="border-b border-slate-100 pb-3">
@@ -252,6 +263,9 @@
             </section>
         </main>
 
+        <!-- ================= MODALS ================= -->
+
+        <!-- 1. QUICK BILL MODAL -->
         <div x-show="showInvoiceModal" x-cloak style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
             <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
                 <div x-show="showInvoiceModal" x-transition.opacity class="fixed inset-0 bg-slate-950/75 backdrop-blur-2xl transition-opacity" @click="showInvoiceModal = false"></div>
@@ -292,6 +306,66 @@
             </div>
         </div>
 
+        <!-- 2. APPOINTMENT / DAILY MANIFEST MODAL -->
+        <div x-show="showApptModal" x-cloak style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div x-show="showApptModal" x-transition.opacity class="fixed inset-0 bg-slate-950/75 backdrop-blur-2xl transition-opacity" @click="showApptModal = false"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+                <div x-show="showApptModal" x-transition class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl border border-slate-300 transform transition-all sm:my-8 sm:align-middle sm:max-w-xl w-full relative z-10">
+                    <div class="p-6 relative space-y-4">
+                        <button @click="showApptModal = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-full p-1.5 cursor-pointer">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+
+                        <div>
+                            <span class="text-[10px] bg-slate-950 text-slate-300 font-mono font-black px-2 py-0.5 rounded uppercase tracking-wider">Operational Manifest</span>
+                            <h3 class="text-xl font-black text-slate-950 mt-1" x-text="selectedDayName"></h3>
+                        </div>
+
+                        <!-- Scrollable Manifest Loop List -->
+                        <div class="space-y-3 max-h-96 overflow-y-auto pr-1">
+                            <template x-for="job in selectedDayJobs" :key="job.id">
+                                <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2 hover:border-slate-300 transition-all text-left">
+                                    <div class="flex justify-between items-start gap-4">
+                                        <div>
+                                            <h4 class="font-black text-slate-950 text-sm uppercase tracking-tight" x-text="job.title"></h4>
+                                            <p class="text-xs font-semibold text-slate-600 mt-0.5">
+                                                👤 Client: <span class="text-slate-900 font-bold" x-text="job.customer_name"></span>
+                                            </p>
+                                        </div>
+                                        <span class="font-mono font-black text-xs text-white bg-[#f58613] px-2 py-0.5 rounded shadow-sm shrink-0" x-text="job.time"></span>
+                                    </div>
+
+                                    <!-- Technical/Dispatch Field Notes -->
+                                    <div x-show="job.notes" class="p-2.5 bg-white border border-slate-100 rounded-lg text-xs font-medium text-slate-500 italic">
+                                        <span class="font-bold text-slate-400 block not-italic uppercase text-[9px] tracking-wide mb-0.5">Field Instructions:</span>
+                                        <span x-text="job.notes"></span>
+                                    </div>
+
+                                    <!-- Bottom Card Action Row -->
+                                    <div class="flex justify-between items-center pt-2 border-t border-slate-100 text-xs">
+                                        <span class="inline-block px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide border bg-emerald-50 text-emerald-700 border-emerald-200" x-text="job.status"></span>
+                                        <template x-if="job.estimate_id">
+                                            <a :href="'/estimates/' + job.estimate_id" class="text-[#f58613] hover:text-orange-600 font-black uppercase text-[10px] tracking-widest flex items-center gap-1">
+                                                Open Scope File →
+                                            </a>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Clean Empty View Node -->
+                            <div x-show="selectedDayJobs.length === 0" class="text-center py-8 text-slate-400 font-bold italic text-xs">
+                                No production tasks scheduled for this calendar date block.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CORPORATE PITCH BLACK COMPLIANCE FOOTER -->
         <footer class="border-t border-slate-900 bg-black text-slate-400 py-12">
             <div class="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
 

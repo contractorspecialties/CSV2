@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Auth;
 class DashboardController extends Controller
 {
     /**
-     * Display the contractor dashboard with live metrics, active estimates, and a dynamic weekly scheduling array.
+     * Display the contractor dashboard with live metrics, active estimates, and an interactive week scheduler.
      */
     public function index()
     {
@@ -42,17 +42,26 @@ class DashboardController extends Controller
                 return $customer;
             });
 
-        // 4. Dynamic Calendar Matrix Engine (Monday through Sunday)
+        // 4. Optimized Calendar Matrix Engine (Single database fetch grouped in memory)
         $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY);
+        $endOfWeek = $startOfWeek->copy()->endOfWeek(Carbon::SUNDAY);
+
+        $weekAppointments = Appointment::where('company_id', $companyId)
+            ->whereBetween('scheduled_at', [$startOfWeek->copy()->startOfDay(), $endOfWeek->copy()->endOfDay()])
+            ->with(['customer', 'estimate'])
+            ->get()
+            ->groupBy(function ($appt) {
+                return $appt->scheduled_at->toDateString();
+            });
+
         $daysOfWeek = [];
 
         for ($i = 0; $i < 7; $i++) {
             $currentDayDate = $startOfWeek->copy()->addDays($i);
+            $dateString = $currentDayDate->toDateString();
 
-            // Query live database appointment volume for this specific corporate date unit
-            $jobsCount = Appointment::where('company_id', $companyId)
-                ->whereDate('scheduled_at', $currentDayDate->toDateString())
-                ->count();
+            // Extract pre-loaded appointments for this calendar date node
+            $dayJobs = $weekAppointments->get($dateString, collect());
 
             // Determine semantic UI state flags dynamically
             if ($currentDayDate->isToday()) {
@@ -66,10 +75,23 @@ class DashboardController extends Controller
             }
 
             $daysOfWeek[] = [
-                'name'   => $currentDayDate->format('D'),
-                'num'    => $currentDayDate->format('j'),
-                'status' => $status,
-                'jobs'   => $jobsCount,
+                'name'        => $currentDayDate->format('D'),
+                'num'         => $currentDayDate->format('j'),
+                'full_date'   => $currentDayDate->format('l, F jS'),
+                'status'      => $status,
+                'jobs_count'  => $dayJobs->count(),
+                'appointments'=> $dayJobs->map(function ($job) {
+                    return [
+                        'id'              => $job->id,
+                        'title'           => $job->title,
+                        'time'            => $job->scheduled_at->format('g:i A'),
+                        'status'          => $job->status,
+                        'notes'           => $job->notes,
+                        'customer_name'   => $job->customer ? "{$job->customer->first_name} {$job->customer->last_name}" : 'Unassigned Client',
+                        'estimate_id'     => $job->estimate_id,
+                        'estimate_number' => $job->estimate ? $job->estimate->estimate_number : null,
+                    ];
+                })->toArray(),
             ];
         }
 
