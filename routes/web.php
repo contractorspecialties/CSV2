@@ -37,6 +37,8 @@ Route::middleware(['auth'])->group(function () {
     // Estimates & Job Operational Processing (Unified under EstimateController)
     Route::post('/estimates/{id}/blueprint', [EstimateController::class, 'saveBlueprint']);
     Route::post('/estimates/{id}/text-dispatch', [EstimateController::class, 'sendEstimateSms']);
+    Route::post('/estimates/{id}/status', [EstimateController::class, 'updateStatus'])->name('estimates.status');
+    Route::post('/estimates/{id}/attachments', [EstimateController::class, 'uploadAttachment'])->name('estimates.attachments');
     Route::post('/estimates/{id}/close-job', [EstimateController::class, 'closeJob']);
     Route::resource('estimates', EstimateController::class);
 });
