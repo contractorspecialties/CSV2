@@ -374,9 +374,10 @@
                         <img src="/images/footer-logo.webp" alt="Corporate Brand Mark" class="w-full h-full object-contain p-4">
                     </div>
                     <div class="text-xs font-medium text-slate-500 text-center md:text-left mt-1">
-                        &copy; 2026 ContractorSpecialties.<br>
-                        All corporate directories and security lines secure.
-                    </div>
+    &copy; 2026 ContractorSpecialties.<br>
+    ContractorSpecialties is owned and operated by Contractor Service Pros LLC.<br>
+    All corporate directories and security lines secure.
+</div>
                 </div>
 
                 <div class="md:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-6 text-xs font-bold uppercase tracking-wider md:pt-4">
