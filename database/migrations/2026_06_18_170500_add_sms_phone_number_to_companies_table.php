@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('companies', function (Blueprint $blueprint) {
-            // Adds the dedicated Telnyx tracking line string to each contractor's tenant profile
+        // Explicitly targeting the customized sc_ prefix ledger table
+        Schema::table('sc_companies', function (Blueprint $blueprint) {
             $blueprint->string('sms_phone_number', 30)->nullable()->after('email');
         });
     }
@@ -22,7 +22,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('companies', function (Blueprint $blueprint) {
+        Schema::table('sc_companies', function (Blueprint $blueprint) {
             $blueprint->dropColumn('sms_phone_number');
         });
     }
