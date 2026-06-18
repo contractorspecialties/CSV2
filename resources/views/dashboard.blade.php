@@ -22,7 +22,6 @@
         selectedDayName: ''
     }" class="contents">
 
-        <!-- PITCH BLACK HIGH-CONTRAST HEADER -->
         <header class="bg-black border-b border-slate-900 sticky top-0 z-50 shadow-md">
             <div class="max-w-6xl mx-auto px-4 h-24 flex items-center justify-between">
                 <div class="w-[400px] max-w-[65%] h-[100px] flex items-center">
@@ -38,7 +37,6 @@
             </div>
         </header>
 
-        <!-- UTILITY-FIRST LIGHT CONTENT LAYOUT -->
         <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-8 space-y-8">
 
             @if(session('status'))
@@ -48,7 +46,6 @@
                 </div>
             @endif
 
-            <!-- CONTROL ACTION TOOL DECK -->
             <section class="grid grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4">
                 <a href="/estimates/create" class="relative flex flex-col items-center justify-center aspect-square bg-gradient-to-b from-[#f58613] to-orange-600 rounded-2xl shadow-sm hover:shadow-md active:scale-95 transition-all group overflow-hidden cursor-pointer">
                     <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">📝</span>
@@ -81,7 +78,6 @@
                 </a>
             </section>
 
-            <!-- CASH SNAPSHOT METRICS -->
             <section class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-6 divide-y sm:divide-y-0 sm:divide-x divide-slate-200">
                 <div class="space-y-1">
                     <span class="text-xs font-black uppercase tracking-wider text-slate-400 block">Draft Bids</span>
@@ -100,7 +96,6 @@
                 </div>
             </section>
 
-            <!-- WORKFLOW SCHEDULE LIST (INTERACTIVE WINDOW) -->
             <section class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                     <h3 class="font-black text-sm tracking-tight text-slate-900 uppercase flex items-center gap-2">
@@ -138,7 +133,6 @@
                 </div>
             </section>
 
-            <!-- HIGH-REAL-ESTATE PIPELINE ESTIMATES LEDGER -->
             <section class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                     <h3 class="font-black text-xs text-slate-900 uppercase tracking-wider">Active Job Estimation Ledger</h3>
@@ -193,7 +187,6 @@
                 @endif
             </section>
 
-            <!-- DIRECTORY & LIVE CUSTOMER LOOPS -->
             <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -238,7 +231,6 @@
                     </div>
                 </div>
 
-                <!-- RESOURCE & REPEATING WORK MODULE -->
                 <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between space-y-6">
                     <div class="space-y-4">
                         <div class="border-b border-slate-100 pb-3">
@@ -263,9 +255,6 @@
             </section>
         </main>
 
-        <!-- ================= MODALS ================= -->
-
-        <!-- 1. QUICK BILL MODAL -->
         <div x-show="showInvoiceModal" x-cloak style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
             <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
                 <div x-show="showInvoiceModal" x-transition.opacity class="fixed inset-0 bg-slate-950/75 backdrop-blur-2xl transition-opacity" @click="showInvoiceModal = false"></div>
@@ -306,7 +295,6 @@
             </div>
         </div>
 
-        <!-- 2. APPOINTMENT / DAILY MANIFEST MODAL -->
         <div x-show="showApptModal" x-cloak style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
             <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
                 <div x-show="showApptModal" x-transition.opacity class="fixed inset-0 bg-slate-950/75 backdrop-blur-2xl transition-opacity" @click="showApptModal = false"></div>
@@ -323,7 +311,6 @@
                             <h3 class="text-xl font-black text-slate-950 mt-1" x-text="selectedDayName"></h3>
                         </div>
 
-                        <!-- Scrollable Manifest Loop List -->
                         <div class="space-y-3 max-h-96 overflow-y-auto pr-1">
                             <template x-for="job in selectedDayJobs" :key="job.id">
                                 <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2 hover:border-slate-300 transition-all text-left">
@@ -337,13 +324,11 @@
                                         <span class="font-mono font-black text-xs text-white bg-[#f58613] px-2 py-0.5 rounded shadow-sm shrink-0" x-text="job.time"></span>
                                     </div>
 
-                                    <!-- Technical/Dispatch Field Notes -->
                                     <div x-show="job.notes" class="p-2.5 bg-white border border-slate-100 rounded-lg text-xs font-medium text-slate-500 italic">
                                         <span class="font-bold text-slate-400 block not-italic uppercase text-[9px] tracking-wide mb-0.5">Field Instructions:</span>
                                         <span x-text="job.notes"></span>
                                     </div>
 
-                                    <!-- Bottom Card Action Row -->
                                     <div class="flex justify-between items-center pt-2 border-t border-slate-100 text-xs">
                                         <span class="inline-block px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide border bg-emerald-50 text-emerald-700 border-emerald-200" x-text="job.status"></span>
                                         <template x-if="job.estimate_id">
@@ -355,7 +340,6 @@
                                 </div>
                             </template>
 
-                            <!-- Clean Empty View Node -->
                             <div x-show="selectedDayJobs.length === 0" class="text-center py-8 text-slate-400 font-bold italic text-xs">
                                 No production tasks scheduled for this calendar date block.
                             </div>
@@ -365,7 +349,6 @@
             </div>
         </div>
 
-        <!-- CORPORATE PITCH BLACK COMPLIANCE FOOTER -->
         <footer class="border-t border-slate-900 bg-black text-slate-400 py-12">
             <div class="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
 
@@ -374,13 +357,13 @@
                         <img src="/images/footer-logo.webp" alt="Corporate Brand Mark" class="w-full h-full object-contain p-4">
                     </div>
                     <div class="text-xs font-medium text-slate-500 text-center md:text-left mt-1">
-    &copy; 2026 ContractorSpecialties.<br>
-    ContractorSpecialties is owned and operated by Contractor Service Pros LLC.<br>
-    All corporate directories and security lines secure.
-</div>
+                        &copy; 2026 ContractorSpecialties.<br>
+                        ContractorSpecialties is owned and operated by Contractor Service Pros LLC.<br>
+                        All corporate directories and security lines secure.
+                    </div>
                 </div>
 
-                <div class="md:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-6 text-xs font-bold uppercase tracking-wider md:pt-4">
+                <div class="md:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-6 text-xs font-bold uppercase tracking-wider md:pt-4">
                     <div class="flex flex-col gap-2.5">
                         <span class="text-[10px] text-slate-600 tracking-widest font-black">Tools & Engine</span>
                         <a href="/estimates" class="text-slate-400 hover:text-[#f58613] transition-colors">Estimate Creator</a>
@@ -393,10 +376,15 @@
                         <a href="/contractor-directory" class="text-slate-400 hover:text-[#f58613] transition-colors">Public Directory</a>
                         <a href="/leads" class="text-slate-400 hover:text-[#f58613] transition-colors">Resource Funnels</a>
                     </div>
-                    <div class="flex flex-col gap-2.5 col-span-2 sm:col-span-1">
+                    <div class="flex flex-col gap-2.5">
+                        <span class="text-[10px] text-slate-600 tracking-widest font-black">Legal & Policy</span>
+                        <a href="{{ route('legal.privacy') }}" class="text-slate-400 hover:text-[#f58613] transition-colors normal-case">Privacy Policy</a>
+                        <a href="{{ route('legal.terms') }}" class="text-slate-400 hover:text-[#f58613] transition-colors normal-case">Terms of Use</a>
+                    </div>
+                    <div class="flex flex-col gap-2.5">
                         <span class="text-[10px] text-slate-600 tracking-widest font-black">Secure Entry</span>
                         <a href="/login/partner" class="text-slate-500 hover:text-white transition-colors bg-slate-900 border border-slate-800 px-3 py-2 rounded-lg text-center truncate">General Contractor</a>
-                        <a href="/login/subcontractor" class="text-slate-500 hover:text-white transition-colors bg-slate-900 border border-slate-800 px-3 py-2 rounded-lg text-center truncate mt-1">Subcontractor Portal</a>
+                        <a href="/login/subcontractor" class="text-slate-500 hover:text-white transition-colors bg-slate-900 border border-slate-800 px-3 py-2 rounded-lg text-center truncate mt-1">Sub-Portal</a>
                     </div>
                 </div>
 

@@ -48,3 +48,10 @@ Route::get('/portal', function () { return view('portal'); })->name('portal');
 Route::get('/portal/checkout/{token}', [EstimateController::class, 'checkout'])->name('portal.checkout');
 Route::post('/portal/action/{id}', [EstimateController::class, 'handlePortalAction'])->name('portal.action');
 Route::get('/portal/success/{token}', [EstimateController::class, 'paymentSuccess'])->name('quotes.payment.success');
+
+// Public Legal Compliance Frames
+Route::view('/privacy', 'privacy')->name('legal.privacy');
+Route::view('/terms', 'terms')->name('legal.terms');
+
+// Inbound Telephony Carrier Webhooks
+Route::post('/webhooks/telnyx', [EstimateController::class, 'handleTelnyxWebhook'])->name('webhooks.telnyx');

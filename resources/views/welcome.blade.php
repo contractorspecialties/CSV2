@@ -55,7 +55,7 @@
 
                 <div class="space-y-2 border-b border-slate-100 pb-4 mb-6">
                     <h3 class="text-xl font-black text-slate-950 uppercase tracking-tight">Get Your Secure Access Link</h3>
-                    <p class="text-xs text-slate-500 font-medium font-semibold">No passwords. No setup fees. No commitment. Just tools that make your business run smoother.</p>
+                    <p class="text-xs text-slate-500 font-semibold">No passwords. No setup fees. No commitment. Just tools that make your business run smoother.</p>
                 </div>
 
                 <!-- Session Messaging Interfaces -->
@@ -83,6 +83,11 @@
                     <button type="submit" class="w-full bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-4 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] flex justify-center items-center gap-2 cursor-pointer">
                         Request Secure Access Link →
                     </button>
+
+                    <!-- MANDATORY 10DLC COMPLIANT SMS OPT-IN DISCLOSURE BLOCK -->
+                    <div class="pt-2 border-t border-slate-100 text-[10px] text-slate-400 leading-normal font-medium">
+                        By requesting an access link, you agree to receive automated account confirmations, system status alerts, and operational estimate notifications via text message from ContractorSpecialties. Consent is completely voluntary and is not a condition of purchase. Message frequency varies based on project utilization loops. Message & data rates may apply. Reply <span class="font-bold text-slate-700">STOP</span> to instantly block lines, or <span class="font-bold text-slate-700">HELP</span> for engineering routing diagnostics. View our <a href="{{ route('legal.privacy') }}" class="underline hover:text-[#f58613]">Privacy Policy</a> and <a href="{{ route('legal.terms') }}" class="underline hover:text-[#f58613]">Terms of Use</a>.
+                    </div>
                 </form>
             </div>
         </section>
@@ -264,14 +269,14 @@
                     <img src="/images/footer-logo.webp" alt="Corporate Brand Mark" class="w-full h-full object-contain p-4">
                 </div>
                 <div class="text-xs font-medium text-slate-500 text-center md:text-left mt-1">
-    &copy; 2026 ContractorSpecialties.<br>
-    ContractorSpecialties is owned and operated by Contractor Service Pros LLC.<br>
-    All corporate directories and security lines secure.
-</div>
+                    &copy; 2026 ContractorSpecialties.<br>
+                    ContractorSpecialties is owned and operated by Contractor Service Pros LLC.<br>
+                    All corporate directories and security lines secure.
+                </div>
             </div>
 
-            <!-- Structured Tool, Directory & Resource Compliance Link Columns -->
-            <div class="md:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-6 text-xs font-bold uppercase tracking-wider md:pt-4">
+            <!-- Structured Tool, Directory, Legal & Resource Compliance Link Columns -->
+            <div class="md:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-6 text-xs font-bold uppercase tracking-wider md:pt-4">
                 <div class="flex flex-col gap-2.5">
                     <span class="text-[10px] text-slate-600 tracking-widest font-black">Tools & Engine</span>
                     <a href="#access-hub" class="text-slate-400 hover:text-[#f58613] transition-colors">Estimate Creator</a>
@@ -284,10 +289,16 @@
                     <a href="/contractor-directory" class="text-slate-400 hover:text-[#f58613] transition-colors">Public Directory</a>
                     <a href="/leads" class="text-slate-400 hover:text-[#f58613] transition-colors">Resource Funnels</a>
                 </div>
-                <div class="flex flex-col gap-2.5 col-span-2 sm:col-span-1">
+                <!-- CRITICAL UN-GATEKEPT 10DLC LEGAL NAVIGATION LINKS -->
+                <div class="flex flex-col gap-2.5">
+                    <span class="text-[10px] text-slate-600 tracking-widest font-black">Legal & Policy</span>
+                    <a href="{{ route('legal.privacy') }}" class="text-slate-400 hover:text-[#f58613] transition-colors normal-case">Privacy Policy</a>
+                    <a href="{{ route('legal.terms') }}" class="text-slate-400 hover:text-[#f58613] transition-colors normal-case">Terms of Use</a>
+                </div>
+                <div class="flex flex-col gap-2.5">
                     <span class="text-[10px] text-slate-600 tracking-widest font-black">Secure Entry</span>
                     <a href="/login/partner" class="text-slate-500 hover:text-white transition-colors bg-slate-900 border border-slate-800 px-3 py-2 rounded-lg text-center truncate">General Contractor</a>
-                    <a href="/login/subcontractor" class="text-slate-500 hover:text-white transition-colors bg-slate-900 border border-slate-800 px-3 py-2 rounded-lg text-center truncate mt-1">Subcontractor Portal</a>
+                    <a href="/login/subcontractor" class="text-slate-500 hover:text-white transition-colors bg-slate-900 border border-slate-800 px-3 py-2 rounded-lg text-center truncate mt-1">Sub-Portal</a>
                 </div>
             </div>
 
