@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Explicitly targeting the customized sc_ prefix ledger table
+        // Dropped the positional constraint to ensure a safe structural execution
         Schema::table('sc_companies', function (Blueprint $blueprint) {
-            $blueprint->string('sms_phone_number', 30)->nullable()->after('email');
+            $blueprint->string('sms_phone_number', 30)->nullable();
         });
     }
 
