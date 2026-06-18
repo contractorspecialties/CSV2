@@ -119,7 +119,6 @@ class EstimateController extends Controller
     {
         $companyId = Auth::user()->company_id;
 
-        // Fetch estimate with line items and any uploaded progress images
         $estimate = Estimate::where('company_id', $companyId)
             ->with(['customer', 'items'])
             ->findOrFail($id);
@@ -140,14 +139,13 @@ class EstimateController extends Controller
         $request->validate(['status' => 'required|in:draft,sent,approved,closed']);
         $estimate->update(['status' => $request->status]);
 
-        // If shifting to approved, auto-create a mock calendar appointment for field testing
         if ($request->status === 'approved') {
             \App\Models\Appointment::create([
                 'company_id' => $companyId,
                 'customer_id' => $estimate->customer_id,
                 'estimate_id' => $estimate->id,
                 'title' => "Production Run: " . $estimate->estimate_number,
-                'scheduled_at' => now(), // Places it perfectly onto today's cockpit block
+                'scheduled_at' => now(),
                 'status' => 'scheduled'
             ]);
         }
@@ -161,7 +159,7 @@ class EstimateController extends Controller
     public function uploadAttachment(Request $request, $id)
     {
         $request->validate([
-            'image' => 'required|image|max:10240', // Max 10MB photo sizes
+            'image' => 'required|image|max:10240',
             'caption' => 'nullable|string|max:255'
         ]);
 
@@ -182,5 +180,60 @@ class EstimateController extends Controller
         }
 
         return back()->with('error', 'Failed to read media asset configuration.');
+    }
+
+    /**
+     * Public Unauthenticated Viewport Gateway Node for Homeowners.
+     */
+    public function checkout($token)
+    {
+        // Safe contextual resolution via either database ID index mapping or Reference number string
+        $estimate = Estimate::with(['customer', 'items'])
+            ->where('id', $token)
+            ->orWhere('estimate_number', $token)
+            ->firstOrFail();
+
+        $attachments = JobAttachment::where('estimate_id', $estimate->id)->get();
+
+        return view('portal', compact('estimate', 'attachments'));
+    }
+
+    /**
+     * Public Gateway Controller to capture Homeowner interactive responses safely.
+     */
+    public function handlePortalAction(Request $request, $id)
+    {
+        $estimate = Estimate::findOrFail($id);
+        $action = $request->input('action');
+
+        if ($action === 'schedule') {
+            $estimate->update(['status' => 'approved']);
+
+            // Programmatically inject and schedule their installation run
+            \App\Models\Appointment::create([
+                'company_id'  => $estimate->company_id,
+                'customer_id' => $estimate->customer_id,
+                'estimate_id' => $estimate->id,
+                'title'       => "Production: " . $estimate->estimate_number,
+                'scheduled_at'=> now()->addDays(2), // Mock placement 48 hours out
+                'status'      => 'scheduled',
+                'notes'       => 'Client portal scheduled auto-activation confirmation.'
+            ]);
+
+            return back()->with('status', '✍️ Project approved! Your job site mobilization window has been added straight to our master production dispatch board.');
+        }
+
+        if ($action === 'revision') {
+            $request->validate(['notes' => 'required|string|max:1000']);
+
+            // Log modification requests into notes for estimator evaluation
+            $estimate->update([
+                'notes' => "🚨 Homeowner Modification Request:\n" . $request->notes . "\n\n" . $estimate->notes
+            ]);
+
+            return back()->with('status', '💬 Your correction notes have been logged straight onto the blueprint ledger. Your project administrator will reach out shortly.');
+        }
+
+        return back();
     }
 }

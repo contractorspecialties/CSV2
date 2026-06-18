@@ -1,242 +1,210 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-100 text-slate-900">
+<html lang="en" class="h-full bg-slate-50 text-slate-900">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Review Your Estimate | ContractorSpecialties Portal</title>
+    <title>Project Portal | {{ $estimate->estimate_number }}</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <style>
-        [x-cloak] { display: none !important; }
-    </style>
 </head>
-<body class="flex flex-col min-h-full font-sans antialiased bg-slate-100 text-slate-900 selection:bg-[#f58613] selection:text-white">
+<body class="flex flex-col min-h-full font-sans antialiased bg-slate-50 text-slate-900 selection:bg-[#f58613] selection:text-white">
 
-    <header class="bg-black border-b border-slate-900 sticky top-0 z-50 shadow-md">
-        <div class="max-w-4xl mx-auto px-4 h-24 flex items-center justify-between">
-            <div class="w-[400px] max-w-[70%] h-[100px] flex items-center">
-                <img src="/images/header-logo.webp" alt="ContractorSpecialties Logo" class="w-full h-auto max-h-[90px] object-contain object-left">
+    <!-- MINIMALIST BRAND TRUST HEADER -->
+    <header class="bg-black border-b border-slate-900 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-5xl mx-auto px-4 h-20 flex items-center justify-between">
+            <div class="w-[300px] max-w-[60%] h-[80px] flex items-center">
+                <img src="/images/header-logo.webp" alt="ContractorSpecialties Logo" class="w-full h-auto max-h-[70px] object-contain object-left">
             </div>
             <div class="flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span class="text-[10px] font-mono font-black uppercase text-slate-400 tracking-widest">Verified Secure Portal</span>
+                <span class="text-[10px] bg-emerald-950 text-emerald-400 font-mono font-black px-2 py-0.5 rounded uppercase tracking-wider">
+                    Secure Client Line
+                </span>
             </div>
         </div>
     </header>
 
-    <main class="flex-grow max-w-4xl w-full mx-auto px-4 py-10 space-y-6" x-data="{ signed: false }">
+    <!-- WORKSPACE CANVAS -->
+    <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-8 space-y-6">
 
-        <div class="bg-white border border-slate-200 rounded-3xl shadow-xl overflow-hidden">
-
-            <div class="p-6 sm:p-8 bg-slate-950 text-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-900">
-                <div class="space-y-1">
-                    <span class="text-[10px] font-mono font-black text-[#f58613] uppercase tracking-widest block">Job Estimate Summary</span>
-                    <h1 class="text-xl sm:text-2xl font-black uppercase tracking-tight text-white">Apex Exterior Specialists</h1>
-                </div>
-                <div class="text-left sm:text-right text-xs font-semibold text-slate-400 space-y-0.5">
-                    <div>📱 Office Contact: (555) 019-2834</div>
-                    <div>📅 Issued On: {{ now()->format('M j, Y') }}</div>
-                </div>
+        @if(session('status'))
+            <div class="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl p-5 flex items-center gap-3 shadow-sm">
+                <span class="text-xl">⚡</span>
+                <p class="text-xs font-black uppercase tracking-tight leading-normal">{{ session('status') }}</p>
             </div>
+        @endif
 
-            <div class="p-6 sm:p-8 border-b border-slate-100 bg-slate-50/50 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider block mb-1">Prepared For:</span>
-                    <div class="text-base font-black text-slate-950">Marcus Vance</div>
-                    <div class="text-xs text-slate-600 font-semibold mt-0.5">marcus.vance@domain.com</div>
-                </div>
-                <div class="sm:text-right">
-                    <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider block mb-1">Estimate Tracking Line:</span>
-                    <div class="text-sm font-mono font-black text-slate-900 uppercase">EST-2026-9041</div>
-                </div>
+        <!-- WELCOME CARD -->
+        <div class="bg-slate-900 text-white rounded-2xl p-6 shadow-md border border-slate-950 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-xl font-black uppercase tracking-tight">Project Proposal Workspace</h1>
+                <p class="text-slate-400 text-xs mt-1 font-medium">Review specifications, request timeline adjustments, or activate your job schedule loop.</p>
             </div>
+            <div class="text-xs font-mono font-black text-slate-400 shrink-0 bg-black/40 px-3 py-1.5 rounded-lg border border-slate-800">
+                REF ID: {{ $estimate->estimate_number }}
+            </div>
+        </div>
 
-            <div class="p-6 sm:p-8 space-y-4">
-                <span class="text-[10px] font-black uppercase text-slate-400 tracking-wider block">Project Scope Specifications</span>
+        <!-- SPLIT INTERACTIVE CONTENT DESK -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                <div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                    <table class="w-full text-left text-sm font-medium">
+            <!-- LEFT: FULL SPECIFICATIONS BILL OF MATERIALS -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                        <h3 class="font-black text-xs text-slate-900 uppercase tracking-wider">Itemized Scope Overview</h3>
+                    </div>
+
+                    <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-slate-950 text-slate-400 text-xs uppercase tracking-wider font-bold">
-                                <th class="py-3 px-4">Description of Work</th>
-                                <th class="py-3 px-4 text-center">Qty</th>
-                                <th class="py-3 px-4 text-right">Price</th>
-                                <th class="py-3 px-4 text-right">Line Total</th>
+                            <tr class="border-b border-slate-100 text-[10px] font-black uppercase text-slate-400 bg-slate-50/20">
+                                <th class="py-3 px-6">Specification Description</th>
+                                <th class="py-3 px-4 text-center">Volume</th>
+                                <th class="py-3 px-6 text-right">Line Total</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            <tr class="hover:bg-slate-50/50 transition-colors">
-                                <td class="py-4 px-4">
-                                    <div class="font-black text-slate-950">Premium Exterior Siding Overhaul</div>
-                                    <div class="text-xs text-slate-400 font-normal mt-0.5 italic">Includes complete surface scraping, chemical clean prep, and commercial paint sealant.</div>
-                                </td>
-                                <td class="py-4 px-4 text-center font-mono font-black text-slate-700">1.0</td>
-                                <td class="py-4 px-4 text-right font-mono font-bold text-slate-500">$1,850.00</td>
-                                <td class="py-4 px-4 text-right font-mono font-black text-slate-950">$1,850.00</td>
-                            </tr>
-                            <tr class="hover:bg-slate-50/50 transition-colors">
-                                <td class="py-4 px-4">
-                                    <div class="font-black text-slate-950">Haul-Away Fees & Trash Management</div>
-                                    <div class="text-xs text-slate-400 font-normal mt-0.5 italic">Complete site clearance protection.</div>
-                                </td>
-                                <td class="py-4 px-4 text-center font-mono font-black text-slate-700">1.0</td>
-                                <td class="py-4 px-4 text-right font-mono font-bold text-slate-500">$350.00</td>
-                                <td class="py-4 px-4 text-right font-mono font-black text-slate-950">$350.00</td>
-                            </tr>
+                        <tbody class="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
+                            @foreach($estimate->items as $item)
+                                <tr>
+                                    <td class="py-4 px-6 font-bold text-slate-900 text-sm leading-normal">{{ $item->description }}</td>
+                                    <td class="py-4 px-4 text-center font-mono text-slate-500">{{ number_format($item->quantity, 1) }}</td>
+                                    <td class="py-4 px-6 text-right font-mono font-black text-slate-950">${{ number_format($item->total_price, 2) }}</td>
+                                </tr>
+                            @endforeach
                         </tbody>
                     </table>
-                </div>
 
-                <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-                    <span class="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Contractor Scope Notes</span>
-                    <p class="text-xs text-slate-600 font-semibold italic">Work will initiate precisely at 7:30 AM following material staging. All staging zones will be entirely cleared before workforce departure.</p>
-                </div>
-
-                <div class="flex flex-col items-end pt-4 font-mono text-xs text-slate-600 space-y-1.5 border-t border-slate-100">
-                    <div class="flex gap-4">
-                        <span class="w-36 text-right font-bold text-slate-400 uppercase">Line Item Subtotal:</span>
-                        <span class="w-24 text-right font-black text-slate-900">$2,200.00</span>
-                    </div>
-                    <div class="flex gap-4">
-                        <span class="w-36 text-right font-bold text-slate-400 uppercase">Sales Tax (6.5%):</span>
-                        <span class="w-24 text-right font-black text-slate-900">+$143.00</span>
-                    </div>
-                    <div class="flex gap-4 text-sm pt-2 border-t border-slate-200">
-                        <span class="w-36 text-right font-black text-slate-800 uppercase">Final Contract Price:</span>
-                        <span class="w-24 text-right font-black text-emerald-600 text-base">$2,343.00</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="p-6 sm:p-8 bg-slate-50 border-t border-slate-100 grid grid-cols-1 md:grid-cols-12 gap-6">
-
-                <div class="md:col-span-7 space-y-3">
-                    <h3 class="text-base font-black uppercase tracking-tight text-slate-950">Draw Digital Signature to Approve</h3>
-                    <p class="text-xs text-slate-500 font-medium leading-relaxed">
-                        By providing your trace mark inside the digital engine box, you acknowledge absolute acceptance of the line item scope frameworks and final financial contract valuations listed above.
-                    </p>
-
-                    <div class="w-full h-32 bg-white rounded-xl border border-slate-300 relative shadow-inner overflow-hidden cursor-crosshair">
-                        <canvas id="sig-pad" class="absolute inset-0 w-full h-full"></canvas>
-                        <div class="absolute bottom-2 right-2 flex gap-1">
-                            <button type="button" id="clear-sig" class="bg-slate-100 text-slate-600 font-black text-[9px] uppercase tracking-widest px-2 py-1 rounded border border-slate-300">
-                                Reset Pad
-                            </button>
+                    <!-- Totals Breakdown Sled -->
+                    <div class="bg-slate-50/80 border-t border-slate-100 p-6 flex justify-end">
+                        <div class="w-64 font-mono text-xs text-slate-600 space-y-1.5">
+                            <div class="flex justify-between">
+                                <span class="font-bold text-slate-400 uppercase">Subtotal:</span>
+                                <span class="font-black text-slate-900">${{ number_format($estimate->subtotal, 2) }}</span>
+                            </div>
+                            @if($estimate->tax_rate > 0)
+                                <div class="flex justify-between">
+                                    <span class="font-bold text-slate-400 uppercase">Local Tax / Assessment:</span>
+                                    <span class="font-black text-slate-900">+${{ number_format($estimate->subtotal * ($estimate->tax_rate / 100), 2) }}</span>
+                                </div>
+                            @endif
+                            <div class="flex justify-between pt-2 border-t border-slate-200 text-sm">
+                                <span class="font-black text-slate-800 uppercase">Project Total:</span>
+                                <span class="text-base font-black text-slate-950">${{ number_format($estimate->grand_total, 2) }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="md:col-span-5 flex flex-col justify-end">
-                    <form action="#" method="POST" id="checkout-form" class="space-y-3">
-                        @csrf
-                        <input type="hidden" id="sig-data" name="signature_payload">
+                <!-- PROGRESS ARCHIVE GALLERY BOX -->
+                @if($attachments->isNotEmpty())
+                    <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+                        <h3 class="font-black text-xs text-slate-900 uppercase tracking-wider flex items-center gap-2">📸 Field Site Visual Timeline</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            @foreach($attachments as $media)
+                                <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+                                    <img src="{{ $media->file_path }}" alt="Project Documentation" class="w-full h-40 object-cover">
+                                    <div class="p-2.5 bg-white text-[11px] font-medium text-slate-600">
+                                        {{ $media->caption }}
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            </div>
 
-                        <button type="submit" id="submit-btn" disabled
-                                class="w-full bg-[#f58613] hover:bg-orange-600 disabled:bg-slate-200 disabled:text-slate-400 font-black text-xs py-4 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] flex justify-center items-center gap-2 cursor-pointer">
-                            Accept Scope & Submit Payment ⚡
-                        </button>
-                    </form>
+            <!-- RIGHT: COLLABORATIVE CLIENT TOOL PANEL -->
+            <div class="space-y-6">
+
+                <div x-data="{ currentConsole: 'main' }" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm min-h-[300px] flex flex-col justify-between">
+
+                    <!-- MAIN NAVIGATION SLED -->
+                    <div x-show="currentConsole === 'main'" class="space-y-4 contents">
+                        <div class="border-b border-slate-100 pb-2">
+                            <span class="text-[10px] text-[#f58613] font-black uppercase tracking-wider block">Proposal State: {{ strtoupper($estimate->status) }}</span>
+                            <h3 class="font-black text-base text-slate-950 mt-0.5">Choose Next Step</h3>
+                        </div>
+
+                        @if($estimate->status !== 'approved')
+                            <div class="space-y-2.5 flex-grow">
+                                <button @click="currentConsole = 'schedule'" class="w-full bg-slate-950 hover:bg-black text-white font-black text-xs py-3.5 px-4 rounded-xl uppercase tracking-wider transition-all shadow-md flex items-center justify-between cursor-pointer">
+                                    <span>✍️ Approve & Schedule</span>
+                                    <span>→</span>
+                                </button>
+
+                                <button @click="currentConsole = 'revision'" class="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-black text-xs py-3.5 px-4 rounded-xl uppercase tracking-wider transition-all shadow-sm flex items-center justify-between cursor-pointer">
+                                    <span>💬 Request Clarification</span>
+                                    <span>→</span>
+                                </button>
+                            </div>
+                        @else
+                            <div class="p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-center space-y-2 flex-grow flex flex-col justify-center">
+                                <span class="text-2xl block">📅</span>
+                                <h4 class="font-black text-sm text-emerald-950 uppercase tracking-tight">Project Active & Scheduled</h4>
+                                <p class="text-xs text-emerald-800 font-medium leading-normal">This project outline is approved. The deployment mobilization routine is locked onto our active grid.</p>
+                            </div>
+                        @endif
+
+                        <div class="pt-4 border-t border-slate-100 text-[11px] font-medium text-slate-400 leading-normal text-center">
+                            Need rapid coordination? Reach our central support desk any time.
+                        </div>
+                    </div>
+
+                    <!-- SUB-PANEL: LOW-PRESSURE SIGN-OFF & DEPOSIT LAYOUT -->
+                    <div x-show="currentConsole === 'schedule'" x-cloak style="display: none;" class="space-y-4 contents">
+                        <div class="border-b border-slate-100 pb-2">
+                            <h3 class="font-black text-sm text-slate-950">Lock In Production Window</h3>
+                            <p class="text-[11px] text-slate-400 font-medium mt-0.5">Approving logs your project directly into our dispatch loop.</p>
+                        </div>
+
+                        <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl font-mono text-xs text-slate-700 space-y-1">
+                            <div class="flex justify-between">
+                                <span class="font-bold text-slate-400">Standard Deposit:</span>
+                                <span class="font-black text-slate-900">$0.00</span>
+                            </div>
+                            <div class="flex justify-between text-[10px] text-slate-400">
+                                <span>*Deposit due at site mobilization launch.</span>
+                            </div>
+                        </div>
+
+                        <form action="/portal/action/{{ $estimate->id }}" method="POST" class="space-y-2">
+                            @csrf
+                            <input type="hidden" name="action" value="schedule">
+                            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs py-3.5 px-4 rounded-xl uppercase tracking-wider transition-all shadow-md cursor-pointer">
+                                Confirm & Book Installation Run ⚡
+                            </button>
+                            <button type="button" @click="currentConsole = 'main'" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-[10px] py-2 rounded-lg uppercase tracking-wide cursor-pointer">
+                                ← Go Back
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- SUB-PANEL: REVISION LOG TEXT DECK -->
+                    <div x-show="currentConsole === 'revision'" x-cloak style="display: none;" class="space-y-4 contents">
+                        <div class="border-b border-slate-100 pb-2">
+                            <h3 class="font-black text-sm text-slate-950">Request Clarification / Changes</h3>
+                            <p class="text-[11px] text-slate-400 font-medium mt-0.5">Leave notes below. Your estimator will be immediately flagged to verify changes.</p>
+                        </div>
+
+                        <form action="/portal/action/{{ $estimate->id }}" method="POST" class="space-y-3">
+                            @csrf
+                            <input type="hidden" name="action" value="revision">
+                            <div>
+                                <textarea name="notes" rows="4" required placeholder="e.g., Can we look at expanding the side pathway coverage layout, or shift execution to next Thursday afternoon?" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs font-medium focus:outline-none focus:border-[#f58613] leading-normal"></textarea>
+                            </div>
+                            <button type="submit" class="w-full bg-slate-950 hover:bg-black text-white font-black text-xs py-3 px-4 rounded-xl uppercase tracking-wider transition-all cursor-pointer">
+                                Submit Correction Note →
+                            </button>
+                            <button type="button" @click="currentConsole = 'main'" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-[10px] py-2 rounded-lg uppercase tracking-wide cursor-pointer">
+                                Cancel
+                            </button>
+                        </form>
+                    </div>
+
                 </div>
 
             </div>
-
         </div>
     </main>
 
-    <footer class="border-t border-slate-900 bg-black text-slate-400 py-12 mt-auto">
-        <div class="max-w-4xl mx-auto px-4 grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-            <div class="md:col-span-5 flex flex-col items-center md:items-start gap-4">
-                <div class="w-[400px] max-w-full aspect-square bg-slate-950 border border-slate-900 rounded-2xl overflow-hidden shadow-lg flex items-center justify-center">
-                    <img src="/images/footer-logo.webp" alt="Corporate Brand Mark" class="w-full h-full object-contain p-4">
-                </div>
-                <div class="text-xs font-medium text-slate-500 text-center md:text-left mt-1">
-                    &copy; 2026 ContractorSpecialties.<br>
-                    Secure transactional processing routes enabled via isolated tracking layers.
-                </div>
-            </div>
-            <div class="md:col-span-7 grid grid-cols-2 gap-6 text-xs font-bold uppercase tracking-wider md:pt-4">
-                <div class="flex flex-col gap-2.5">
-                    <span class="text-[10px] text-slate-600 tracking-widest font-black">Security Frameworks</span>
-                    <a href="#" class="text-slate-400 pointer-events-none">Stripe Level 1 PCI Protected</a>
-                    <a href="#" class="text-slate-400 pointer-events-none">256-Bit SSL Data Encryption</a>
-                </div>
-                <div class="flex flex-col gap-2.5">
-                    <span class="text-[10px] text-slate-600 tracking-widest font-black">Contract Terms</span>
-                    <a href="/privacy" class="text-slate-500 hover:text-[#f58613]">Privacy Protocol</a>
-                    <a href="/terms" class="text-slate-500 hover:text-[#f58613]">Terms of Use</a>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const canvas = document.getElementById('sig-pad');
-            const clearBtn = document.getElementById('clear-sig');
-            const submitBtn = document.getElementById('submit-btn');
-            const sigInput = document.getElementById('sig-data');
-            const ctx = canvas.getContext('2d');
-
-            let drawing = false;
-            let strokeCount = 0;
-
-            // Normalize coordinate mapping bounds inside viewport grids
-            function resizeCanvas() {
-                const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                canvas.width = canvas.offsetWidth * ratio;
-                canvas.height = canvas.offsetHeight * ratio;
-                ctx.scale(ratio, ratio);
-                ctx.lineWidth = 2.5;
-                ctx.lineCap = 'round';
-                ctx.strokeStyle = '#021d48';
-            }
-            window.addEventListener('resize', resizeCanvas);
-            resizeCanvas();
-
-            function startDraw(e) {
-                drawing = true;
-                ctx.beginPath();
-                const pos = getPos(e);
-                ctx.moveTo(pos.x, pos.y);
-            }
-
-            function draw(e) {
-                if (!drawing) return;
-                e.preventDefault();
-                const pos = getPos(e);
-                ctx.lineTo(pos.x, pos.y);
-                ctx.stroke();
-                strokeCount++;
-                if (strokeCount > 10) {
-                    submitBtn.removeAttribute('disabled');
-                    sigInput.value = canvas.toDataURL();
-                }
-            }
-
-            function stopDraw() { drawing = false; }
-
-            function getPos(e) {
-                const rect = canvas.getBoundingClientRect();
-                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                return { x: clientX - rect.left, y: clientY - rect.top };
-            }
-
-            canvas.addEventListener('mousedown', startDraw);
-            canvas.addEventListener('mousemove', draw);
-            window.addEventListener('mouseup', stopDraw);
-
-            canvas.addEventListener('touchstart', startDraw);
-            canvas.addEventListener('touchmove', draw);
-            window.addEventListener('touchend', stopDraw);
-
-            clearBtn.addEventListener('click', () => {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                submitBtn.setAttribute('disabled', 'true');
-                sigInput.value = '';
-                strokeCount = 0;
-            });
-        });
-    </script>
 </body>
 </html>

@@ -46,4 +46,5 @@ Route::middleware(['auth'])->group(function () {
 // Homeowner Viewport Portal Frames
 Route::get('/portal', function () { return view('portal'); })->name('portal');
 Route::get('/portal/checkout/{token}', [EstimateController::class, 'checkout'])->name('portal.checkout');
+Route::post('/portal/action/{id}', [EstimateController::class, 'handlePortalAction'])->name('portal.action');
 Route::get('/portal/success/{token}', [EstimateController::class, 'paymentSuccess'])->name('quotes.payment.success');
