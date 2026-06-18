@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Auth;
 class DashboardController extends Controller
 {
     /**
-     * Display the contractor dashboard with live metrics and a dynamic weekly scheduling array.
+     * Display the contractor dashboard with live metrics, active estimates, and a dynamic weekly scheduling array.
      */
     public function index()
     {
@@ -23,7 +23,13 @@ class DashboardController extends Controller
         $sentCount = Estimate::where('company_id', $companyId)->where('status', 'sent')->count();
         $bookedRevenue = Estimate::where('company_id', $companyId)->where('status', 'approved')->sum('grand_total');
 
-        // 2. Fetch Recent Customers with dynamic lifetime approved calculations
+        // 2. Fetch All Active Pipeline Estimates to populate the tracking ledger
+        $estimates = Estimate::where('company_id', $companyId)
+            ->with('customer')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // 3. Fetch Recent Customers with dynamic lifetime approved calculations
         $recentCustomers = Customer::where('company_id', $companyId)
             ->withSum(['estimates as lifetime_value' => function ($query) {
                 $query->where('status', 'approved');
@@ -36,7 +42,7 @@ class DashboardController extends Controller
                 return $customer;
             });
 
-        // 3. Dynamic Calendar Matrix Engine (Monday through Sunday)
+        // 4. Dynamic Calendar Matrix Engine (Monday through Sunday)
         $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY);
         $daysOfWeek = [];
 
@@ -67,6 +73,6 @@ class DashboardController extends Controller
             ];
         }
 
-        return view('dashboard', compact('recentCustomers', 'daysOfWeek', 'draftCount', 'sentCount', 'bookedRevenue'));
+        return view('dashboard', compact('estimates', 'recentCustomers', 'daysOfWeek', 'draftCount', 'sentCount', 'bookedRevenue'));
     }
 }

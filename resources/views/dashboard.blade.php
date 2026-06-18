@@ -130,6 +130,60 @@
                 </div>
             </section>
 
+            <section class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <h3 class="font-black text-xs text-slate-900 uppercase tracking-wider">Active Job Estimation Ledger</h3>
+                    <span class="text-[10px] bg-slate-200 text-slate-700 font-black px-2 py-0.5 rounded uppercase tracking-wide">Live Pipeline Tracking</span>
+                </div>
+
+                @if($estimates->isEmpty())
+                    <div class="p-12 text-center max-w-md mx-auto space-y-3">
+                        <div class="w-12 h-12 bg-slate-100 border border-slate-200 text-slate-400 text-lg flex items-center justify-center rounded-xl mx-auto shadow-inner">📂</div>
+                        <h4 class="font-black text-sm text-slate-900 uppercase tracking-tight">No Active Estimates Found</h4>
+                        <p class="text-xs text-slate-400 font-medium">Click "New Estimate" at the top deck to initialize your first structural job valuation outline.</p>
+                    </div>
+                @else
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-100 text-[10px] font-black uppercase text-slate-400 bg-slate-50/20">
+                                    <th class="py-3 px-6">Reference ID</th>
+                                    <th class="py-3 px-6">Customer Account</th>
+                                    <th class="py-3 px-6 text-right">Financial Valuation</th>
+                                    <th class="py-3 px-6 text-center">Tracking Node</th>
+                                    <th class="py-3 px-6 text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 text-slate-700">
+                                @foreach($estimates as $estimate)
+                                    <tr class="hover:bg-slate-50/80 font-semibold transition-colors">
+                                        <td class="py-4 px-6 font-mono font-black text-slate-950">{{ $estimate->estimate_number }}</td>
+                                        <td class="py-4 px-6 font-bold text-slate-900">
+                                            {{ $estimate->customer->last_name }}, {{ $estimate->customer->first_name }}
+                                        </td>
+                                        <td class="py-4 px-6 text-right font-mono font-black text-slate-950">${{ number_format($estimate->grand_total, 2) }}</td>
+                                        <td class="py-4 px-6 text-center">
+                                            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider
+                                                {{ $estimate->status === 'approved' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' : '' }}
+                                                {{ $estimate->status === 'sent' ? 'bg-orange-50 text-orange-700 border border-orange-200/60' : '' }}
+                                                {{ $estimate->status === 'draft' ? 'bg-slate-100 text-slate-700 border border-slate-200/40' : '' }}
+                                            ">
+                                                {{ $estimate->status }}
+                                            </span>
+                                        </td>
+                                        <td class="py-4 px-6 text-center">
+                                            <a href="/estimates/{{ $estimate->id }}" class="text-[#f58613] hover:text-orange-600 font-black uppercase text-[10px] tracking-wider">
+                                                View Scope →
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            </section>
+
             <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
