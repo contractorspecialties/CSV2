@@ -53,8 +53,13 @@ Route::get('/portal/success/{token}', [EstimateController::class, 'paymentSucces
 Route::view('/privacy', 'privacy')->name('legal.privacy');
 Route::view('/terms', 'terms')->name('legal.terms');
 
-// Inbound Telephony Carrier Webhooks
-Route::post('/webhooks/telnyx', [EstimateController::class, 'handleTelnyxWebhook'])->name('webhooks.telnyx');
+// Front-Facing Marketing Pages & Local Lead Funnels
+Route::view('/advertise', 'advertise')->name('marketing.advertise');
+Route::view('/contractor-directory', 'contractor-directory')->name('marketing.directory');
+Route::view('/leads', 'leads')->name('marketing.leads');
 
 // System Documentation & Training Rails
 Route::view('/tutorial', 'tutorial')->name('platform.tutorial');
+
+// Inbound Telephony Carrier Webhooks
+Route::post('/webhooks/telnyx', [EstimateController::class, 'handleTelnyxWebhook'])->name('webhooks.telnyx');
