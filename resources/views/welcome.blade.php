@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ContractorSpecialties | Professional Tools for Small Field Businesses</title>
-    <!-- Tailwind CSS CDN for instant presentation rendering -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Alpine.js Core for front-end interface mechanics -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
@@ -14,11 +12,9 @@
 </head>
 <body class="flex flex-col min-h-full font-sans antialiased bg-slate-50 text-slate-900 selection:bg-[#f58613] selection:text-white">
 
-    <!-- PITCH BLACK HIGH-CONTRAST NAVIGATION HEADER -->
     <header class="bg-black border-b border-slate-900 sticky top-0 z-50 shadow-md">
         <div class="max-w-6xl mx-auto px-4 h-24 flex items-center justify-between">
 
-            <!-- Precise 400x100 Brand Asset Allocation Box -->
             <div class="w-[400px] max-w-[65%] h-[100px] flex items-center">
                 <img src="/images/header-logo.webp" alt="ContractorSpecialties Logo" class="w-full h-auto max-h-[90px] object-contain object-left">
             </div>
@@ -30,13 +26,10 @@
         </div>
     </header>
 
-    <!-- MAIN MARKETING INTAKE & SYSTEM PRESENTATION CORE -->
     <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-12 md:py-16 space-y-20">
 
-        <!-- HERO SEGMENT: HEADLINE, SUB-HEADLINE & FRICTIONLESS LOGIN NODE -->
         <section class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
 
-            <!-- Left Value Matrix Pitch Column -->
             <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
                 <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-950 tracking-tight leading-tight uppercase">
                     Professional Tools for Small Field Businesses — <br>
@@ -47,7 +40,6 @@
                 </p>
             </div>
 
-            <!-- Right Passwordless Access Card Node -->
             <div id="access-hub" class="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xl relative">
                 <div class="absolute -top-3 -right-3 w-12 h-12 rounded-xl bg-slate-900 text-[#f58613] border border-slate-800 flex items-center justify-center text-xl shadow-md font-bold">
                     🔑
@@ -55,10 +47,9 @@
 
                 <div class="space-y-2 border-b border-slate-100 pb-4 mb-6">
                     <h3 class="text-xl font-black text-slate-950 uppercase tracking-tight">Get Your Secure Access Link</h3>
-                    <p class="text-xs text-slate-500 font-semibold">No passwords. No setup fees. No commitment. Just tools that make your business run smoother.</p>
+                    <p class="text-xs text-slate-500 font-medium font-semibold">No passwords. No setup fees. No commitment. Just tools that make your business run smoother.</p>
                 </div>
 
-                <!-- Session Messaging Interfaces -->
                 @if($errors->any())
                     <div class="p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-xs font-bold mb-4">
                         Please provide a valid registered account email address.
@@ -71,7 +62,6 @@
                     </div>
                 @endif
 
-                <!-- Form Execution Link Vector -->
                 <form action="{{ route('magic.send') }}" method="POST" class="space-y-4">
                     @csrf
                     <div>
@@ -84,15 +74,13 @@
                         Request Secure Access Link →
                     </button>
 
-                    <!-- MANDATORY 10DLC COMPLIANT SMS OPT-IN DISCLOSURE BLOCK -->
-                    <div class="pt-2 border-t border-slate-100 text-[10px] text-slate-400 leading-normal font-medium">
-                        By requesting an access link, you agree to receive automated account confirmations, system status alerts, and operational estimate notifications via text message from ContractorSpecialties. Consent is completely voluntary and is not a condition of purchase. Message frequency varies based on project utilization loops. Message & data rates may apply. Reply <span class="font-bold text-slate-700">STOP</span> to instantly block lines, or <span class="font-bold text-slate-700">HELP</span> for engineering routing diagnostics. View our <a href="{{ route('legal.privacy') }}" class="underline hover:text-[#f58613]">Privacy Policy</a> and <a href="{{ route('legal.terms') }}" class="underline hover:text-[#f58613]">Terms of Use</a>.
+                    <div class="pt-3 border-t border-slate-100 text-[10px] text-slate-400 leading-normal font-medium">
+                        By requesting an access link, you agree to receive automated account confirmations, system status alerts, and operational estimate notifications via text message from ContractorSpecialties. Consent is completely voluntary and is not a condition of purchase. Message frequency varies based on project utilization loops. Message & data rates may apply. Reply <span class="font-bold text-slate-700 tracking-tight">STOP</span> to instantly block lines, or <span class="font-bold text-slate-700 tracking-tight">HELP</span> for engineering routing diagnostics. View our <a href="/privacy" class="underline hover:text-[#f58613] transition-colors">Privacy Policy</a> and <a href="/terms" class="underline hover:text-[#f58613] transition-colors">Terms of Use</a>.
                     </div>
                 </form>
             </div>
         </section>
 
-        <!-- SECTION 1: WHAT IT DOES (Full CPP Tool Suite — Clean, Sharp, and Human) -->
         <section class="space-y-8 border-t border-slate-200 pt-16">
             <div class="text-center max-w-xl mx-auto">
                 <h2 class="text-2xl font-black text-slate-950 uppercase tracking-tight">Everything You Need to Run the Field</h2>
@@ -101,7 +89,6 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
-                <!-- Feature Box 1 -->
                 <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
                     <span class="text-xl block">Build Estimates in Minutes</span>
                     <p class="text-xs text-slate-600 font-semibold leading-relaxed">
@@ -109,7 +96,6 @@
                     </p>
                 </div>
 
-                <!-- Feature Box 2 -->
                 <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
                     <span class="text-xl block">Convert Estimates to Invoices Instantly</span>
                     <p class="text-xs text-slate-600 font-semibold leading-relaxed">
@@ -117,7 +103,6 @@
                     </p>
                 </div>
 
-                <!-- Feature Box 3 -->
                 <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
                     <span class="text-xl block">Quick Messaging to Customers</span>
                     <p class="text-xs text-slate-600 font-semibold leading-relaxed">
@@ -125,7 +110,6 @@
                     </p>
                 </div>
 
-                <!-- Feature Box 4 -->
                 <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
                     <span class="text-xl block">Capture and Send Job Photos Instantly</span>
                     <p class="text-xs text-slate-600 font-semibold leading-relaxed">
@@ -133,7 +117,6 @@
                     </p>
                 </div>
 
-                <!-- Feature Box 5 -->
                 <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
                     <span class="text-xl block">Calendar Reminders & Job Tracking</span>
                     <p class="text-xs text-slate-600 font-semibold leading-relaxed">
@@ -141,7 +124,6 @@
                     </p>
                 </div>
 
-                <!-- Feature Box 6 -->
                 <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
                     <span class="text-xl block">On‑the‑Spot Add‑On Invoices</span>
                     <p class="text-xs text-slate-600 font-semibold leading-relaxed">
@@ -149,7 +131,6 @@
                     </p>
                 </div>
 
-                <!-- Feature Box 7 -->
                 <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
                     <span class="text-xl block">Text‑to‑Pay for Faster Cashflow</span>
                     <p class="text-xs text-slate-600 font-semibold leading-relaxed">
@@ -157,7 +138,6 @@
                     </p>
                 </div>
 
-                <!-- Feature Box 8 -->
                 <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-2">
                     <span class="text-xl block">Automated Review Collection</span>
                     <p class="text-xs text-slate-600 font-semibold leading-relaxed">
@@ -168,7 +148,6 @@
             </div>
         </section>
 
-        <!-- SECTION 2: PROFILES (Clean, Integrated Business Showcase Platform) -->
         <section class="bg-slate-900 rounded-3xl p-6 sm:p-10 text-white shadow-md grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
             <div class="md:col-span-8 space-y-3">
                 <span class="text-xs font-black uppercase text-[#f58613] tracking-widest block">Unified Lead Generation Layouts</span>
@@ -184,10 +163,8 @@
             </div>
         </section>
 
-        <!-- SECTION 3 & 5: WHO IT'S FOR & PHILOSOPHY (Honest, Pure Workflow Execution) -->
         <section class="grid grid-cols-1 md:grid-cols-2 gap-12 border-t border-slate-200 pt-16 items-start">
 
-            <!-- Who It's For Grid Component -->
             <div class="space-y-4">
                 <h3 class="text-xl font-black text-slate-950 uppercase tracking-tight">Built for the Small and Solo Contractor</h3>
                 <p class="text-sm text-slate-600 font-semibold leading-relaxed">
@@ -203,7 +180,6 @@
                 <p class="text-xs text-slate-500 font-medium italic">No fluff. No bloat. No enterprise nonsense.</p>
             </div>
 
-            <!-- The Operating Philosophy Grid Component -->
             <div class="space-y-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                 <h3 class="text-xl font-black text-slate-950 uppercase tracking-tight">We’re Here to Make Contractors More Profitable — Period</h3>
                 <p class="text-xs text-slate-600 font-semibold leading-relaxed">
@@ -220,7 +196,6 @@
 
         </section>
 
-        <!-- SECTION 4: PRICING (Honest Monthly Rates & Seasonal Wave Policy) -->
         <section class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-8">
             <div class="text-center max-w-xl mx-auto space-y-2">
                 <h2 class="text-2xl font-black text-slate-950 uppercase tracking-tight">Straightforward Monthly Pricing</h2>
@@ -228,7 +203,6 @@
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto">
-                <!-- Single User Frame -->
                 <div class="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-3">
                     <span class="text-xs font-black bg-slate-900 text-white px-2.5 py-0.5 rounded-md uppercase tracking-wider inline-block">Solo Account</span>
                     <div class="flex items-baseline gap-1 font-mono">
@@ -238,7 +212,6 @@
                     <p class="text-xs text-slate-500 font-bold uppercase tracking-tight">Single User Access Parameters</p>
                 </div>
 
-                <!-- Up to 5 Users Frame -->
                 <div class="bg-white border-2 border-slate-950 rounded-2xl p-6 space-y-3 shadow-md">
                     <span class="text-xs font-black bg-[#f58613] text-white px-2.5 py-0.5 rounded-md uppercase tracking-wider inline-block">Crew Account</span>
                     <div class="flex items-baseline gap-1 font-mono">
@@ -259,11 +232,9 @@
 
     </main>
 
-    <!-- CORPORATE PITCH BLACK COMPLIANCE FOOTER -->
     <footer class="border-t border-slate-900 bg-black text-slate-400 py-12">
         <div class="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
 
-            <!-- Fixed 400x400 Left Anchor Framework Container -->
             <div class="md:col-span-5 flex flex-col items-center md:items-start gap-4">
                 <div class="w-[400px] max-w-full aspect-square bg-slate-950 border border-slate-900 rounded-2xl overflow-hidden shadow-lg flex items-center justify-center">
                     <img src="/images/footer-logo.webp" alt="Corporate Brand Mark" class="w-full h-full object-contain p-4">
@@ -275,7 +246,6 @@
                 </div>
             </div>
 
-            <!-- Structured Tool, Directory, Legal & Resource Compliance Link Columns -->
             <div class="md:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-6 text-xs font-bold uppercase tracking-wider md:pt-4">
                 <div class="flex flex-col gap-2.5">
                     <span class="text-[10px] text-slate-600 tracking-widest font-black">Tools & Engine</span>
@@ -289,16 +259,16 @@
                     <a href="/contractor-directory" class="text-slate-400 hover:text-[#f58613] transition-colors">Public Directory</a>
                     <a href="/leads" class="text-slate-400 hover:text-[#f58613] transition-colors">Resource Funnels</a>
                 </div>
-                <!-- CRITICAL UN-GATEKEPT 10DLC LEGAL NAVIGATION LINKS -->
                 <div class="flex flex-col gap-2.5">
                     <span class="text-[10px] text-slate-600 tracking-widest font-black">Legal & Policy</span>
-                    <a href="{{ route('legal.privacy') }}" class="text-slate-400 hover:text-[#f58613] transition-colors normal-case">Privacy Policy</a>
-                    <a href="{{ route('legal.terms') }}" class="text-slate-400 hover:text-[#f58613] transition-colors normal-case">Terms of Use</a>
+                    <a href="/privacy" class="text-slate-400 hover:text-[#f58613] transition-colors normal-case">Privacy Policy</a>
+                    <a href="/terms" class="text-slate-400 hover:text-[#f58613] transition-colors normal-case">Terms of Use</a>
                 </div>
                 <div class="flex flex-col gap-2.5">
                     <span class="text-[10px] text-slate-600 tracking-widest font-black">Secure Entry</span>
                     <a href="/login/partner" class="text-slate-500 hover:text-white transition-colors bg-slate-900 border border-slate-800 px-3 py-2 rounded-lg text-center truncate">General Contractor</a>
                     <a href="/login/subcontractor" class="text-slate-500 hover:text-white transition-colors bg-slate-900 border border-slate-800 px-3 py-2 rounded-lg text-center truncate mt-1">Sub-Portal</a>
+                    <a href="/tutorial" class="text-[#f58613] hover:text-orange-500 transition-colors normal-case mt-1.5 font-black tracking-wide italic">How-To Manual 📺</a>
                 </div>
             </div>
 

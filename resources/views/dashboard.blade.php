@@ -378,13 +378,14 @@
                     </div>
                     <div class="flex flex-col gap-2.5">
                         <span class="text-[10px] text-slate-600 tracking-widest font-black">Legal & Policy</span>
-                        <a href="{{ route('legal.privacy') }}" class="text-slate-400 hover:text-[#f58613] transition-colors normal-case">Privacy Policy</a>
-                        <a href="{{ route('legal.terms') }}" class="text-slate-400 hover:text-[#f58613] transition-colors normal-case">Terms of Use</a>
+                        <a href="/privacy" class="text-slate-400 hover:text-[#f58613] transition-colors normal-case">Privacy Policy</a>
+                        <a href="/terms" class="text-slate-400 hover:text-[#f58613] transition-colors normal-case">Terms of Use</a>
                     </div>
                     <div class="flex flex-col gap-2.5">
                         <span class="text-[10px] text-slate-600 tracking-widest font-black">Secure Entry</span>
                         <a href="/login/partner" class="text-slate-500 hover:text-white transition-colors bg-slate-900 border border-slate-800 px-3 py-2 rounded-lg text-center truncate">General Contractor</a>
                         <a href="/login/subcontractor" class="text-slate-500 hover:text-white transition-colors bg-slate-900 border border-slate-800 px-3 py-2 rounded-lg text-center truncate mt-1">Sub-Portal</a>
+                        <a href="/tutorial" class="text-[#f58613] hover:text-orange-500 transition-colors normal-case mt-1.5 font-black tracking-wide italic">How-To Manual 📺</a>
                     </div>
                 </div>
 

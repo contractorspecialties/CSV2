@@ -55,3 +55,6 @@ Route::view('/terms', 'terms')->name('legal.terms');
 
 // Inbound Telephony Carrier Webhooks
 Route::post('/webhooks/telnyx', [EstimateController::class, 'handleTelnyxWebhook'])->name('webhooks.telnyx');
+
+// System Documentation & Training Rails
+Route::view('/tutorial', 'tutorial')->name('platform.tutorial');
