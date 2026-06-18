@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Dropped the positional constraint to ensure a safe structural execution
-        Schema::table('sc_companies', function (Blueprint $blueprint) {
-            $blueprint->string('sms_phone_number', 30)->nullable();
-        });
+        // Check if the column exists first to bypass database duplicate panic
+        if (!Schema::hasColumn('sc_companies', 'sms_phone_number')) {
+            Schema::table('sc_companies', function (Blueprint $blueprint) {
+                $blueprint->string('sms_phone_number', 30)->nullable();
+            });
+        }
     }
 
     /**
@@ -22,8 +24,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('sc_companies', function (Blueprint $blueprint) {
-            $blueprint->dropColumn('sms_phone_number');
-        });
+        if (Schema::hasColumn('sc_companies', 'sms_phone_number')) {
+            Schema::table('sc_companies', function (Blueprint $blueprint) {
+                $blueprint->dropColumn('sms_phone_number');
+            });
+        }
     }
 };
