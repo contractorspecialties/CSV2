@@ -11,7 +11,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Bypass CSRF validation gates for incoming telephony carrier webhook threads
+        $middleware->validateCsrfTokens(except: [
+            'webhooks/telnyx',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

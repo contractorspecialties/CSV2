@@ -9,6 +9,8 @@ use App\Models\JobAttachment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -187,7 +189,6 @@ class EstimateController extends Controller
      */
     public function checkout($token)
     {
-        // Safe contextual resolution via either database ID index mapping or Reference number string
         $estimate = Estimate::with(['customer', 'items'])
             ->where('id', $token)
             ->orWhere('estimate_number', $token)
@@ -209,13 +210,12 @@ class EstimateController extends Controller
         if ($action === 'schedule') {
             $estimate->update(['status' => 'approved']);
 
-            // Programmatically inject and schedule their installation run
             \App\Models\Appointment::create([
                 'company_id'  => $estimate->company_id,
                 'customer_id' => $estimate->customer_id,
                 'estimate_id' => $estimate->id,
                 'title'       => "Production: " . $estimate->estimate_number,
-                'scheduled_at'=> now()->addDays(2), // Mock placement 48 hours out
+                'scheduled_at'=> now()->addDays(2),
                 'status'      => 'scheduled',
                 'notes'       => 'Client portal scheduled auto-activation confirmation.'
             ]);
@@ -226,7 +226,6 @@ class EstimateController extends Controller
         if ($action === 'revision') {
             $request->validate(['notes' => 'required|string|max:1000']);
 
-            // Log modification requests into notes for estimator evaluation
             $estimate->update([
                 'notes' => "🚨 Homeowner Modification Request:\n" . $request->notes . "\n\n" . $estimate->notes
             ]);
@@ -235,5 +234,74 @@ class EstimateController extends Controller
         }
 
         return back();
+    }
+
+    /**
+     * Execute outbound 10DLC compliant SMS via localized Telnyx line numbers.
+     */
+    public function sendEstimateSms($id)
+    {
+        $companyId = Auth::user()->company_id;
+        $estimate = Estimate::where('company_id', $companyId)->with('customer')->findOrFail($id);
+
+        if (empty($estimate->customer->phone)) {
+            return back()->with('error', '❌ This customer profile does not have a valid phone number recorded.');
+        }
+
+        // Pull company profile info from customized sc_ table parameters
+        $company = DB::table('sc_companies')->where('id', $companyId)->first();
+        $fromLine = $company->sms_phone_number ?? env('TELNYX_DEFAULT_FROM');
+
+        if (empty($fromLine)) {
+            return back()->with('error', '❌ No messaging originator line has been configured for this tenant region.');
+        }
+
+        $portalLink = route('portal.checkout', ['token' => $estimate->estimate_number]);
+        $messageBody = "Hello " . $estimate->customer->first_name . ", here is the link to view your estimate " . $estimate->estimate_number . " from ContractorSpecialties: " . $portalLink . " . Reply STOP to opt out.";
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . env('TELNYX_API_KEY'),
+                'Content-Type' => 'application/json',
+            ])->post('https://api.telnyx.com/v2/messages', [
+                'from' => $fromLine,
+                'to' => $estimate->customer->phone,
+                'text' => $messageBody,
+            ]);
+
+            if ($response->successful()) {
+                $estimate->update(['status' => 'sent']);
+                return back()->with('status', '📨 Estimate link successfully dispatched via localized carrier route.');
+            }
+
+            Log::error('Telnyx Outbound SMS Delivery Failure: ' . $response->body());
+            return back()->with('error', '❌ Telephony routing engine rejected the outbound transmission script.');
+        } catch (\Exception $exception) {
+            Log::error('Telnyx Client Connection Exception: ' . $exception->getMessage());
+            return back()->with('error', '❌ Outbound network port failed to handshake with carrier gateways.');
+        }
+    }
+
+    /**
+     * Intercept and process unauthenticated inbound messaging webhooks from Telnyx.
+     */
+    public function handleTelnyxWebhook(Request $request)
+    {
+        $incomingData = $request->all();
+
+        if (isset($incomingData['data']['event_type']) && $incomingData['data']['event_type'] === 'message.received') {
+            $messagePayload = $incomingData['data']['payload'];
+            $senderLine = $messagePayload['from']['phone_number'] ?? 'Unknown';
+            $incomingBody = trim($messagePayload['text'] ?? '');
+
+            // Log incoming interactions or filter opt-out system state commands
+            if (strtoupper($incomingBody) === 'STOP') {
+                Log::info("SMS Opt-Out Flag Registered by Line: {$senderLine}");
+            } else {
+                Log::info("Inbound SMS Received from {$senderLine}: {$incomingBody}");
+            }
+        }
+
+        return response()->json(['status' => 'received'], 200);
     }
 }

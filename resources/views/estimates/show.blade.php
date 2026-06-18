@@ -9,7 +9,6 @@
 </head>
 <body class="flex flex-col min-h-full font-sans antialiased bg-slate-50 text-slate-900 selection:bg-[#f58613] selection:text-white">
 
-    <!-- SOLID BLACK HEADER -->
     <header class="bg-black border-b border-slate-900 sticky top-0 z-50 shadow-md">
         <div class="max-w-6xl mx-auto px-4 h-24 flex items-center justify-between">
             <div class="w-[400px] max-w-[60%] h-[100px] flex items-center">
@@ -21,7 +20,6 @@
         </div>
     </header>
 
-    <!-- CORE PANEL WORKSPACE -->
     <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-8 space-y-6">
 
         @if(session('status'))
@@ -31,7 +29,13 @@
             </div>
         @endif
 
-        <!-- ESTIMATE ANCHOR CONTEXT TOP BAR -->
+        @if(session('error'))
+            <div class="bg-red-50 border border-red-200 text-red-900 rounded-2xl p-4 flex items-center gap-3 shadow-sm">
+                <span class="text-lg">⚠️</span>
+                <p class="text-xs font-black uppercase tracking-tight">{{ session('error') }}</p>
+            </div>
+        @endif
+
         <div class="border-b border-slate-200 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
                 <span class="text-[10px] bg-slate-900 text-slate-300 font-mono font-black px-2 py-0.5 rounded uppercase tracking-wider">
@@ -41,14 +45,13 @@
                 <p class="text-sm text-slate-500 font-medium">Assigned to client profile: <strong class="text-slate-900">{{ $estimate->customer->last_name }}, {{ $estimate->customer->first_name }}</strong></p>
             </div>
 
-            <!-- Quick Pipeline Testing Simulator State Tools -->
             <div class="bg-white border border-slate-200 rounded-xl p-2.5 flex items-center gap-2 shadow-sm">
                 <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 pl-1">Simulate Step:</span>
                 <form action="/estimates/{{ $estimate->id }}/status" method="POST" class="flex gap-1">
                     @csrf
                     <input type="hidden" name="status" value="sent">
                     <button type="submit" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-[10px] px-2.5 py-1.5 rounded uppercase tracking-wide cursor-pointer transition-all">
-                        🚀 Dispatch
+                        🚀 Draft Over
                     </button>
                 </form>
                 <form action="/estimates/{{ $estimate->id }}/status" method="POST" class="flex gap-1">
@@ -63,7 +66,6 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            <!-- LEFT: DETAILED LINE ITEM BILL OF MATERIALS -->
             <div class="lg:col-span-2 space-y-6">
                 <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
                     <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
@@ -91,7 +93,6 @@
                         </tbody>
                     </table>
 
-                    <!-- Totals Breakdown Sled -->
                     <div class="bg-slate-50/80 border-t border-slate-100 p-6 flex justify-end">
                         <div class="w-64 font-mono text-xs text-slate-600 space-y-1.5">
                             <div class="flex justify-between">
@@ -110,7 +111,6 @@
                     </div>
                 </div>
 
-                <!-- Internal Notes Panel -->
                 @if($estimate->notes)
                     <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-2">
                         <span class="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Internal Scope parameters</span>
@@ -119,17 +119,46 @@
                 @endif
             </div>
 
-            <!-- RIGHT: LIVE FIELD DEPLOYMENT ASSETS (IMAGES & TRACKING) -->
             <div class="space-y-6">
 
-                <!-- PROGRESS IMAGE HANDLER ENGINE -->
+                <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+                    <div class="border-b border-slate-100 pb-2">
+                        <h3 class="font-black text-xs text-slate-900 uppercase tracking-wider">📱 Outbound Customer Dispatch</h3>
+                        <p class="text-[11px] text-slate-400 font-medium mt-0.5">Blast the secure project link straight to the property owner's mobile screen.</p>
+                    </div>
+
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <span class="text-[9px] text-slate-400 font-black uppercase tracking-wider block">Target Client Line</span>
+                            <span class="text-xs font-mono font-black text-slate-900">
+                                {{ $estimate->customer->phone ?? 'No Phone Logged' }}
+                            </span>
+                        </div>
+                        @if($estimate->customer->phone)
+                            <span class="text-[9px] bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono font-black px-1.5 py-0.5 rounded uppercase tracking-wide">Valid Route</span>
+                        @else
+                            <span class="text-[9px] bg-red-50 text-red-700 border border-red-200 font-mono font-black px-1.5 py-0.5 rounded uppercase tracking-wide">Blocked</span>
+                        @endif
+                    </div>
+
+                    <form action="/estimates/{{ $estimate->id }}/text-dispatch" method="POST">
+                        @csrf
+                        <button type="submit" @empty($estimate->customer->phone) disabled @endempty class="w-full bg-[#f58613] hover:bg-orange-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-black text-xs py-3.5 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] flex justify-center items-center gap-2 cursor-pointer">
+                            Send Estimate Link via Text →
+                        </button>
+                    </form>
+
+                    <div class="text-[9px] text-slate-400 leading-normal font-medium italic text-center">
+                        Outbound routing dispatches dynamically via assigned local NC market nodes.
+                    </div>
+                </div>
+
                 <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                     <div class="border-b border-slate-100 pb-2">
                         <h3 class="font-black text-xs text-slate-900 uppercase tracking-wider">📸 Field Site Visual Timeline</h3>
                         <p class="text-[11px] text-slate-400 font-medium mt-0.5">Upload visual proof or job status photos directly to this folder profile.</p>
                     </div>
 
-                    <!-- Image Capture Input Dropform -->
                     <form action="/estimates/{{ $estimate->id }}/attachments" method="POST" enctype="multipart/form-data" class="space-y-3">
                         @csrf
                         <div>
@@ -144,7 +173,6 @@
                         </button>
                     </form>
 
-                    <!-- Rendered Gallery Stream matrix -->
                     <div class="pt-2 border-t border-slate-100 space-y-3">
                         @forelse($attachments as $media)
                             <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50 shadow-sm">
