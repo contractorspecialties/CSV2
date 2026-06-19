@@ -38,7 +38,7 @@ class MagicAuthController extends Controller
         $magicLink = route('magic.verify', ['token' => $token]);
 
         try {
-            // Reverting to clean plain-text delivery to prevent mobile mail clients from corrupting or double-escaping link structures
+            // Raw plain text keeps links clean across aggressive mobile email providers
             Mail::raw("Hello, click the link below to log securely into your ContractorSpecialties company dashboard. This link will expire in 15 minutes for your security.\n\n{$magicLink}", function ($message) use ($user) {
                 $message->to($user->email)
                         ->subject('⚡ Your Secure Dashboard Sign-In Link');
@@ -172,9 +172,10 @@ class MagicAuthController extends Controller
             'two_factor_expires_at' => null,
         ]);
 
-        session()->forget('auth_2fa_user_id');
-
+        // Fix: Force state regeneration to guarantee session locking on mobile browsers
         Auth::login($user);
+        $request->session()->regenerate();
+        session()->forget('auth_2fa_user_id');
 
         return redirect()->route('dashboard')->with('status', '⚡ Verified successfully. Welcome back to your company workspace!');
     }
