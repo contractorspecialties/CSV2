@@ -35,11 +35,12 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('pricebook', PricebookController::class)->only(['index', 'store', 'destroy']);
 
     // Estimates & Job Operational Processing (Unified under EstimateController)
-    Route::post('/estimates/{id}/blueprint', [EstimateController::class, 'saveBlueprint']);
-    Route::post('/estimates/{id}/text-dispatch', [EstimateController::class, 'sendEstimateSms']);
+    Route::post('/estimates/{id}/blueprint', [EstimateController::class, 'saveBlueprint'])->name('estimates.blueprint');
+    Route::post('/estimates/{id}/text-dispatch', [EstimateController::class, 'sendEstimateSms'])->name('estimates.text-dispatch');
+    Route::post('/estimates/{id}/email-dispatch', [EstimateController::class, 'sendEstimateEmail'])->name('estimates.email-dispatch');
     Route::post('/estimates/{id}/status', [EstimateController::class, 'updateStatus'])->name('estimates.status');
     Route::post('/estimates/{id}/attachments', [EstimateController::class, 'uploadAttachment'])->name('estimates.attachments');
-    Route::post('/estimates/{id}/close-job', [EstimateController::class, 'closeJob']);
+    Route::post('/estimates/{id}/close-job', [EstimateController::class, 'closeJob'])->name('estimates.close-job');
     Route::resource('estimates', EstimateController::class);
 });
 
