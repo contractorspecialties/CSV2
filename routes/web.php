@@ -18,6 +18,7 @@ Route::get('/', function () { return view('welcome'); })->name('welcome');
 Route::get('/login', function () { return redirect()->route('welcome'); })->name('login');
 
 // Frictionless Login Handling
+Route::post('/login/two-factor-verify', [MagicAuthController::class, 'verifyTwoFactor'])->name('magic.2fa');
 Route::post('/login/magic', [MagicAuthController::class, 'sendLink'])->name('magic.send');
 Route::get('/login/verify/{token}', [MagicAuthController::class, 'verifyToken'])->name('magic.verify');
 Route::post('/logout', [MagicAuthController::class, 'logout'])->name('logout');

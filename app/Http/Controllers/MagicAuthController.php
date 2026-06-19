@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -12,7 +14,7 @@ use Illuminate\Support\Str;
 class MagicAuthController extends Controller
 {
     /**
-     * Generate a passwordless login token and dispatch the magic access link.
+     * Generate a secure sign-in token and email the login link to the user.
      */
     public function sendLink(Request $request)
     {
@@ -22,12 +24,11 @@ class MagicAuthController extends Controller
 
         $user = User::where('email', $validated['email'])->first();
 
-        // Guard against unlisted sign-in attempts without leaking account existence profiles
+        // Safe confirmation message to prevent data-mining of active accounts
         if (!$user) {
-            return back()->with('status', '📨 If your business email is registered in our directory, a secure access link has been sent.');
+            return back()->with('status', '📨 If your business email is registered, your secure login link has been sent.');
         }
 
-        // Generate secure login token strings
         $token = Str::random(64);
 
         $user->update([
@@ -38,29 +39,36 @@ class MagicAuthController extends Controller
         $magicLink = route('magic.verify', ['token' => $token]);
 
         try {
-            // Simple text message delivery frame
-            Mail::raw("Hello, click the link below to securely log into your ContractorSpecialties workspace. This link will expire in 15 minutes.\n\n{$magicLink}", function ($message) use ($user) {
+            Mail::html("
+                <div style=\"font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px;\">
+                    <h2 style=\"color: #0f172a; text-transform: uppercase; font-size: 16px; font-weight: 900; letter-spacing: -0.5px;\">Secure Dashboard Sign-In</h2>
+                    <p style=\"font-size: 14px; color: #334155;\">Click the button below to log directly into your ContractorSpecialties company account dashboard. This link will automatically expire in 15 minutes for your protection.</p>
+                    <div style=\"margin: 24px 0;\">
+                        <a href=\"{$magicLink}\" style=\"display: inline-block; background-color: #f58613; color: #ffffff; text-decoration: none; font-weight: 800; font-size: 12px; padding: 14px 24px; border-radius: 8px; text-transform: uppercase; tracking: 0.5px;\">Log Into Dashboard →</a>
+                    </div>
+                    <hr style=\"border: 0; border-top: 1px solid #f1f5f9; margin: 20px 0;\" />
+                    <p style=\"font-size: 11px; color: #94a3b8; margin-bottom: 0;\">If you didn't request this sign-in link, you can safely ignore this email. Your account credentials remain secure.</p>
+                </div>
+            ", function ($message) use ($user) {
                 $message->to($user->email)
-                        ->subject('⚡ Your Secure Workspace Access Link');
+                        ->subject('⚡ Your Secure Dashboard Sign-In Link');
             });
 
-            // Safety backup entry inside logs for quick manual verification testing
-            Log::info("🔑 Magic Sign-In Link generated for {$user->email}: {$magicLink}");
+            Log::info("🔑 Secure sign-in link written for {$user->email}: {$magicLink}");
 
         } catch (\Exception $e) {
-            Log::error("🚨 Mail service failed to dispatch magic link: " . $e->getMessage());
+            Log::error("🚨 Mail service could not dispatch sign-in link: " . $e->getMessage());
 
-            // Local sandbox fallback so you can always log in during testing even if SMTP is dark
             if (config('app.env') === 'local' || config('app.env') === 'staging') {
-                Log::info("💡 Staging Safety Intercept: Link written to log file. Copy-paste this route: {$magicLink}");
+                Log::info("💡 Safety Fallback Intercept: Copy-paste this URL path: {$magicLink}");
             }
         }
 
-        return back()->with('status', '📨 If your business email is registered in our directory, a secure access link has been sent.');
+        return back()->with('status', '📨 If your business email is registered, your secure login link has been sent.');
     }
 
     /**
-     * Validate incoming access link and authenticate the session safely.
+     * Validate the sign-in link and either enforce text code security or bypass to dashboard.
      */
     public function verifyToken($token)
     {
@@ -69,22 +77,127 @@ class MagicAuthController extends Controller
             ->first();
 
         if (!$user) {
-            return redirect()->route('welcome')->withErrors(['email' => '🛑 Access link has expired or is invalid. Please request a new secure key link.']);
+            return redirect()->route('welcome')->withErrors(['email' => '🛑 This login link has expired or is invalid. Please request a new secure link.']);
         }
 
-        // Expire token immediately after first consumption to secure workspace parameters
+        // Wipe single-use sign-in token immediately upon use
         $user->update([
             'login_token' => null,
             'token_expires_at' => null,
         ]);
 
-        Auth::login($user);
+        // If no mobile number is saved for security verification, log them straight in as a frictionless fallback
+        if (empty($user->phone_2fa)) {
+            Auth::login($user);
+            return redirect()->route('dashboard')->with('status', '⚡ Welcome back! To protect your account, please save a mobile phone number in your settings to enable secure text verification next time.');
+        }
 
-        return redirect()->route('dashboard')->with('status', '⚡ Workspace successfully authenticated. Welcome back!');
+        // Generate a clean 6-digit text security verification code
+        $securityCode = strval(rand(100000, 999999));
+
+        $user->update([
+            'two_factor_code' => $securityCode,
+            'two_factor_expires_at' => now()->addMinutes(10),
+        ]);
+
+        // Park the incoming user identity safely inside the temporary session thread
+        session(['auth_2fa_user_id' => $user->id]);
+
+        // Pull company name to apply dynamic business branding to the text
+        $company = DB::table('sc_companies')->where('id', $user->company_id)->first();
+        $companyName = $company->name ?? 'ContractorSpecialties';
+        $fromLine = $company->sms_phone_number ?? env('TELNYX_DEFAULT_FROM');
+
+        // Text out the security code over active carrier routes
+        if (!empty($fromLine)) {
+            try {
+                Http::withHeaders([
+                    'Authorization' => 'Bearer ' . env('TELNYX_API_KEY'),
+                    'Content-Type'  => 'application/json',
+                ])->post('https://api.telnyx.com/v2/messages', [
+                    'from' => $fromLine,
+                    'to'   => $user->phone_2fa,
+                    'text' => "Your 6-digit security code for your {$companyName} account is: {$securityCode}. This code expires in 10 minutes.",
+                ]);
+            } catch (\Exception $e) {
+                Log::error("🚨 Text security verification gateway could not send code: " . $e->getMessage());
+            }
+        }
+
+        // Render a clean, fast responsive inline code entry card without needing an extra layout view file
+        return response("
+            <!DOCTYPE html>
+            <html lang=\"en\" class=\"h-full bg-slate-50\">
+            <head>
+                <meta charset=\"UTF-8\">
+                <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+                <title>Account Verification | Security Gate</title>
+                <script src=\"https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4\"></script>
+            </head>
+            <body class=\"flex flex-col justify-center min-h-full font-sans antialiased bg-slate-50 px-4 py-12\">
+                <div class=\"w-full max-w-md mx-auto bg-white border border-slate-200 rounded-2xl shadow-xl p-8 space-y-6\">
+                    <div class=\"text-center space-y-2\">
+                        <div class=\"inline-flex items-center justify-center w-12 h-12 rounded-xl bg-orange-50 text-[#f58613] text-xl font-bold mb-2\">📱</div>
+                        <h2 class=\"text-xl font-black text-slate-950 uppercase tracking-tight\">Confirm Your Identity</h2>
+                        <p class=\"text-xs text-slate-500 font-semibold max-w-[280px] mx-auto leading-normal\">We just texted a 6-digit security code to your phone for extra verification.</p>
+                    </div>
+
+                    <form action=\"" . route('magic.2fa') . "\" method=\"POST\" class=\"space-y-4\">
+                        <input type=\"hidden\" name=\"_token\" value=\"" . csrf_token() . "\">
+                        <div>
+                            <label for=\"secure_code\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Enter 6-Digit Security Code</label>
+                            <input type=\"text\" id=\"secure_code\" name=\"two_factor_code\" required maxlength=\"6\" placeholder=\"000000\" autocomplete=\"one-time-code\" class=\"w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-center text-lg font-mono font-black tracking-[0.5em] text-slate-900 focus:outline-none focus:border-[#f58613]\">
+                        </div>
+
+                        <button type=\"submit\" class=\"w-full bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-3.5 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer\">
+                            Verify Code & Log In →
+                        </button>
+                    </form>
+                </div>
+            </body>
+            </html>
+        ");
     }
 
     /**
-     * Terminate the operational session frame cleanly.
+     * Process the texted 6-digit verification code to complete account authorization.
+     */
+    public function verifyTwoFactor(Request $request)
+    {
+        $request->validate([
+            'two_factor_code' => 'required|string|size:6',
+        ]);
+
+        $userId = session('auth_2fa_user_id');
+
+        if (!$userId) {
+            return redirect()->route('welcome')->withErrors(['email' => '🛑 Your session has expired. Please sign in again.']);
+        }
+
+        $user = User::where('id', $userId)
+            ->where('two_factor_code', $request->two_factor_code)
+            ->where('two_factor_expires_at', '>', now())
+            ->first();
+
+        if (!$user) {
+            return back()->withErrors(['two_factor_code' => '🛑 The code you entered is incorrect or has expired. Please double-check your mobile alerts and try again.']);
+        }
+
+        // Clear security fields from active record storage upon successful verification match
+        $user->update([
+            'two_factor_code' => null,
+            'two_factor_expires_at' => null,
+        ]);
+
+        session()->forget('auth_2fa_user_id');
+
+        Auth::login($user);
+
+        return redirect()->route('dashboard')->with('status', '⚡ Verified successfully. Welcome back to your company workspace!');
+    }
+
+    /**
+     * Terminate the session cleanly.
      */
     public function logout(Request $request)
     {
