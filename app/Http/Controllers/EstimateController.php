@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Estimate;
 use App\Models\EstimateItem;
 use App\Models\JobAttachment;
+use App\Models\PricebookItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -23,15 +24,17 @@ class EstimateController extends Controller
     {
         $companyId = Auth::user()->company_id;
 
+        // Fetch company directory customers ordered cleanly by name properties
         $customers = Customer::where('company_id', $companyId)
             ->orderBy('last_name', 'asc')
             ->orderBy('first_name', 'asc')
             ->get();
 
-        $pricebookItems = [];
-        if (DB::connection()->getSchemaBuilder()->hasTable('pricebooks')) {
-            $pricebookItems = DB::table('pricebooks')->where('company_id', $companyId)->get();
-        }
+        // Optimized Model-Driven Query automatically tracking prefix definitions
+        $pricebookItems = PricebookItem::where('company_id', $companyId)
+            ->orderBy('category', 'asc')
+            ->orderBy('name', 'asc')
+            ->get();
 
         $preselectedCustomerId = $request->query('customer_id');
 
@@ -45,17 +48,17 @@ class EstimateController extends Controller
     {
         $validated = $request->validate([
             'customer_first_name' => 'required|string|max:255',
-            'customer_last_name' => 'required|string|max:255',
-            'customer_email' => 'required|email|max:255',
-            'customer_phone' => 'nullable|string|max:30',
-            'customer_address' => 'nullable|string|max:500',
-            'tax_rate' => 'required|numeric|min:0|max:100',
-            'notes' => 'nullable|string',
-            'expires_at' => 'nullable|date|after:today',
-            'items' => 'required|array|min:1',
+            'customer_last_name'  => 'required|string|max:255',
+            'customer_email'      => 'required|email|max:255',
+            'customer_phone'      => 'nullable|string|max:30',
+            'customer_address'    => 'nullable|string|max:500',
+            'tax_rate'            => 'required|numeric|min:0|max:100',
+            'notes'               => 'nullable|string',
+            'expires_at'          => 'nullable|date|after:today',
+            'items'               => 'required|array|min:1',
             'items.*.description' => 'required|string|max:500',
-            'items.*.quantity' => 'required|numeric|min:0.01',
-            'items.*.unit_price' => 'required|numeric|min:0.00',
+            'items.*.quantity'    => 'required|numeric|min:0.01',
+            'items.*.unit_price'  => 'required|numeric|min:0.00',
         ]);
 
         $companyId = Auth::user()->company_id;
@@ -64,9 +67,9 @@ class EstimateController extends Controller
             $customer = Customer::firstOrCreate(
                 ['company_id' => $companyId, 'email' => $validated['customer_email']],
                 [
-                    'first_name' => $validated['customer_first_name'],
-                    'last_name' => $validated['customer_last_name'],
-                    'phone' => $validated['customer_phone'],
+                    'first_name'      => $validated['customer_first_name'],
+                    'last_name'       => $validated['customer_last_name'],
+                    'phone'           => $validated['customer_phone'],
                     'billing_address' => $validated['customer_address'],
                 ]
             );
@@ -74,15 +77,15 @@ class EstimateController extends Controller
             $estimateNumber = 'EST-' . strtoupper(Str::random(4)) . '-' . rand(1000, 9999);
 
             $estimate = Estimate::create([
-                'company_id' => $companyId,
-                'customer_id' => $customer->id,
+                'company_id'      => $companyId,
+                'customer_id'     => $customer->id,
                 'estimate_number' => $estimateNumber,
-                'status' => 'draft',
-                'tax_rate' => $validated['tax_rate'],
-                'notes' => $validated['notes'],
-                'expires_at' => $validated['expires_at'] ?? now()->addDays(30),
-                'subtotal' => 0.00,
-                'grand_total' => 0.00,
+                'status'          => 'draft',
+                'tax_rate'        => $validated['tax_rate'],
+                'notes'           => $validated['notes'],
+                'expires_at'      => $validated['expires_at'] ?? now()->addDays(30),
+                'subtotal'        => 0.00,
+                'grand_total'     => 0.00,
             ]);
 
             $calculatedSubtotal = 0;
@@ -94,8 +97,8 @@ class EstimateController extends Controller
                 EstimateItem::create([
                     'estimate_id' => $estimate->id,
                     'description' => $itemData['description'],
-                    'quantity' => $itemData['quantity'],
-                    'unit_price' => $itemData['unit_price'],
+                    'quantity'    => $itemData['quantity'],
+                    'unit_price'  => $itemData['unit_price'],
                     'total_price' => $itemTotal,
                 ]);
             }
@@ -104,12 +107,12 @@ class EstimateController extends Controller
             $calculatedGrandTotal = $calculatedSubtotal + $taxAmount;
 
             $estimate->update([
-                'subtotal' => $calculatedSubtotal,
+                'subtotal'    => $calculatedSubtotal,
                 'grand_total' => $calculatedGrandTotal,
             ]);
 
             return $estimate;
-        });
+        ]);
 
         return redirect()->route('dashboard')->with('status', "⚡ Estimate {$estimate->estimate_number} successfully compiled.");
     }
@@ -143,12 +146,12 @@ class EstimateController extends Controller
 
         if ($request->status === 'approved') {
             \App\Models\Appointment::create([
-                'company_id' => $companyId,
-                'customer_id' => $estimate->customer_id,
-                'estimate_id' => $estimate->id,
-                'title' => "Production Run: " . $estimate->estimate_number,
+                'company_id'   => $companyId,
+                'customer_id'  => $estimate->customer_id,
+                'estimate_id'  => $estimate->id,
+                'title'        => "Production Run: " . $estimate->estimate_number,
                 'scheduled_at' => now(),
-                'status' => 'scheduled'
+                'status'       => 'scheduled'
             ]);
         }
 
@@ -161,7 +164,7 @@ class EstimateController extends Controller
     public function uploadAttachment(Request $request, $id)
     {
         $request->validate([
-            'image' => 'required|image|max:10240',
+            'image'   => 'required|image|max:10240',
             'caption' => 'nullable|string|max:255'
         ]);
 
@@ -173,9 +176,9 @@ class EstimateController extends Controller
 
             JobAttachment::create([
                 'estimate_id' => $estimate->id,
-                'file_path' => '/storage/' . $path,
-                'file_type' => 'image',
-                'caption' => $request->caption ?? 'Field status update log'
+                'file_path'   => '/storage/' . $path,
+                'file_type'   => 'image',
+                'caption'     => $request->caption ?? 'Field status update log'
             ]);
 
             return back()->with('status', '📸 Progress photo successfully bound to job history archive.');
@@ -211,13 +214,13 @@ class EstimateController extends Controller
             $estimate->update(['status' => 'approved']);
 
             \App\Models\Appointment::create([
-                'company_id'  => $estimate->company_id,
-                'customer_id' => $estimate->customer_id,
-                'estimate_id' => $estimate->id,
-                'title'       => "Production: " . $estimate->estimate_number,
-                'scheduled_at'=> now()->addDays(2),
-                'status'      => 'scheduled',
-                'notes'       => 'Client portal scheduled auto-activation confirmation.'
+                'company_id'   => $estimate->company_id,
+                'customer_id'  => $estimate->customer_id,
+                'estimate_id'  => $estimate->id,
+                'title'        => "Production: " . $estimate->estimate_number,
+                'scheduled_at' => now()->addDays(2),
+                'status'       => 'scheduled',
+                'notes'        => 'Client portal scheduled auto-activation confirmation.'
             ]);
 
             return back()->with('status', '✍️ Project approved! Your job site mobilization window has been added straight to our master production dispatch board.');
@@ -248,7 +251,6 @@ class EstimateController extends Controller
             return back()->with('error', '❌ This customer profile does not have a valid phone number recorded.');
         }
 
-        // Pull company profile info from customized sc_ table parameters
         $company = DB::table('sc_companies')->where('id', $companyId)->first();
         $fromLine = $company->sms_phone_number ?? env('TELNYX_DEFAULT_FROM');
 
@@ -262,10 +264,10 @@ class EstimateController extends Controller
         try {
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . env('TELNYX_API_KEY'),
-                'Content-Type' => 'application/json',
-            ])->post('https://api.telnyx.com/v2/messages', [
+                'Content-Type'  => 'application/json',
+            ]->post('https://api.telnyx.com/v2/messages', [
                 'from' => $fromLine,
-                'to' => $estimate->customer->phone,
+                'to'   => $estimate->customer->phone,
                 'text' => $messageBody,
             ]);
 
@@ -294,7 +296,6 @@ class EstimateController extends Controller
             $senderLine = $messagePayload['from']['phone_number'] ?? 'Unknown';
             $incomingBody = trim($messagePayload['text'] ?? '');
 
-            // Log incoming interactions or filter opt-out system state commands
             if (strtoupper($incomingBody) === 'STOP') {
                 Log::info("SMS Opt-Out Flag Registered by Line: {$senderLine}");
             } else {
