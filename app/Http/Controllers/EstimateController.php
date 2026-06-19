@@ -112,7 +112,7 @@ class EstimateController extends Controller
             ]);
 
             return $estimate;
-        ]);
+        });
 
         return redirect()->route('dashboard')->with('status', "⚡ Estimate {$estimate->estimate_number} successfully compiled.");
     }
@@ -265,7 +265,7 @@ class EstimateController extends Controller
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . env('TELNYX_API_KEY'),
                 'Content-Type'  => 'application/json',
-            ]->post('https://api.telnyx.com/v2/messages', [
+            ])->post('https://api.telnyx.com/v2/messages', [
                 'from' => $fromLine,
                 'to'   => $estimate->customer->phone,
                 'text' => $messageBody,
