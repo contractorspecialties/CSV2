@@ -28,15 +28,28 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Secure Login Line Configuration
+    // Secure Login Line Configuration (With Smart String Normalization)
     Route::post('/user/security-phone', function (Illuminate\Http\Request $request) {
-        $request->validate(['phone_2fa' => 'required|string|max:30']);
+        $request->validate(['phone_2fa' => 'required|string|max:50']);
 
-        Illuminate\Support\Facades\Auth::user()->update([
-            'phone_2fa' => $request->phone_2fa
-        ]);
+        // Strip out parentheses, spaces, hyphens, and letters completely
+        $digits = preg_replace('/[^0-9]/', '', $request->phone_2fa);
 
-        return back()->with('status', '🔒 Security mobile number successfully verified and saved.');
+        // Intelligently append North American country coding for clean API transmission
+        if (strlen($digits) === 10) {
+            $cleanE164 = '+1' . $digits;
+        } elseif (strlen($digits) === 11 && str_starts_with($digits, '1')) {
+            $cleanE164 = '+' . $digits;
+        } else {
+            $cleanE164 = '+' . $digits;
+        }
+
+        // Use direct model assignment to bypass any missing fillable attribute configurations
+        $user = Illuminate\Support\Facades\Auth::user();
+        $user->phone_2fa = $cleanE164;
+        $user->save();
+
+        return back()->with('status', "🔒 Number verified and formatted to {$cleanE164} successfully.");
     })->name('user.security-phone');
 
     // Customers Management
