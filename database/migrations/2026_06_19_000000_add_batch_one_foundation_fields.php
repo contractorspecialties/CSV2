@@ -12,7 +12,6 @@ return new class extends Migration
     {
         $defaultConnection = config('database.default', 'sqlite');
         $configuredPrefix = config("database.connections.{$defaultConnection}.prefix");
-        // Maintain consistency with your custom sc_ prefix tracking setup
         $this->prefix = !empty($configuredPrefix) ? $configuredPrefix : 'sc_';
     }
 
@@ -21,27 +20,38 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. Upgrade Company Settings for Onboarding & Saved Message Templates
+        // 1. Upgrade Company Settings safely (skipping columns already built)
         Schema::table($this->prefix . 'companies', function (Blueprint $table) {
             if (!Schema::hasColumn($this->prefix . 'companies', 'sms_phone_number')) {
-                $table->string('sms_phone_number')->nullable()->after('logo_path');
+                $table->string('sms_phone_number')->nullable();
             }
-            $table->json('sms_templates')->nullable()->after('sms_phone_number');
-            $table->boolean('is_onboarding_complete')->default(false)->after('sms_templates');
+            if (!Schema::hasColumn($this->prefix . 'companies', 'sms_templates')) {
+                $table->json('sms_templates')->nullable();
+            }
+            if (!Schema::hasColumn($this->prefix . 'companies', 'is_onboarding_complete')) {
+                $table->boolean('is_onboarding_complete')->default(false);
+            }
         });
 
-        // 2. Upgrade User Profiles to support Text-Based Security Logins (2FA)
-        // Checking for prefix safety on the base users structure
+        // 2. Upgrade User Profiles for text-based security codes (dropping positional rules)
         $userTable = Schema::hasTable($this->prefix . 'users') ? $this->prefix . 'users' : 'users';
-        Schema::table($userTable, function (Blueprint $table) {
-            $table->string('phone_2fa')->nullable()->after('last_name');
-            $table->string('two_factor_code', 6)->nullable()->after('token_expires_at');
-            $table->timestamp('two_factor_expires_at')->nullable()->after('two_factor_code');
+        Schema::table($userTable, function (Blueprint $table) use ($userTable) {
+            if (!Schema::hasColumn($userTable, 'phone_2fa')) {
+                $table->string('phone_2fa')->nullable();
+            }
+            if (!Schema::hasColumn($userTable, 'two_factor_code')) {
+                $table->string('two_factor_code', 6)->nullable();
+            }
+            if (!Schema::hasColumn($userTable, 'two_factor_expires_at')) {
+                $table->timestamp('two_factor_expires_at')->nullable();
+            }
         });
 
         // 3. Upgrade Customer Files for long-term internal job notes
         Schema::table($this->prefix . 'customers', function (Blueprint $table) {
-            $table->text('internal_notes')->nullable()->after('lifetime_value');
+            if (!Schema::hasColumn($this->prefix . 'customers', 'internal_notes')) {
+                $table->text('internal_notes')->nullable();
+            }
         });
     }
 
