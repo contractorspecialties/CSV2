@@ -25,11 +25,13 @@ class EstimateController extends Controller
     {
         $companyId = Auth::user()->company_id;
 
+        // Fetch company directory customers ordered cleanly by name properties
         $customers = Customer::where('company_id', $companyId)
             ->orderBy('last_name', 'asc')
             ->orderBy('first_name', 'asc')
             ->get();
 
+        // Optimized Model-Driven Query automatically tracking prefix definitions
         $pricebookItems = PricebookItem::where('company_id', $companyId)
             ->orderBy('category', 'asc')
             ->orderBy('name', 'asc')
@@ -194,7 +196,7 @@ class EstimateController extends Controller
                         'text' => "Hello " . $estimate->customer->first_name . ", we have updated your estimate notes per your clarification request. Review revisions here: " . $portalLink,
                     ]);
                 } catch (\Exception $e) {
-                    Log::error(' Telnyx auto-notification crash: ' . $e->getMessage());
+                    Log::error('Telnyx auto-notification crash: ' . $e->getMessage());
                 }
             }
         }
