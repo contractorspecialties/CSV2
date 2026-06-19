@@ -28,6 +28,17 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // Secure Login Line Configuration
+    Route::post('/user/security-phone', function (Illuminate\Http\Request $request) {
+        $request->validate(['phone_2fa' => 'required|string|max:30']);
+
+        Illuminate\Support\Facades\Auth::user()->update([
+            'phone_2fa' => $request->phone_2fa
+        ]);
+
+        return back()->with('status', '🔒 Security mobile number successfully verified and saved.');
+    })->name('user.security-phone');
+
     // Customers Management
     Route::get('/customers/export', [CustomerController::class, 'exportCsv'])->name('customers.export');
     Route::resource('customers', CustomerController::class);
