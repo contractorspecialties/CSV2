@@ -48,32 +48,32 @@
 
             <section class="grid grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4">
                 <a href="/estimates/create" class="relative flex flex-col items-center justify-center aspect-square bg-gradient-to-b from-[#f58613] to-orange-600 rounded-2xl shadow-sm hover:shadow-md active:scale-95 transition-all group overflow-hidden cursor-pointer">
-                    <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">_</span>
+                    <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">📝</span>
                     <span class="text-xs font-black text-white uppercase tracking-wider text-center px-1">New Estimate</span>
                 </a>
 
                 <a href="/customers/create" class="relative flex flex-col items-center justify-center aspect-square bg-white border border-slate-200 rounded-2xl shadow-sm hover:border-[#f58613] active:scale-95 transition-all group overflow-hidden cursor-pointer">
-                    <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">_</span>
+                    <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">👥</span>
                     <span class="text-xs font-black text-slate-800 uppercase tracking-wider text-center px-1">Add Customer</span>
                 </a>
 
                 <a href="/pricebook" class="relative flex flex-col items-center justify-center aspect-square bg-white border border-slate-200 rounded-2xl shadow-sm hover:border-slate-800 active:scale-95 transition-all group overflow-hidden cursor-pointer">
-                    <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">_</span>
+                    <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">📖</span>
                     <span class="text-xs font-black text-slate-800 uppercase tracking-wider text-center px-1">Pricebook Matrix</span>
                 </a>
 
                 <button @click="showInvoiceModal = true" class="relative flex flex-col items-center justify-center aspect-square bg-white border border-slate-200 rounded-2xl shadow-sm hover:border-[#f58613] active:scale-95 transition-all group overflow-hidden cursor-pointer outline-none">
-                    <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">_</span>
+                    <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">⚡</span>
                     <span class="text-xs font-black text-slate-800 uppercase tracking-wider text-center px-1">Quick Bill</span>
                 </button>
 
                 <button @click="showInstallModal = true" class="relative flex flex-col items-center justify-center aspect-square bg-slate-900 border border-slate-950 rounded-2xl shadow-sm text-[#f58613] active:scale-95 transition-all group overflow-hidden cursor-pointer outline-none">
-                    <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">_</span>
+                    <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">📱</span>
                     <span class="text-xs font-black uppercase tracking-wider text-center px-1 text-slate-200">App Shortcut</span>
                 </button>
 
                 <a href="#" class="relative flex flex-col items-center justify-center aspect-square bg-slate-900 border border-slate-950 rounded-2xl shadow-sm text-[#f58613] active:scale-95 transition-all group overflow-hidden cursor-pointer">
-                    <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">_</span>
+                    <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">🌐</span>
                     <span class="text-xs font-black uppercase tracking-wider text-center px-1 text-slate-200">My Review Page</span>
                 </a>
             </section>
@@ -86,7 +86,7 @@
                 </div>
                 <div class="pt-4 sm:pt-0 sm:pl-6 space-y-1">
                     <span class="text-xs font-black uppercase tracking-wider text-slate-400 block">Sent Estimates</span>
-                    <div class="text-3xl font-black text attachment-[#f58613] font-mono">{{ $sentCount }}</div>
+                    <div class="text-3xl font-black text-[#f58613] font-mono">{{ $sentCount }}</div>
                     <span class="text-xs text-slate-500 block font-medium">Bids out for customer review</span>
                 </div>
                 <div class="pt-4 sm:pt-0 sm:pl-6 space-y-1">
@@ -245,8 +245,8 @@
                         <form action="/user/security-phone" method="POST" class="space-y-3">
                             @csrf
                             <div>
-                                <label for="phone_2fa" class="block text-[10px] font-black uppercase text-slate-400 mb-1 tracking-wide">Secure Mobile Line</label>
-                                <input type="tel" id=\"phone_2fa\" name="phone_2fa" placeholder="e.g., +19195551234" value="{{ auth()->user()->phone_2fa ?? '' }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-3 text-sm font-mono font-bold focus:outline-none focus:border-[#f58613]">
+                                <label antisymmetric for="phone_2fa" class="block text-[10px] font-black uppercase text-slate-400 mb-1 tracking-wide">Secure Mobile Line</label>
+                                <input type="tel" id="phone_2fa" name="phone_2fa" placeholder="e.g., +19195551234" value="{{ auth()->user()->phone_2fa ?? '' }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-3 text-sm font-mono font-bold focus:outline-none focus:border-[#f58613]">
                             </div>
 
                             <button type="submit" class="w-full bg-slate-950 hover:bg-black text-white font-black text-xs py-2.5 px-4 rounded-xl uppercase tracking-wider shadow transition-all active:scale-[0.99] cursor-pointer">

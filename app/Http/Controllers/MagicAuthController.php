@@ -24,7 +24,6 @@ class MagicAuthController extends Controller
 
         $user = User::where('email', $validated['email'])->first();
 
-        // Safe confirmation message to prevent data-mining of active accounts
         if (!$user) {
             return back()->with('status', '📨 If your business email is registered, your secure login link has been sent.');
         }
@@ -39,17 +38,8 @@ class MagicAuthController extends Controller
         $magicLink = route('magic.verify', ['token' => $token]);
 
         try {
-            Mail::html("
-                <div style=\"font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px;\">
-                    <h2 style=\"color: #0f172a; text-transform: uppercase; font-size: 16px; font-weight: 900; letter-spacing: -0.5px;\">Secure Dashboard Sign-In</h2>
-                    <p style=\"font-size: 14px; color: #334155;\">Click the button below to log directly into your ContractorSpecialties company account dashboard. This link will automatically expire in 15 minutes for your protection.</p>
-                    <div style=\"margin: 24px 0;\">
-                        <a href=\"{$magicLink}\" style=\"display: inline-block; background-color: #f58613; color: #ffffff; text-decoration: none; font-weight: 800; font-size: 12px; padding: 14px 24px; border-radius: 8px; text-transform: uppercase; tracking: 0.5px;\">Log Into Dashboard →</a>
-                    </div>
-                    <hr style=\"border: 0; border-top: 1px solid #f1f5f9; margin: 20px 0;\" />
-                    <p style=\"font-size: 11px; color: #94a3b8; margin-bottom: 0;\">If you didn't request this sign-in link, you can safely ignore this email. Your account credentials remain secure.</p>
-                </div>
-            ", function ($message) use ($user) {
+            // Reverting to clean plain-text delivery to prevent mobile mail clients from corrupting or double-escaping link structures
+            Mail::raw("Hello, click the link below to log securely into your ContractorSpecialties company dashboard. This link will expire in 15 minutes for your security.\n\n{$magicLink}", function ($message) use ($user) {
                 $message->to($user->email)
                         ->subject('⚡ Your Secure Dashboard Sign-In Link');
             });
@@ -80,19 +70,17 @@ class MagicAuthController extends Controller
             return redirect()->route('welcome')->withErrors(['email' => '🛑 This login link has expired or is invalid. Please request a new secure link.']);
         }
 
-        // Wipe single-use sign-in token immediately upon use
         $user->update([
             'login_token' => null,
             'token_expires_at' => null,
         ]);
 
-        // If no mobile number is saved for security verification, log them straight in as a frictionless fallback
+        // Frictionless bypass if no mobile line is configured yet
         if (empty($user->phone_2fa)) {
             Auth::login($user);
-            return redirect()->route('dashboard')->with('status', '⚡ Welcome back! To protect your account, please save a mobile phone number in your settings to enable secure text verification next time.');
+            return redirect()->route('dashboard')->with('status', '⚡ Welcome back! To protect your account, save your mobile number under the Security panel to enable text code confirmation.');
         }
 
-        // Generate a clean 6-digit text security verification code
         $securityCode = strval(rand(100000, 999999));
 
         $user->update([
@@ -100,15 +88,12 @@ class MagicAuthController extends Controller
             'two_factor_expires_at' => now()->addMinutes(10),
         ]);
 
-        // Park the incoming user identity safely inside the temporary session thread
         session(['auth_2fa_user_id' => $user->id]);
 
-        // Pull company name to apply dynamic business branding to the text
         $company = DB::table('sc_companies')->where('id', $user->company_id)->first();
         $companyName = $company->name ?? 'ContractorSpecialties';
         $fromLine = $company->sms_phone_number ?? env('TELNYX_DEFAULT_FROM');
 
-        // Text out the security code over active carrier routes
         if (!empty($fromLine)) {
             try {
                 Http::withHeaders([
@@ -124,7 +109,6 @@ class MagicAuthController extends Controller
             }
         }
 
-        // Render a clean, fast responsive inline code entry card without needing an extra layout view file
         return response("
             <!DOCTYPE html>
             <html lang=\"en\" class=\"h-full bg-slate-50\">
@@ -183,7 +167,6 @@ class MagicAuthController extends Controller
             return back()->withErrors(['two_factor_code' => '🛑 The code you entered is incorrect or has expired. Please double-check your mobile alerts and try again.']);
         }
 
-        // Clear security fields from active record storage upon successful verification match
         $user->update([
             'two_factor_code' => null,
             'two_factor_expires_at' => null,
