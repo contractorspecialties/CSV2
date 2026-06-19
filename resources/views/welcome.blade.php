@@ -47,12 +47,17 @@
 
                 <div class="space-y-2 border-b border-slate-100 pb-4 mb-6">
                     <h3 class="text-xl font-black text-slate-950 uppercase tracking-tight">Get Your Secure Access Link</h3>
-                    <p class="text-xs text-slate-500 font-medium font-semibold">No passwords. No setup fees. No commitment. Just tools that make your business run smoother.</p>
+                    <p class="text-xs text-slate-500 font-semibold max-w-[280px] leading-normal">No passwords. No setup fees. No commitment. Just tools that make your business run smoother.</p>
                 </div>
 
                 @if($errors->any())
-                    <div class="p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-xs font-bold mb-4">
-                        Please provide a valid registered account email address.
+                    <div class="p-3 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-bold mb-4 space-y-1 shadow-sm">
+                        @foreach($errors->all() as $error)
+                            <div class="flex items-start gap-1.5">
+                                <span class="shrink-0">⚠️</span>
+                                <span>{{ $error }}</span>
+                            </div>
+                        @endforeach
                     </div>
                 @endif
 
