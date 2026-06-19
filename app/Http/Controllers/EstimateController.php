@@ -115,7 +115,7 @@ class EstimateController extends Controller
             ]);
 
             return $estimate;
-        });
+        ]);
 
         return redirect()->route('dashboard')->with('status', "⚡ Estimate {$estimate->estimate_number} successfully compiled.");
     }
@@ -164,7 +164,7 @@ class EstimateController extends Controller
     /**
      * Record a contractor reply message onto the blueprint ledger and notify the customer.
      */
-    public function updateBlueprintNotes(Request $request, $id)
+    public function saveBlueprint(Request $request, $id)
     {
         $companyId = Auth::user()->company_id;
         $estimate = Estimate::where('company_id', $companyId)->with('customer')->findOrFail($id);
