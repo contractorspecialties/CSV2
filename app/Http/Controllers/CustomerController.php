@@ -46,7 +46,7 @@ class CustomerController extends Controller
     }
 
     /**
-     * Commit a fresh target account or overwrite safe tracking properties inline.
+     * Commit a fresh target account profile inline.
      */
     public function store(Request $request)
     {
@@ -75,6 +75,46 @@ class CustomerController extends Controller
         );
 
         return redirect()->route('customers.index')->with('status', '⚡ New customer profile successfully saved to your list.');
+    }
+
+    /**
+     * Process inline CRM profile edits securely.
+     */
+    public function update(Request $request, $id)
+    {
+        $customer = Customer::where('company_id', Auth::user()->company_id)->findOrFail($id);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'nullable|string|max:50',
+            'billing_address' => 'nullable|string|max:500'
+        ]);
+
+        $parts = explode(' ', trim($validated['name']), 2);
+        $firstName = $parts[0];
+        $lastName = $parts[1] ?? ' ';
+
+        $customer->update([
+            'first_name'      => $firstName,
+            'last_name'       => $lastName,
+            'email'           => $validated['email'],
+            'phone'           => $validated['phone'] ?? null,
+            'billing_address' => $validated['billing_address'] ?? null,
+        ]);
+
+        return redirect()->route('customers.index')->with('status', '🔄 Customer profile details successfully updated.');
+    }
+
+    /**
+     * Purge a customer profile record from the tenant partition.
+     */
+    public function destroy($id)
+    {
+        $customer = Customer::where('company_id', Auth::user()->company_id)->findOrFail($id);
+        $customer->delete();
+
+        return redirect()->route('customers.index')->with('status', '🗑️ Customer account cleanly scrubbed from company directory registries.');
     }
 
     /**
