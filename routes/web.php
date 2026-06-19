@@ -21,7 +21,9 @@ Route::get('/login', function () { return redirect()->route('welcome'); })->name
 Route::post('/login/two-factor-verify', [MagicAuthController::class, 'verifyTwoFactor'])->name('magic.2fa');
 Route::post('/login/magic', [MagicAuthController::class, 'sendLink'])->name('magic.send');
 Route::get('/login/verify/{token}', [MagicAuthController::class, 'verifyToken'])->name('magic.verify');
-Route::post('/logout', [MagicAuthController::class, 'logout'])->name('logout');
+
+// Changed to match both GET and POST requests for fast browser testing
+Route::match(['get', 'post'], '/logout', [MagicAuthController::class, 'logout'])->name('logout');
 
 // Authenticated Contractor Workspace
 Route::middleware(['auth'])->group(function () {
@@ -32,10 +34,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/user/security-phone', function (Illuminate\Http\Request $request) {
         $request->validate(['phone_2fa' => 'required|string|max:50']);
 
-        // Strip out parentheses, spaces, hyphens, and letters completely
         $digits = preg_replace('/[^0-9]/', '', $request->phone_2fa);
 
-        // Intelligently append North American country coding for clean API transmission
         if (strlen($digits) === 10) {
             $cleanE164 = '+1' . $digits;
         } elseif (strlen($digits) === 11 && str_starts_with($digits, '1')) {
@@ -44,7 +44,6 @@ Route::middleware(['auth'])->group(function () {
             $cleanE164 = '+' . $digits;
         }
 
-        // Use direct model assignment to bypass any missing fillable attribute configurations
         $user = Illuminate\Support\Facades\Auth::user();
         $user->phone_2fa = $cleanE164;
         $user->save();
