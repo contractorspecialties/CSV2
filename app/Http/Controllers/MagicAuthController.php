@@ -38,7 +38,6 @@ class MagicAuthController extends Controller
         $magicLink = route('magic.verify', ['token' => $token]);
 
         try {
-            // Raw plain text keeps links clean across aggressive mobile email providers
             Mail::raw("Hello, click the link below to log securely into your ContractorSpecialties company dashboard. This link will expire in 15 minutes for your security.\n\n{$magicLink}", function ($message) use ($user) {
                 $message->to($user->email)
                         ->subject('⚡ Your Secure Dashboard Sign-In Link');
@@ -77,7 +76,7 @@ class MagicAuthController extends Controller
 
         // Frictionless bypass if no mobile line is configured yet
         if (empty($user->phone_2fa)) {
-            Auth::login($user);
+            Auth::login($user, true);
             return redirect()->route('dashboard')->with('status', '⚡ Welcome back! To protect your account, save your mobile number under the Security panel to enable text code confirmation.');
         }
 
@@ -172,9 +171,14 @@ class MagicAuthController extends Controller
             'two_factor_expires_at' => null,
         ]);
 
-        // Fix: Force state regeneration to guarantee session locking on mobile browsers
-        Auth::login($user);
+        // Fix: Force persistent device locking using standard remember tokens to survive cellular IP hops
+        Auth::login($user, true);
         $request->session()->regenerate();
+
+        // Force explicit session write to disk/memory storage before launching redirect headers
+        $request->session()->put('auth.password_confirmed_at', time());
+        $request->session()->save();
+
         session()->forget('auth_2fa_user_id');
 
         return redirect()->route('dashboard')->with('status', '⚡ Verified successfully. Welcome back to your company workspace!');
