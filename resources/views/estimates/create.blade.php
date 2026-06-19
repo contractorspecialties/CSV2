@@ -252,22 +252,27 @@
 
                 <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                     <div class="border-b border-slate-100 pb-2">
-                        <h3 class="font-black text-sm text-slate-900 uppercase tracking-wider">💰 Invoicing Rules & Surcharges</h3>
+                        <h3 class="font-black text-sm text-slate-900 uppercase tracking-wider">💰 Invoicing Rules & Expirations</h3>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
-                            <label class="flex items-center gap-2 font-black text-xs text-slate-600 uppercase tracking-wider mb-2 cursor-pointer">
+                            <label class="flex items-center gap-2 font-black text-[10px] text-slate-500 uppercase tracking-wider mb-2 cursor-pointer">
                                 <input type="checkbox" name="require_deposit" x-model="requireDeposit" class="rounded border-slate-300 text-[#f58613] focus:ring-[#f58613]">
-                                Request Upfront Deposit
+                                Upfront Deposit
                             </label>
                             <input type="number" name="deposit_amount" step="0.01" placeholder="0.00" x-show="requireDeposit" x-cloak x-transition x-model.number="depositAmount"
                                    class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 px-3 text-xs font-mono font-black focus:outline-none focus:border-[#f58613]">
                         </div>
                         <div>
-                            <label for="tax_rate" class="block text-xs font-black uppercase text-slate-500 mb-1">Local Sales Tax Rate (%)</label>
-                            <input type="number" id="tax_rate" name="tax_rate" step="0.01" min="0" max="100" x-model.number="taxRate" placeholder="0.00"
+                            <label for="tax_rate" class="block text-[10px] font-black uppercase text-slate-500 mb-2">Sales Tax (%)</label>
+                            <input type="number" id="tax_rate" name="tax_rate" step="0.01" min="0" max="100" x-model.number="taxRate" placeholder="0.00" required
                                    class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 px-3 text-xs font-mono font-black focus:outline-none focus:border-[#f58613]">
+                        </div>
+                        <div>
+                            <label for="expires_at" class="block text-[10px] font-black uppercase text-slate-500 mb-2">Expiration Date</label>
+                            <input type="date" id="expires_at" name="expires_at" min="{{ now()->addDay()->format('Y-m-d') }}"
+                                   class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 px-3 text-xs font-semibold focus:outline-none focus:border-[#f58613] bg-white text-slate-700 cursor-pointer">
                         </div>
                     </div>
                 </div>

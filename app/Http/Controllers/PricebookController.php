@@ -36,13 +36,13 @@ class PricebookController extends Controller
         ]);
 
         PricebookItem::create([
-            'company_id' => Auth::user()->company_id,
-            'name' => $validated['name'],
-            'category' => $validated['category'],
-            'unit_type' => $validated['unit_type'],
-            'base_unit_cost' => $validated['base_unit_cost'],
-            'markup_percentage' => $validated-[#021d48] ?? $validated['markup_percentage'],
-            'description' => $validated['description'],
+            'company_id'        => Auth::user()->company_id,
+            'name'              => $validated['name'],
+            'category'          => $validated['category'],
+            'unit_type'         => $validated['unit_type'],
+            'base_unit_cost'    => $validated['base_unit_cost'],
+            'markup_percentage' => $validated['markup_percentage'],
+            'description'       => $validated['description'],
         ]);
 
         return redirect()->route('pricebook.index')->with('status', '⚡ New catalog item successfully written to your pricebook records.');

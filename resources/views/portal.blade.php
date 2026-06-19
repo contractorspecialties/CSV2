@@ -9,7 +9,6 @@
 </head>
 <body class="flex flex-col min-h-full font-sans antialiased bg-slate-50 text-slate-900 selection:bg-[#f58613] selection:text-white">
 
-    <!-- MINIMALIST BRAND TRUST HEADER -->
     <header class="bg-black border-b border-slate-900 sticky top-0 z-50 shadow-sm">
         <div class="max-w-5xl mx-auto px-4 h-20 flex items-center justify-between">
             <div class="w-[300px] max-w-[60%] h-[80px] flex items-center">
@@ -23,7 +22,6 @@
         </div>
     </header>
 
-    <!-- WORKSPACE CANVAS -->
     <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-8 space-y-6">
 
         @if(session('status'))
@@ -33,7 +31,6 @@
             </div>
         @endif
 
-        <!-- WELCOME CARD -->
         <div class="bg-slate-900 text-white rounded-2xl p-6 shadow-md border border-slate-950 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
                 <h1 class="text-xl font-black uppercase tracking-tight">Project Proposal Workspace</h1>
@@ -44,10 +41,8 @@
             </div>
         </div>
 
-        <!-- SPLIT INTERACTIVE CONTENT DESK -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            <!-- LEFT: FULL SPECIFICATIONS BILL OF MATERIALS -->
             <div class="lg:col-span-2 space-y-6">
                 <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
                     <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
@@ -65,7 +60,7 @@
                         <tbody class="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
                             @foreach($estimate->items as $item)
                                 <tr>
-                                    <td class="py-4 px-6 font-bold text-slate-900 text-sm leading-normal">{{ $item->description }}</td>
+                                    <td class="py-4 px-6 font-bold text-slate-900 text-sm leading-normal whitespace-pre-line">{{ $item->description }}</td>
                                     <td class="py-4 px-4 text-center font-mono text-slate-500">{{ number_format($item->quantity, 1) }}</td>
                                     <td class="py-4 px-6 text-right font-mono font-black text-slate-950">${{ number_format($item->total_price, 2) }}</td>
                                 </tr>
@@ -73,7 +68,6 @@
                         </tbody>
                     </table>
 
-                    <!-- Totals Breakdown Sled -->
                     <div class="bg-slate-50/80 border-t border-slate-100 p-6 flex justify-end">
                         <div class="w-64 font-mono text-xs text-slate-600 space-y-1.5">
                             <div class="flex justify-between">
@@ -94,7 +88,6 @@
                     </div>
                 </div>
 
-                <!-- PROGRESS ARCHIVE GALLERY BOX -->
                 @if($attachments->isNotEmpty())
                     <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                         <h3 class="font-black text-xs text-slate-900 uppercase tracking-wider flex items-center gap-2">📸 Field Site Visual Timeline</h3>
@@ -112,19 +105,17 @@
                 @endif
             </div>
 
-            <!-- RIGHT: COLLABORATIVE CLIENT TOOL PANEL -->
             <div class="space-y-6">
 
                 <div x-data="{ currentConsole: 'main' }" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm min-h-[300px] flex flex-col justify-between">
 
-                    <!-- MAIN NAVIGATION SLED -->
                     <div x-show="currentConsole === 'main'" class="space-y-4 contents">
                         <div class="border-b border-slate-100 pb-2">
                             <span class="text-[10px] text-[#f58613] font-black uppercase tracking-wider block">Proposal State: {{ strtoupper($estimate->status) }}</span>
                             <h3 class="font-black text-base text-slate-950 mt-0.5">Choose Next Step</h3>
                         </div>
 
-                        @if($estimate->status !== 'approved')
+                        @if($estimate->status !== 'approved' && $estimate->status !== 'closed')
                             <div class="space-y-2.5 flex-grow">
                                 <button @click="currentConsole = 'schedule'" class="w-full bg-slate-950 hover:bg-black text-white font-black text-xs py-3.5 px-4 rounded-xl uppercase tracking-wider transition-all shadow-md flex items-center justify-between cursor-pointer">
                                     <span>✍️ Approve & Schedule</span>
@@ -149,7 +140,6 @@
                         </div>
                     </div>
 
-                    <!-- SUB-PANEL: LOW-PRESSURE SIGN-OFF & DEPOSIT LAYOUT -->
                     <div x-show="currentConsole === 'schedule'" x-cloak style="display: none;" class="space-y-4 contents">
                         <div class="border-b border-slate-100 pb-2">
                             <h3 class="font-black text-sm text-slate-950">Lock In Production Window</h3>
@@ -178,7 +168,6 @@
                         </form>
                     </div>
 
-                    <!-- SUB-PANEL: REVISION LOG TEXT DECK -->
                     <div x-show="currentConsole === 'revision'" x-cloak style="display: none;" class="space-y-4 contents">
                         <div class="border-b border-slate-100 pb-2">
                             <h3 class="font-black text-sm text-slate-950">Request Clarification / Changes</h3>

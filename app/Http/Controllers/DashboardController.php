@@ -8,6 +8,7 @@ use App\Models\Estimate;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -18,12 +19,12 @@ class DashboardController extends Controller
     {
         $companyId = Auth::user()->company_id;
 
-        // 1. Compile Pipeline Financial Indicators safely
+        // 1. Compile Pipeline Financial Indicators safely from the active tenant space
         $draftCount = Estimate::where('company_id', $companyId)->where('status', 'draft')->count();
         $sentCount = Estimate::where('company_id', $companyId)->where('status', 'sent')->count();
         $bookedRevenue = Estimate::where('company_id', $companyId)->where('status', 'approved')->sum('grand_total');
 
-        // 2. Fetch All Active Pipeline Estimates to populate the tracking ledger
+        // 2. Fetch All Active Pipeline Estimates to populate the tracking ledger table view
         $estimates = Estimate::where('company_id', $companyId)
             ->with('customer')
             ->orderBy('created_at', 'desc')
@@ -42,7 +43,7 @@ class DashboardController extends Controller
                 return $customer;
             });
 
-        // 4. Optimized Calendar Matrix Engine (Single database fetch grouped in memory)
+        // 4. Optimized Calendar Matrix Engine (Single database fetch grouped in memory for performance)
         $startOfWeek = Carbon::now()->startOfWeek(Carbon::MONDAY);
         $endOfWeek = $startOfWeek->copy()->endOfWeek(Carbon::SUNDAY);
 
@@ -63,7 +64,7 @@ class DashboardController extends Controller
             // Extract pre-loaded appointments for this calendar date node
             $dayJobs = $weekAppointments->get($dateString, collect());
 
-            // Determine semantic UI state flags dynamically
+            // Determine semantic UI state flags dynamically to wire Tailwind border/background highlights
             if ($currentDayDate->isToday()) {
                 $status = 'today';
             } elseif ($currentDayDate->isPast()) {
@@ -75,12 +76,12 @@ class DashboardController extends Controller
             }
 
             $daysOfWeek[] = [
-                'name'        => $currentDayDate->format('D'),
-                'num'         => $currentDayDate->format('j'),
-                'full_date'   => $currentDayDate->format('l, F jS'),
-                'status'      => $status,
-                'jobs_count'  => $dayJobs->count(),
-                'appointments'=> $dayJobs->map(function ($job) {
+                'name'         => $currentDayDate->format('D'),
+                'num'          => $currentDayDate->format('j'),
+                'full_date'    => $currentDayDate->format('l, F jS'),
+                'status'       => $status,
+                'jobs_count'   => $dayJobs->count(),
+                'appointments' => $dayJobs->map(function ($job) {
                     return [
                         'id'              => $job->id,
                         'title'           => $job->title,
