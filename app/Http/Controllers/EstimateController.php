@@ -115,7 +115,7 @@ class EstimateController extends Controller
             ]);
 
             return $estimate;
-        ]);
+        });
 
         return redirect()->route('dashboard')->with('status', "⚡ Estimate {$estimate->estimate_number} successfully compiled.");
     }
