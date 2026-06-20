@@ -15,6 +15,57 @@ use Illuminate\Support\Carbon;
 class MagicAuthController extends Controller
 {
     /**
+     * Handle the registration of a new contractor and provision their workspace architecture.
+     */
+    public function register(Request $request)
+    {
+        $validated = $request->validate([
+            'company_name' => 'required|string|max:255',
+            'email'        => 'required|email|max:255|unique:users,email',
+        ], [
+            'email.unique' => '🛑 This professional email address is already registered to a workspace engine framework.',
+        ]);
+
+        // Securely provision company tenant block respecting active prefix settings ('sc_')
+        $companyId = DB::table('sc_companies')->insertGetId([
+            'name'       => $validated['company_name'],
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Use direct instance instantiation to bypass mass-assignment fillable protection limits
+        $user = new User();
+        $user->email = $validated['email'];
+        $user->company_id = $companyId;
+        $user->password = bcrypt(Str::random(32)); // Passwordless account safety dummy marker
+        $user->save();
+
+        // Package instant verification token onto user profile using verified epoch logic
+        $randomPart = Str::random(32);
+        $expirationEpoch = time() + (60 * 15); // 15 Minute window
+        $combinedToken = $randomPart . 't' . $expirationEpoch;
+
+        $user->update([
+            'login_token' => $combinedToken,
+            'token_expires_at' => now()->addMinutes(15),
+        ]);
+
+        $magicLink = route('magic.verify', ['token' => $combinedToken]);
+
+        try {
+            Mail::raw("Welcome to ContractorSpecialties! Click the secure activation link below to verify your email and launch your new company management workspace dashboard layout:\n\n{$magicLink}", function ($message) use ($user) {
+                $message->to($user->email)
+                        ->subject('⚡ Activate Your New Company Workspace');
+            });
+            Log::info("🏗️ Fresh company workspace provisioned for {$user->email} with token registration layout.");
+        } catch (\Exception $e) {
+            Log::error("🚨 Onboarding activation mail failed transmission sequence: " . $e->getMessage());
+        }
+
+        return redirect()->route('welcome')->with('status', '🏗️ Your company workspace has been successfully provisioned! Check your inbox for your direct activation link.');
+    }
+
+    /**
      * Generate a secure token with an embedded timestamp and email the link to the user.
      */
     public function sendLink(Request $request)

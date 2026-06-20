@@ -17,6 +17,10 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () { return view('welcome'); })->name('welcome');
 Route::get('/login', function () { return redirect()->route('welcome'); })->name('login');
 
+// Frictionless Onboarding Tiers
+Route::get('/register', function () { return view('register'); })->name('register');
+Route::post('/register', [MagicAuthController::class, 'register'])->name('register.submit');
+
 // Frictionless Login Handling
 Route::post('/login/magic', [MagicAuthController::class, 'sendLink'])->name('magic.send');
 
