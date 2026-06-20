@@ -39,7 +39,16 @@ class MagicAuthController extends Controller
         $magicLink = route('magic.verify', ['token' => $token]);
 
         try {
-            Mail::raw("Hello, click the link below to log securely into your ContractorSpecialties company dashboard. This link will expire in 15 minutes for your security.\n\n{$magicLink}", function ($message) use ($user) {
+            Mail::html("
+                <div style=\"font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;\">
+                    <h2 style=\"color: #0f172a; font-size: 16px; font-weight: bold;\">Workspace Login Link</h2>
+                    <p style=\"font-size: 14px; color: #334155;\">Click the secure link below to open your contractor workspace panel. This access route is single-use and expires in 15 minutes.</p>
+                    <div style=\"margin: 20px 0;\">
+                        <a href=\"{$magicLink}\" rel=\"nofollow\" style=\"display: inline-block; background-color: #f58613; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 13px; padding: 12px 20px; border-radius: 6px;\">Log Into Dashboard Direct →</a>
+                    </div>
+                    <p style=\"font-size: 11px; color: #94a3b8;\">If the button does not work, copy and paste this path directly into your address bar:<br><span style=\"font-family: monospace; color: #64748b;\">{$magicLink}</span></p>
+                </div>
+            ", function ($message) use ($user) {
                 $message->to($user->email)
                         ->subject('⚡ Your Secure Dashboard Sign-In Link');
             });
@@ -54,17 +63,17 @@ class MagicAuthController extends Controller
     }
 
     /**
-     * Display a secure intermediate bridge confirmation layout to stop background email bots from expiring single-use links.
+     * Display a secure intermediate bridge confirmation layout.
      */
     public function showVerifyBridge($token)
     {
         $user = User::where('login_token', $token)->first();
 
-        if (!$user) {
-            return redirect()->route('welcome')->withErrors(['email' => '🛑 This login link has already been used or is invalid. Please request a new secure link.']);
+        // Check validation rules directly inside PHP to protect against clock drift
+        if (!$user || Carbon::parse($user->token_expires_at)->isPast()) {
+            return redirect()->route('welcome')->withErrors(['email' => '🛑 This login link has expired or is invalid. Please request a new secure link.']);
         }
 
-        // Render a fast click-through form layout to block bots
         return response("
             <!DOCTYPE html>
             <html lang=\"en\" class=\"h-full bg-slate-50\">
@@ -95,29 +104,21 @@ class MagicAuthController extends Controller
     }
 
     /**
-     * Process human-submitted confirmation request inputs to complete workspace login steps safely.
+     * Process human-submitted confirmation requests and dispatch the 2FA text code.
      */
     public function processVerifyBridge($token)
     {
         $user = User::where('login_token', $token)->first();
 
-        if (!$user) {
+        if (!$user || Carbon::parse($user->token_expires_at)->isPast()) {
             return redirect()->route('welcome')->withErrors(['email' => '🛑 This login link has expired or is invalid. Please request a new secure link.']);
         }
 
-        // Perform time tracking calculations natively inside PHP to prevent database engine clock-drift bugs
-        $expiration = Carbon::parse($user->token_expires_at);
-        if (now()->greaterThan($expiration)) {
-            $user->update(['login_token' => null, 'token_expires_at' => null]);
-            return redirect()->route('welcome')->withErrors(['email' => '🛑 This secure authentication code token has expired. Request a new login path link.']);
-        }
-
-        $user->update([
-            'login_token' => null,
-            'token_expires_at' => null,
-        ]);
+        // NOTE: We no longer clear the login_token here. This protects the route from being burned by background bots or double clicks.
 
         if (empty($user->phone_2fa)) {
+            // Bypass straight to dashboard if no security number is registered yet
+            $user->update(['login_token' => null, 'token_expires_at' => null]);
             Auth::login($user, true);
             return redirect()->route('dashboard')->with('status', '⚡ Welcome back! Save your mobile number to arm your text-code security options.');
         }
@@ -150,7 +151,7 @@ class MagicAuthController extends Controller
             }
         }
 
-        // Render input element parameters configured with numeric inputmodes to force immediate numeric keypad popups on field screens
+        // Render verification input with explicit numeric inputmode parameters for immediate mobile number pads
         return response("
             <!DOCTYPE html>
             <html lang=\"en\" class=\"h-full bg-slate-50\">
@@ -209,9 +210,12 @@ class MagicAuthController extends Controller
             return back()->withErrors(['two_factor_code' => '🛑 The code you entered is incorrect or has expired. Please double-check your mobile alerts and try again.']);
         }
 
+        // Clean up both single-use security items simultaneously upon successful confirmation
         $user->update([
             'two_factor_code' => null,
             'two_factor_expires_at' => null,
+            'login_token' => null,
+            'token_expires_at' => null,
         ]);
 
         Auth::login($user, true);
