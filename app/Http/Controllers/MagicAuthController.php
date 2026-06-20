@@ -48,7 +48,7 @@ class MagicAuthController extends Controller
         $user = new User();
         $user->email = $validated['email'];
         $user->company_id = $companyId;
-        $user->password = bcrypt(Str::random(32)); // Passwordless account safety dummy marker
+        // Removed password row write initialization to match your lean passwordless database schema configuration
         $user->save();
 
         // Package instant verification token onto user profile using verified epoch logic
