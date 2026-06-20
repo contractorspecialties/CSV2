@@ -245,8 +245,8 @@
                         <form action="/user/security-phone" method="POST" class="space-y-3">
                             @csrf
                             <div>
-                                <label antisymmetric for="phone_2fa" class="block text-[10px] font-black uppercase text-slate-400 mb-1 tracking-wide">Secure Mobile Line</label>
-                                <input type="tel" id="phone_2fa" name="phone_2fa" placeholder="e.g., +19195551234" value="{{ auth()->user()->phone_2fa ?? '' }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-3 text-sm font-mono font-bold focus:outline-none focus:border-[#f58613]">
+                                <label for="phone_2fa" class="block text-[10px] font-black uppercase text-slate-400 mb-1 tracking-wide">Secure Mobile Line</label>
+                                <input type="text" id="phone_2fa" name="phone_2fa" placeholder="e.g., 9195551234" value="{{ auth()->user()->phone_2fa ?? '' }}" required inputmode="numeric" pattern="[0-9]*" class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-3 text-sm font-mono font-bold focus:outline-none focus:border-[#f58613]">
                             </div>
 
                             <button type="submit" class="w-full bg-slate-950 hover:bg-black text-white font-black text-xs py-2.5 px-4 rounded-xl uppercase tracking-wider shadow transition-all active:scale-[0.99] cursor-pointer">
