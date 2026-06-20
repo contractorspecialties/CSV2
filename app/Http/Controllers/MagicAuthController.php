@@ -48,7 +48,11 @@ class MagicAuthController extends Controller
         $user = new User();
         $user->email = $validated['email'];
         $user->company_id = $companyId;
-        // Removed password row write initialization to match your lean passwordless database schema configuration
+
+        // FIX: Satisfy database schema strictness with clean placeholder assignments
+        $user->first_name = 'Contractor';
+        $user->last_name = 'Owner';
+
         $user->save();
 
         // Package instant verification token onto user profile using verified epoch logic
@@ -307,6 +311,7 @@ class MagicAuthController extends Controller
             'token_expires_at' => null,
         ]);
 
+        // Fix: Force persistent device locking using standard remember tokens to survive cellular IP hops
         Auth::login($user, true);
         $request->session()->regenerate();
 
