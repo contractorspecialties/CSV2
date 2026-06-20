@@ -49,16 +49,16 @@ class MagicAuthController extends Controller
         $user->email = $validated['email'];
         $user->company_id = $companyId;
 
-        // FIX: Satisfy database schema strictness with clean placeholder assignments
+        // Satisfy database schema strictness with clean placeholder assignments
         $user->first_name = 'Contractor';
         $user->last_name = 'Owner';
 
         $user->save();
 
-        // Package instant verification token onto user profile using verified epoch logic
+        // Package instant verification token using a bulletproof pipe (|) delimiter
         $randomPart = Str::random(32);
         $expirationEpoch = time() + (60 * 15); // 15 Minute window
-        $combinedToken = $randomPart . 't' . $expirationEpoch;
+        $combinedToken = $randomPart . '|' . $expirationEpoch;
 
         $user->update([
             'login_token' => $combinedToken,
@@ -95,10 +95,10 @@ class MagicAuthController extends Controller
             return back()->with('status', '📨 If your business email is registered, your secure login link has been sent.');
         }
 
-        // Embed the exact expiration epoch integer directly inside the text string token (fits easily in varchar 64)
+        // Embed expiration using a bulletproof pipe (|) delimiter to protect against alphanumeric string collisions
         $randomPart = Str::random(32);
         $expirationEpoch = time() + (60 * 15); // Valid for exactly 15 minutes
-        $combinedToken = $randomPart . 't' . $expirationEpoch;
+        $combinedToken = $randomPart . '|' . $expirationEpoch;
 
         $user->update([
             'login_token' => $combinedToken,
@@ -133,8 +133,8 @@ class MagicAuthController extends Controller
             return redirect()->route('welcome')->withErrors(['email' => '🛑 This login link has already been used or is invalid. Please request a new secure link.']);
         }
 
-        // Extract the raw epoch integer directly from the token string to bypass DB clock drift completely
-        $parts = explode('t', $token);
+        // Safely extract the raw epoch integer using the guaranteed unique pipe string separator
+        $parts = explode('|', $token);
         $expiresAtEpoch = isset($parts[1]) ? (int)$parts[1] : 0;
 
         if (time() > $expiresAtEpoch) {
@@ -182,7 +182,7 @@ class MagicAuthController extends Controller
             return redirect()->route('welcome')->withErrors(['email' => '🛑 This login link has expired or is invalid. Please request a new secure link.']);
         }
 
-        $parts = explode('t', $token);
+        $parts = explode('|', $token);
         $expiresAtEpoch = isset($parts[1]) ? (int)$parts[1] : 0;
 
         if (time() > $expiresAtEpoch) {
@@ -311,7 +311,6 @@ class MagicAuthController extends Controller
             'token_expires_at' => null,
         ]);
 
-        // Fix: Force persistent device locking using standard remember tokens to survive cellular IP hops
         Auth::login($user, true);
         $request->session()->regenerate();
 
