@@ -26,9 +26,20 @@ class MagicAuthController extends Controller
             'email.unique' => '🛑 This professional email address is already registered to a workspace engine framework.',
         ]);
 
-        // Securely provision company tenant block respecting active prefix settings ('sc_')
+        // Algorithmic slug compiler with dynamic collision safety checks
+        $slug = Str::slug($validated['company_name']);
+        $baseSlug = $slug;
+        $counter = 1;
+
+        while (DB::table('sc_companies')->where('slug', $slug)->exists()) {
+            $slug = $baseSlug . '-' . $counter;
+            $counter++;
+        }
+
+        // Securely provision company tenant block specifying explicit slug criteria
         $companyId = DB::table('sc_companies')->insertGetId([
             'name'       => $validated['company_name'],
+            'slug'       => $slug,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -55,9 +66,9 @@ class MagicAuthController extends Controller
         try {
             Mail::raw("Welcome to ContractorSpecialties! Click the secure activation link below to verify your email and launch your new company management workspace dashboard layout:\n\n{$magicLink}", function ($message) use ($user) {
                 $message->to($user->email)
-                        ->subject('⚡ Activate Your New Company Workspace');
+                        ->subject('⚡ Your New Company Workspace Activation Route');
             });
-            Log::info("🏗️ Fresh company workspace provisioned for {$user->email} with token registration layout.");
+            Log::info("🏗️ Fresh company workspace provisioned for {$user->email} with slug identifier: {$slug}");
         } catch (\Exception $e) {
             Log::error("🚨 Onboarding activation mail failed transmission sequence: " . $e->getMessage());
         }
