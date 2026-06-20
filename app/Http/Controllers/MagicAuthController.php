@@ -15,7 +15,7 @@ use Illuminate\Support\Carbon;
 class MagicAuthController extends Controller
 {
     /**
-     * Generate a secure sign-in token and email the login link to the user.
+     * Generate a secure token with an embedded timestamp and email the link to the user.
      */
     public function sendLink(Request $request)
     {
@@ -29,14 +29,17 @@ class MagicAuthController extends Controller
             return back()->with('status', '📨 If your business email is registered, your secure login link has been sent.');
         }
 
-        $token = Str::random(32);
+        // Embed the exact expiration epoch integer directly inside the text string token (fits easily in varchar 64)
+        $randomPart = Str::random(32);
+        $expirationEpoch = time() + (60 * 15); // Valid for exactly 15 minutes
+        $combinedToken = $randomPart . 't' . $expirationEpoch;
 
         $user->update([
-            'login_token' => $token,
-            'token_expires_at' => now()->addMinutes(15),
+            'login_token' => $combinedToken,
+            'token_expires_at' => now()->addMinutes(15), // Kept for general database schema alignment
         ]);
 
-        $magicLink = route('magic.verify', ['token' => $token]);
+        $magicLink = route('magic.verify', ['token' => $combinedToken]);
 
         try {
             Mail::raw("Hello, click the link below to log securely into your ContractorSpecialties company dashboard. This link will expire in 15 minutes for your security.\n\n{$magicLink}", function ($message) use ($user) {
@@ -44,7 +47,7 @@ class MagicAuthController extends Controller
                         ->subject('⚡ Your Secure Dashboard Sign-In Link');
             });
 
-            Log::info("🔑 Secure sign-in token compiled for {$user->email}: {$token}");
+            Log::info("🔑 Secure token compiled for {$user->email}: {$combinedToken}");
 
         } catch (\Exception $e) {
             Log::error("🚨 Mail service could not dispatch sign-in link: " . $e->getMessage());
@@ -54,14 +57,23 @@ class MagicAuthController extends Controller
     }
 
     /**
-     * Display a secure intermediate bridge confirmation layout.
+     * Display a secure intermediate bridge confirmation layout without burning the token.
      */
     public function showVerifyBridge($token)
     {
         $user = User::where('login_token', $token)->first();
 
-        if (!$user || Carbon::parse($user->token_expires_at)->isPast()) {
-            return redirect()->route('welcome')->withErrors(['email' => '🛑 This login link has expired or is invalid. Please request a new secure link.']);
+        if (!$user) {
+            return redirect()->route('welcome')->withErrors(['email' => '🛑 This login link has already been used or is invalid. Please request a new secure link.']);
+        }
+
+        // Extract the raw epoch integer directly from the token string to bypass DB clock drift completely
+        $parts = explode('t', $token);
+        $expiresAtEpoch = isset($parts[1]) ? (int)$parts[1] : 0;
+
+        if (time() > $expiresAtEpoch) {
+            $user->update(['login_token' => null, 'token_expires_at' => null]);
+            return redirect()->route('welcome')->withErrors(['email' => '🛑 This secure login link has expired. Please request a new link.']);
         }
 
         return response("
@@ -94,14 +106,22 @@ class MagicAuthController extends Controller
     }
 
     /**
-     * Process human confirmation, stage session values, and trigger Telnyx carriers.
+     * Process user confirmation and send the 2FA code via Telnyx.
      */
     public function processVerifyBridge($token)
     {
         $user = User::where('login_token', $token)->first();
 
-        if (!$user || Carbon::parse($user->token_expires_at)->isPast()) {
+        if (!$user) {
             return redirect()->route('welcome')->withErrors(['email' => '🛑 This login link has expired or is invalid. Please request a new secure link.']);
+        }
+
+        $parts = explode('t', $token);
+        $expiresAtEpoch = isset($parts[1]) ? (int)$parts[1] : 0;
+
+        if (time() > $expiresAtEpoch) {
+            $user->update(['login_token' => null, 'token_expires_at' => null]);
+            return redirect()->route('welcome')->withErrors(['email' => '🛑 This secure login link has expired. Please request a new link.']);
         }
 
         if (empty($user->phone_2fa)) {
@@ -112,12 +132,11 @@ class MagicAuthController extends Controller
 
         $securityCode = strval(rand(100000, 999999));
 
-        // FIX: Store the code and raw expiration epoch integer inside the encrypted user session
-        // to bypass any local database engine timezone or system clock drift faults completely.
+        // Store 2FA variables entirely in session memory to avoid timezone lag
         session([
             'auth_2fa_user_id'    => $user->id,
             'auth_2fa_code'       => $securityCode,
-            'auth_2fa_expires_at' => time() + (60 * 10), // Valid for exactly 10 minutes from right now
+            'auth_2fa_expires_at' => time() + (60 * 10), // Valid for 10 minutes
         ]);
 
         $company = DB::table('sc_companies')->where('id', $user->company_id)->first();
@@ -192,7 +211,7 @@ class MagicAuthController extends Controller
     }
 
     /**
-     * Complete text code authorization natively utilizing session epoch parameters.
+     * Complete text code authorization using session parameters.
      */
     public function verifyTwoFactor(Request $request)
     {
@@ -208,8 +227,6 @@ class MagicAuthController extends Controller
             return redirect()->route('welcome')->withErrors(['email' => '🛑 Verification session expired. Please sign in again.']);
         }
 
-        // FIX: Compare metrics entirely via session variables. This treats numbers as absolute strings
-        // and checks expiration against server time, cutting database lag completely out of the equation.
         if (time() > $expiresAt || $savedCode !== $request->two_factor_code) {
             return redirect()->route('magic.2fa.view')->withErrors(['two_factor_code' => '🛑 The verification code entered is incorrect or has expired. Please verify your alerts and retry.']);
         }
@@ -220,7 +237,7 @@ class MagicAuthController extends Controller
             return redirect()->route('welcome')->withErrors(['email' => '🛑 Target profile identity could not be verified.']);
         }
 
-        // Wipe single-use login link data elements from DB upon successful match
+        // Wipe single-use token details from the database now that authentication is complete
         $user->update([
             'two_factor_code' => null,
             'two_factor_expires_at' => null,
@@ -234,7 +251,6 @@ class MagicAuthController extends Controller
         $request->session()->put('auth.password_confirmed_at', time());
         $request->session()->save();
 
-        // Clean session tracking variables completely
         session()->forget(['auth_2fa_user_id', 'auth_2fa_code', 'auth_2fa_expires_at']);
 
         return redirect()->route('dashboard')->with('status', '⚡ Verified successfully. Welcome back to your company workspace!');
