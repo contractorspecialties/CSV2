@@ -39,16 +39,7 @@ class MagicAuthController extends Controller
         $magicLink = route('magic.verify', ['token' => $token]);
 
         try {
-            Mail::html("
-                <div style=\"font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;\">
-                    <h2 style=\"color: #0f172a; font-size: 16px; font-weight: bold;\">Workspace Login Link</h2>
-                    <p style=\"font-size: 14px; color: #334155;\">Click the secure link below to open your contractor workspace panel. This access route is single-use and expires in 15 minutes.</p>
-                    <div style=\"margin: 20px 0;\">
-                        <a href=\"{$magicLink}\" rel=\"nofollow\" style=\"display: inline-block; background-color: #f58613; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 13px; padding: 12px 20px; border-radius: 6px;\">Log Into Dashboard Direct →</a>
-                    </div>
-                    <p style=\"font-size: 11px; color: #94a3b8;\">If the button does not work, copy and paste this path directly into your address bar:<br><span style=\"font-family: monospace; color: #64748b;\">{$magicLink}</span></p>
-                </div>
-            ", function ($message) use ($user) {
+            Mail::raw("Hello, click the link below to log securely into your ContractorSpecialties company dashboard. This link will expire in 15 minutes for your security.\n\n{$magicLink}", function ($message) use ($user) {
                 $message->to($user->email)
                         ->subject('⚡ Your Secure Dashboard Sign-In Link');
             });
@@ -103,7 +94,7 @@ class MagicAuthController extends Controller
     }
 
     /**
-     * Process human confirmation, stage tracking items, and issue the 2FA secure text.
+     * Process human confirmation, stage session values, and trigger Telnyx carriers.
      */
     public function processVerifyBridge($token)
     {
@@ -121,13 +112,13 @@ class MagicAuthController extends Controller
 
         $securityCode = strval(rand(100000, 999999));
 
-        $user->update([
-            'two_factor_code' => $securityCode,
-            'two_factor_expires_at' => now()->addMinutes(10),
+        // FIX: Store the code and raw expiration epoch integer inside the encrypted user session
+        // to bypass any local database engine timezone or system clock drift faults completely.
+        session([
+            'auth_2fa_user_id'    => $user->id,
+            'auth_2fa_code'       => $securityCode,
+            'auth_2fa_expires_at' => time() + (60 * 10), // Valid for exactly 10 minutes from right now
         ]);
-
-        // Explicitly set tracking markers inside core session array
-        session(['auth_2fa_user_id' => $user->id]);
 
         $company = DB::table('sc_companies')->where('id', $user->company_id)->first();
         $companyName = $company->name ?? 'ContractorSpecialties';
@@ -148,12 +139,11 @@ class MagicAuthController extends Controller
             }
         }
 
-        // Redirect to isolated form URL to ensure clean session state serialization down to client storage
         return redirect()->route('magic.2fa.view');
     }
 
     /**
-     * Render the isolated 2FA text input panel view cleanly with native error reporting hooks.
+     * Render the isolated 2FA text input panel view layout.
      */
     public function showTwoFactorForm()
     {
@@ -202,7 +192,7 @@ class MagicAuthController extends Controller
     }
 
     /**
-     * Complete human text validation verification securely entirely using local server-side Carbon metrics.
+     * Complete text code authorization natively utilizing session epoch parameters.
      */
     public function verifyTwoFactor(Request $request)
     {
@@ -210,20 +200,27 @@ class MagicAuthController extends Controller
             'two_factor_code' => 'required|string|size:6',
         ]);
 
-        $userId = session('auth_2fa_user_id');
+        $userId    = session('auth_2fa_user_id');
+        $savedCode = session('auth_2fa_code');
+        $expiresAt = session('auth_2fa_expires_at');
 
-        if (!$userId) {
-            return redirect()->route('welcome')->withErrors(['email' => '🛑 Verification session expired. Please attempt sign-in again.']);
+        if (!$userId || !$savedCode || !$expiresAt) {
+            return redirect()->route('welcome')->withErrors(['email' => '🛑 Verification session expired. Please sign in again.']);
+        }
+
+        // FIX: Compare metrics entirely via session variables. This treats numbers as absolute strings
+        // and checks expiration against server time, cutting database lag completely out of the equation.
+        if (time() > $expiresAt || $savedCode !== $request->two_factor_code) {
+            return redirect()->route('magic.2fa.view')->withErrors(['two_factor_code' => '🛑 The verification code entered is incorrect or has expired. Please verify your alerts and retry.']);
         }
 
         $user = User::find($userId);
 
-        // Process expiration matching metrics in PHP to bypass MySQL system clock mismatch faults
-        if (!$user || $user->two_factor_code !== $request->two_factor_code || Carbon::parse($user->two_factor_expires_at)->isPast()) {
-            return redirect()->route('magic.2fa.view')->withErrors(['two_factor_code' => '🛑 The verification code entered is incorrect or has expired. Please verify your alerts and retry.']);
+        if (!$user) {
+            return redirect()->route('welcome')->withErrors(['email' => '🛑 Target profile identity could not be verified.']);
         }
 
-        // Wipe security values simultaneously upon clean matching authentication parameters
+        // Wipe single-use login link data elements from DB upon successful match
         $user->update([
             'two_factor_code' => null,
             'two_factor_expires_at' => null,
@@ -237,7 +234,8 @@ class MagicAuthController extends Controller
         $request->session()->put('auth.password_confirmed_at', time());
         $request->session()->save();
 
-        session()->forget('auth_2fa_user_id');
+        // Clean session tracking variables completely
+        session()->forget(['auth_2fa_user_id', 'auth_2fa_code', 'auth_2fa_expires_at']);
 
         return redirect()->route('dashboard')->with('status', '⚡ Verified successfully. Welcome back to your company workspace!');
     }
