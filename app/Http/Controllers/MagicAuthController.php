@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Illuminate\Support\Carbon;
 
 class MagicAuthController extends Controller
 {
@@ -28,7 +29,6 @@ class MagicAuthController extends Controller
             return back()->with('status', '📨 If your business email is registered, your secure login link has been sent.');
         }
 
-        // Shrunk to 32 characters to easily survive plain-text mail wrapping thresholds
         $token = Str::random(32);
 
         $user->update([
@@ -39,17 +39,7 @@ class MagicAuthController extends Controller
         $magicLink = route('magic.verify', ['token' => $token]);
 
         try {
-            // Bulletproof HTML delivery structure that blocks background security scanners from consuming the token
-            Mail::html("
-                <div style=\"font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;\">
-                    <h2 style=\"color: #0f172a; font-size: 16px; font-weight: bold;\">Workspace Login Link</h2>
-                    <p style=\"font-size: 14px; color: #334155;\">Click the secure link below to open your contractor workspace panel. This access route is single-use and expires in 15 minutes.</p>
-                    <div style=\"margin: 20px 0;\">
-                        <a href=\"{$magicLink}\" rel=\"nofollow\" style=\"display: inline-block; background-color: #f58613; color: #ffffff; text-decoration: none; font-weight: bold; font-size: 13px; padding: 12px 20px; border-radius: 6px;\">Log Into Dashboard Direct →</a>
-                    </div>
-                    <p style=\"font-size: 11px; color: #94a3b8;\">If the button does not work, copy and paste this path directly into your address bar:<br><span style=\"font-family: monospace; color: #64748b;\">{$magicLink}</span></p>
-                </div>
-            ", function ($message) use ($user) {
+            Mail::raw("Hello, click the link below to log securely into your ContractorSpecialties company dashboard. This link will expire in 15 minutes for your security.\n\n{$magicLink}", function ($message) use ($user) {
                 $message->to($user->email)
                         ->subject('⚡ Your Secure Dashboard Sign-In Link');
             });
@@ -64,21 +54,62 @@ class MagicAuthController extends Controller
     }
 
     /**
-     * Validate the sign-in link and either enforce text code security or bypass to dashboard.
+     * Display a secure intermediate bridge confirmation layout to stop background email bots from expiring single-use links.
      */
-    public function verifyToken($token)
+    public function showVerifyBridge($token)
     {
-        // Simple scanner safety check - block head requests or common pre-fetch user agents
-        if (request()->isMethod('HEAD') || str_contains(request()->header('User-Agent', ''), 'Slackbot')) {
-            return response('Scanner Intercepted', 200);
+        $user = User::where('login_token', $token)->first();
+
+        if (!$user) {
+            return redirect()->route('welcome')->withErrors(['email' => '🛑 This login link has already been used or is invalid. Please request a new secure link.']);
         }
 
-        $user = User::where('login_token', $token)
-            ->where('token_expires_at', '>', now())
-            ->first();
+        // Render a fast click-through form layout to block bots
+        return response("
+            <!DOCTYPE html>
+            <html lang=\"en\" class=\"h-full bg-slate-50\">
+            <head>
+                <meta charset=\"UTF-8\">
+                <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+                <title>Secure Workspace Entrance</title>
+                <script src=\"https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4\"></script>
+            </head>
+            <body class=\"flex flex-col justify-center min-h-full font-sans antialiased bg-slate-50 px-4 py-12\">
+                <div class=\"w-full max-w-md mx-auto bg-white border border-slate-200 rounded-2xl shadow-xl p-8 text-center space-y-6\">
+                    <div class=\"space-y-2\">
+                        <div class=\"inline-flex items-center justify-center w-12 h-12 rounded-xl bg-orange-50 text-[#f58613] text-xl font-bold mb-1\">🏗️</div>
+                        <h2 class=\"text-xl font-black text-slate-950 uppercase tracking-tight\">Contractor Specialties Portal</h2>
+                        <p class=\"text-xs text-slate-500 font-semibold max-w-[280px] mx-auto leading-normal\">Click below to confirm your identity and open your secure workspace dashboard manager.</p>
+                    </div>
+
+                    <form action=\"" . route('magic.verify.submit', ['token' => $token]) . "\" method=\"POST\">
+                        <input type=\"hidden\" name=\"_token\" value=\"" . csrf_token() . "\">
+                        <button type=\"submit\" class=\"w-full bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-4 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer\">
+                            Securely Enter Dashboard →
+                        </button>
+                    </form>
+                </div>
+            </body>
+            </html>
+        ");
+    }
+
+    /**
+     * Process human-submitted confirmation request inputs to complete workspace login steps safely.
+     */
+    public function processVerifyBridge($token)
+    {
+        $user = User::where('login_token', $token)->first();
 
         if (!$user) {
             return redirect()->route('welcome')->withErrors(['email' => '🛑 This login link has expired or is invalid. Please request a new secure link.']);
+        }
+
+        // Perform time tracking calculations natively inside PHP to prevent database engine clock-drift bugs
+        $expiration = Carbon::parse($user->token_expires_at);
+        if (now()->greaterThan($expiration)) {
+            $user->update(['login_token' => null, 'token_expires_at' => null]);
+            return redirect()->route('welcome')->withErrors(['email' => '🛑 This secure authentication code token has expired. Request a new login path link.']);
         }
 
         $user->update([
@@ -119,6 +150,7 @@ class MagicAuthController extends Controller
             }
         }
 
+        // Render input element parameters configured with numeric inputmodes to force immediate numeric keypad popups on field screens
         return response("
             <!DOCTYPE html>
             <html lang=\"en\" class=\"h-full bg-slate-50\">
@@ -140,7 +172,7 @@ class MagicAuthController extends Controller
                         <input type=\"hidden\" name=\"_token\" value=\"" . csrf_token() . "\">
                         <div>
                             <label for=\"secure_code\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Enter 6-Digit Security Code</label>
-                            <input type=\"text\" id=\"secure_code\" name=\"two_factor_code\" required maxlength=\"6\" placeholder=\"000000\" autocomplete=\"one-time-code\" class=\"w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-center text-lg font-mono font-black tracking-[0.5em] text-slate-900 focus:outline-none focus:border-[#f58613]\">
+                            <input type=\"text\" id=\"secure_code\" name=\"two_factor_code\" required maxlength=\"6\" placeholder=\"000000\" inputmode=\"numeric\" pattern=\"[0-9]*\" autocomplete=\"one-time-code\" class=\"w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-center text-lg font-mono font-black tracking-[0.5em] text-slate-900 focus:outline-none focus:border-[#f58613]\">
                         </div>
 
                         <button type=\"submit\" class=\"w-full bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-3.5 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer\">

@@ -20,9 +20,11 @@ Route::get('/login', function () { return redirect()->route('welcome'); })->name
 // Frictionless Login Handling
 Route::post('/login/two-factor-verify', [MagicAuthController::class, 'verifyTwoFactor'])->name('magic.2fa');
 Route::post('/login/magic', [MagicAuthController::class, 'sendLink'])->name('magic.send');
-Route::get('/login/verify/{token}', [MagicAuthController::class, 'verifyToken'])->name('magic.verify');
 
-// Changed to match both GET and POST requests for fast browser testing
+// Interstitial Handshake: GET displays the landing card, POST processes the authentication
+Route::get('/login/verify/{token}', [MagicAuthController::class, 'showVerifyBridge'])->name('magic.verify');
+Route::post('/login/verify/{token}', [MagicAuthController::class, 'processVerifyBridge'])->name('magic.verify.submit');
+
 Route::match(['get', 'post'], '/logout', [MagicAuthController::class, 'logout'])->name('logout');
 
 // Authenticated Contractor Workspace
