@@ -18,12 +18,15 @@ Route::get('/', function () { return view('welcome'); })->name('welcome');
 Route::get('/login', function () { return redirect()->route('welcome'); })->name('login');
 
 // Frictionless Login Handling
-Route::post('/login/two-factor-verify', [MagicAuthController::class, 'verifyTwoFactor'])->name('magic.2fa');
 Route::post('/login/magic', [MagicAuthController::class, 'sendLink'])->name('magic.send');
 
-// Interstitial Handshake: GET displays the landing card, POST processes the authentication
+// Interstitial Bot-Shield Handshake Routes
 Route::get('/login/verify/{token}', [MagicAuthController::class, 'showVerifyBridge'])->name('magic.verify');
 Route::post('/login/verify/{token}', [MagicAuthController::class, 'processVerifyBridge'])->name('magic.verify.submit');
+
+// Dedicated Secure SMS Code Verification Nodes
+Route::get('/login/two-factor', [MagicAuthController::class, 'showTwoFactorForm'])->name('magic.2fa.view');
+Route::post('/login/two-factor-verify', [MagicAuthController::class, 'verifyTwoFactor'])->name('magic.2fa');
 
 Route::match(['get', 'post'], '/logout', [MagicAuthController::class, 'logout'])->name('logout');
 
@@ -73,6 +76,7 @@ Route::middleware(['auth'])->group(function () {
 // Homeowner Viewport Portal Frames
 Route::get('/portal', function () { return view('portal'); })->name('portal');
 Route::get('/portal/checkout/{token}', [EstimateController::class, 'checkout'])->name('portal.checkout');
+
 Route::post('/portal/action/{id}', [EstimateController::class, 'handlePortalAction'])->name('portal.action');
 Route::get('/portal/success/{token}', [EstimateController::class, 'paymentSuccess'])->name('quotes.payment.success');
 

@@ -69,7 +69,6 @@ class MagicAuthController extends Controller
     {
         $user = User::where('login_token', $token)->first();
 
-        // Check validation rules directly inside PHP to protect against clock drift
         if (!$user || Carbon::parse($user->token_expires_at)->isPast()) {
             return redirect()->route('welcome')->withErrors(['email' => '🛑 This login link has expired or is invalid. Please request a new secure link.']);
         }
@@ -104,7 +103,7 @@ class MagicAuthController extends Controller
     }
 
     /**
-     * Process human-submitted confirmation requests and dispatch the 2FA text code.
+     * Process human confirmation, stage tracking items, and issue the 2FA secure text.
      */
     public function processVerifyBridge($token)
     {
@@ -114,10 +113,7 @@ class MagicAuthController extends Controller
             return redirect()->route('welcome')->withErrors(['email' => '🛑 This login link has expired or is invalid. Please request a new secure link.']);
         }
 
-        // NOTE: We no longer clear the login_token here. This protects the route from being burned by background bots or double clicks.
-
         if (empty($user->phone_2fa)) {
-            // Bypass straight to dashboard if no security number is registered yet
             $user->update(['login_token' => null, 'token_expires_at' => null]);
             Auth::login($user, true);
             return redirect()->route('dashboard')->with('status', '⚡ Welcome back! Save your mobile number to arm your text-code security options.');
@@ -130,6 +126,7 @@ class MagicAuthController extends Controller
             'two_factor_expires_at' => now()->addMinutes(10),
         ]);
 
+        // Explicitly set tracking markers inside core session array
         session(['auth_2fa_user_id' => $user->id]);
 
         $company = DB::table('sc_companies')->where('id', $user->company_id)->first();
@@ -151,7 +148,19 @@ class MagicAuthController extends Controller
             }
         }
 
-        // Render verification input with explicit numeric inputmode parameters for immediate mobile number pads
+        // Redirect to isolated form URL to ensure clean session state serialization down to client storage
+        return redirect()->route('magic.2fa.view');
+    }
+
+    /**
+     * Render the isolated 2FA text input panel view cleanly with native error reporting hooks.
+     */
+    public function showTwoFactorForm()
+    {
+        if (!session()->has('auth_2fa_user_id')) {
+            return redirect()->route('welcome')->withErrors(['email' => '🛑 Your security verification session has expired. Request a new login link.']);
+        }
+
         return response("
             <!DOCTYPE html>
             <html lang=\"en\" class=\"h-full bg-slate-50\">
@@ -168,6 +177,12 @@ class MagicAuthController extends Controller
                         <h2 class=\"text-xl font-black text-slate-950 uppercase tracking-tight\">Confirm Your Identity</h2>
                         <p class=\"text-xs text-slate-500 font-semibold max-w-[280px] mx-auto leading-normal\">We just texted a 6-digit security code to your phone for extra verification.</p>
                     </div>
+
+                    " . (session()->has('errors') ? "
+                        <div class=\"p-3 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-bold text-center\">
+                            " . session('errors')->first() . "
+                        </div>
+                    " : "") . "
 
                     <form action=\"" . route('magic.2fa') . "\" method=\"POST\" class=\"space-y-4\">
                         <input type=\"hidden\" name=\"_token\" value=\"" . csrf_token() . "\">
@@ -187,7 +202,7 @@ class MagicAuthController extends Controller
     }
 
     /**
-     * Process the texted 6-digit verification code to complete account authorization.
+     * Complete human text validation verification securely entirely using local server-side Carbon metrics.
      */
     public function verifyTwoFactor(Request $request)
     {
@@ -198,19 +213,17 @@ class MagicAuthController extends Controller
         $userId = session('auth_2fa_user_id');
 
         if (!$userId) {
-            return redirect()->route('welcome')->withErrors(['email' => '🛑 Your session has expired. Please sign in again.']);
+            return redirect()->route('welcome')->withErrors(['email' => '🛑 Verification session expired. Please attempt sign-in again.']);
         }
 
-        $user = User::where('id', $userId)
-            ->where('two_factor_code', $request->two_factor_code)
-            ->where('two_factor_expires_at', '>', now())
-            ->first();
+        $user = User::find($userId);
 
-        if (!$user) {
-            return back()->withErrors(['two_factor_code' => '🛑 The code you entered is incorrect or has expired. Please double-check your mobile alerts and try again.']);
+        // Process expiration matching metrics in PHP to bypass MySQL system clock mismatch faults
+        if (!$user || $user->two_factor_code !== $request->two_factor_code || Carbon::parse($user->two_factor_expires_at)->isPast()) {
+            return redirect()->route('magic.2fa.view')->withErrors(['two_factor_code' => '🛑 The verification code entered is incorrect or has expired. Please verify your alerts and retry.']);
         }
 
-        // Clean up both single-use security items simultaneously upon successful confirmation
+        // Wipe security values simultaneously upon clean matching authentication parameters
         $user->update([
             'two_factor_code' => null,
             'two_factor_expires_at' => null,
