@@ -47,6 +47,18 @@ class EstimateController extends Controller
      */
     public function store(Request $request)
     {
+        // Clean up empty form field string artifacts before firing validation sequences
+        $inputData = $request->all();
+        if (isset($inputData['expires_at']) && trim($inputData['expires_at']) === '') {
+            $inputData['expires_at'] = null;
+        }
+        if (isset($inputData['deposit_amount']) && trim($inputData['deposit_amount']) === '') {
+            $inputData['deposit_amount'] = null;
+        }
+
+        // Re-bind sanitized variables back into a clean workspace request array
+        $request->merge($inputData);
+
         $validated = $request->validate([
             'customer_first_name' => 'required|string|max:255',
             'customer_last_name'  => 'required|string|max:255',
@@ -56,16 +68,19 @@ class EstimateController extends Controller
             'tax_rate'            => 'required|numeric|min:0|max:100',
             'deposit_amount'      => 'nullable|numeric|min:0',
             'notes'               => 'nullable|string',
-            'expires_at'          => 'nullable|date|after:today',
+            'expires_at'          => 'nullable|date|after_or_equal:today',
             'items'               => 'required|array|min:1',
             'items.*.description' => 'required|string|max:500',
             'items.*.quantity'    => 'required|numeric|min:0.01',
             'items.*.unit_price'  => 'required|numeric|min:0.00',
+            'items.*.save_to_pricebook' => 'nullable|boolean',
+            'caption'             => 'nullable|string|max:255'
         ]);
 
         $companyId = Auth::user()->company_id;
 
-        $estimate = DB::transaction(function () use ($validated, $companyId) {
+        $estimate = DB::transaction(function () use ($validated, $companyId, $request) {
+            // Bind or generate the target client master record layout profile safely
             $customer = Customer::firstOrCreate(
                 ['company_id' => $companyId, 'email' => $validated['customer_email']],
                 [
@@ -104,6 +119,18 @@ class EstimateController extends Controller
                     'unit_price'  => $itemData['unit_price'],
                     'total_price' => $itemTotal,
                 ]);
+
+                // AUTOMATED PRICEBOOK INLINE COMPILATION EXTENSION
+                if (!empty($itemData['save_to_pricebook'])) {
+                    PricebookItem::firstOrCreate(
+                        ['company_id' => $companyId, 'name' => Str::limit($itemData['description'], 100)],
+                        [
+                            'category'         => 'Field Created Services',
+                            'base_unit_cost'   => $itemData['unit_price'],
+                            'markup_percentage'=> 0.00
+                        ]
+                    );
+                }
             }
 
             $taxAmount = $calculatedSubtotal * ($validated['tax_rate'] / 100);
@@ -113,6 +140,18 @@ class EstimateController extends Controller
                 'subtotal'    => $calculatedSubtotal,
                 'grand_total' => $calculatedGrandTotal,
             ]);
+
+            // DYNAMIC INBOUND FIELD PROGRESS PHOTO PROCESSING HANDSHAKE
+            if ($request->hasFile('image') && $request->file('image')->isValid()) {
+                $path = $request->file('image')->store('attachments', 'public');
+
+                JobAttachment::create([
+                    'estimate_id' => $estimate->id,
+                    'file_path'   => '/storage/' . $path,
+                    'file_type'   => 'image',
+                    'caption'     => $request->caption ?? 'Initial field status markup record'
+                ]);
+            }
 
             return $estimate;
         });
@@ -182,7 +221,12 @@ class EstimateController extends Controller
         // Auto-notify the client via standard mobile SMS if information is present
         if (!empty($estimate->customer->phone)) {
             $portalLink = route('portal.checkout', ['token' => $estimate->estimate_number]);
-            $company = DB::table('sc_companies')->where('id', $companyId)->first();
+
+            // Assume table customization prefixes safely matching configured User schemas
+            $userTable = (new \App\Models\User())->getTable();
+            $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+
+            $company = DB::table($prefix . 'companies')->where('id', $companyId)->first();
             $fromLine = $company->sms_phone_number ?? env('TELNYX_DEFAULT_FROM');
 
             if (!empty($fromLine)) {
@@ -258,7 +302,6 @@ class EstimateController extends Controller
 
         // Homeowner clicks "Approve & Schedule"
         if ($action === 'schedule') {
-            // Check if contract dictates an upfront mobilization payment pass
             if ($estimate->deposit_amount > 0 && $estimate->status !== 'approved') {
                 $estimate->update(['status' => 'pending_deposit']);
                 return back()->with('status', '✍️ Project terms signed! To finalize mobilization scheduling, please hit the secure deposit button below.');
@@ -321,7 +364,11 @@ class EstimateController extends Controller
             return back()->with('error', '❌ This customer profile does not have a valid phone number recorded.');
         }
 
-        $company = DB::table('sc_companies')->where('id', $companyId)->first();
+        // Detect customizable database layouts dynamically
+        $userTable = (new \App\Models\User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+
+        $company = DB::table($prefix . 'companies')->where('id', $companyId)->first();
         $fromLine = $company->sms_phone_number ?? env('TELNYX_DEFAULT_FROM');
 
         if (empty($fromLine)) {
@@ -372,7 +419,7 @@ class EstimateController extends Controller
                     <p style=\"font-size: 14px; color: #334155; line-height: 1.6;\">Your detailed service specifications package from <strong>ContractorSpecialties</strong> is compiled and ready for authorization review.</p>
 
                     <div style=\"background-color: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 12px; margin: 24px 0;\">
-                        <span style=\"color: #64748b; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;\">Total Estimated Invoice:</span>
+                        <div style=\"color: #64748b; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;\">Total Estimated Invoice:</div>
                         <div style=\"font-size: 28px; font-weight: 900; color: #16a34a; margin-top: 4px;\">$" . number_format($estimate->grand_total, 2) . "</div>
                         " . ($estimate->deposit_amount > 0 ? "<div style=\"margin-top: 10px; font-size: 12px; color: #b45309; font-weight: 700;\">⚠️ Upfront Mobilization Deposit Required: $" . number_format($estimate->deposit_amount, 2) . "</div>" : "") . "
                     </div>
