@@ -155,7 +155,8 @@
 
                             <div class="md:col-span-1 flex items-center justify-between gap-2 h-9 pb-0.5">
                                 <label class="flex items-center gap-1 cursor-pointer select-none">
-                                    <input type="checkbox" :name="'items[' + index + '][save_to_pricebook]'" x-model="item.save_to_pricebook" class="rounded border-slate-300 text-[#f58613] focus:ring-[#f58613]">
+                                    <input type="hidden" :name="'items[' + index + '][save_to_pricebook]'" value="0">
+                                    <input type="checkbox" :name="'items[' + index + '][save_to_pricebook]'" value="1" x-model="item.save_to_pricebook" class="rounded border-slate-300 text-[#f58613] focus:ring-[#f58613]">
                                     <span class="text-[9px] font-black text-slate-400 uppercase tracking-tight">Save</span>
                                 </label>
                                 <button type="button" @click="removeItem(index)" :disabled="items.length === 1"
@@ -406,21 +407,7 @@
     <script>
         function estimateForm() {
             return {
-                // FIX: Map arrays safely via clear, isolated inline JS loops to keep Blade parsing clean
-                items: (() => {
-                    const oldData = @js(old('items'));
-                    if (oldData && Array.isArray(oldData) && oldData.length > 0) {
-                        return oldData.map((item, idx) => ({
-                            id: item.id || (Date.now() + idx + Math.random()),
-                            description: item.description || '',
-                            quantity: parseFloat(item.quantity) || 1,
-                            unit_price: parseFloat(item.unit_price) || 0.00,
-                            save_to_pricebook: (item.save_to_pricebook === true || item.save_to_pricebook === 'on' || item.save_to_pricebook == 1)
-                        }));
-                    }
-                    return [{ id: Date.now(), description: '', quantity: 1, unit_price: 0.00, save_to_pricebook: false }];
-                })(),
-
+                items: [],
                 taxRate: @js(old('tax_rate', 0)),
                 requireDeposit: @js(old('require_deposit') ? true : false),
                 depositAmount: @js(old('deposit_amount', 0)),
@@ -456,6 +443,21 @@
                 markupPreviewUrl: '',
 
                 init() {
+                    // Force complete sequential hydration loop block for old validation arrays
+                    @if(old('items'))
+                        @foreach(old('items') as $idx => $oldItem)
+                            this.items.push({
+                                id: {{ microtime(true) * 1000 + $idx }},
+                                description: @js($oldItem['description'] ?? ''),
+                                quantity: parseFloat(@js($oldItem['quantity'] ?? 1)) || 1,
+                                unit_price: parseFloat(@js($oldItem['unit_price'] ?? 0.00)) || 0.00,
+                                save_to_pricebook: @js(($oldItem['save_to_pricebook'] == 1 || $oldItem['save_to_pricebook'] === 'true'))
+                            });
+                        @endforeach
+                    @else
+                        this.items.push({ id: Date.now(), description: '', quantity: 1, unit_price: 0.00, save_to_pricebook: false });
+                    @endif
+
                     const preselectedId = '{{ $preselectedCustomerId ?? "" }}';
                     if (preselectedId && !this.customer_first_name) {
                         this.loadDirectoryProfile(preselectedId);
