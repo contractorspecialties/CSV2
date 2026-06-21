@@ -23,7 +23,7 @@
     }" class="contents">
 
         <header class="bg-black border-b border-slate-900 sticky top-0 z-50 shadow-md">
-            <div class="max-w-6xl mx-auto px-4 h-24 flex items-center justify-between">
+            <div class="max-w-7xl mx-auto px-4 h-24 flex items-center justify-between">
                 <div class="w-[400px] max-w-[45%] h-[100px] flex items-center">
                     <img src="/images/header-logo.webp" alt="ContractorSpecialties Logo" class="w-full h-auto max-h-[90px] object-contain object-left">
                 </div>
@@ -35,13 +35,13 @@
 
                     @auth
                         @if(auth()->user()->is_admin)
-                            <a href="{{ route('admin.index') }}" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-amber-400 hover:text-amber-300 font-black text-[10px] py-2.5 px-3.5 sm:px-4 rounded-xl uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer">
+                            <a href="{{ route('admin.index') }}" class="bg-slate-990 hover:bg-slate-800 border border-slate-800 text-amber-400 hover:text-amber-300 font-black text-[10px] py-2.5 px-3.5 sm:px-4 rounded-xl uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer">
                                 <span>⚙️</span>
                                 <span class="hidden sm:inline">Admin Desk</span>
                             </a>
                         @endif
 
-                        <a href="{{ route('logout') }}" class="bg-slate-900 hover:bg-red-950/40 border border-slate-800 hover:border-red-900/40 text-slate-400 hover:text-red-400 font-black text-[10px] py-2.5 px-3.5 sm:px-4 rounded-xl uppercase tracking-wider transition-all shadow-sm cursor-pointer">
+                        <a href="{{ route('logout') }}" class="bg-slate-990 hover:bg-red-950/40 border border-slate-800 hover:border-red-900/40 text-slate-400 hover:text-red-400 font-black text-[10px] py-2.5 px-3.5 sm:px-4 rounded-xl uppercase tracking-wider transition-all shadow-sm cursor-pointer">
                             Sign Out
                         </a>
                     @endauth
@@ -57,7 +57,7 @@
             </div>
         </header>
 
-        <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-8 space-y-8">
+        <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8 space-y-8">
 
             @if(session('status'))
                 <div class="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl p-4 flex items-center gap-3 shadow-sm">
@@ -160,58 +160,167 @@
                 </div>
             </section>
 
-            <section class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                    <h3 class="font-black text-xs text-slate-900 uppercase tracking-wider">Active Estimates & Quotes</h3>
-                    <span class="text-[10px] bg-slate-200 text-slate-700 font-black px-2 py-0.5 rounded uppercase tracking-wide">Live Pipeline Tracking</span>
+            <!-- RE-ENGINEERED CPP-STYLE HIGH-CONTRAST KANBAN BOARD SYSTEM -->
+            <section class="space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-slate-900 text-white p-4 rounded-2xl shadow-sm">
+                    <div>
+                        <h3 class="font-black text-sm uppercase tracking-wider text-slate-100">📋 Scope Pipeline Kanban Board</h3>
+                        <p class="text-slate-400 text-[11px] font-medium">Drag, track, or advance bid structures through fulfillment stages in real time.</p>
+                    </div>
+                    <span class="text-[9px] bg-slate-800 text-amber-400 font-mono font-black px-2.5 py-1 rounded-xl uppercase tracking-widest border border-slate-700/60 shadow-inner">
+                        Multi-Lane Operational Engine
+                    </span>
                 </div>
 
-                @if($estimates->isEmpty())
-                    <div class="p-12 text-center max-w-md mx-auto space-y-3">
-                        <div class="w-12 h-12 bg-slate-100 border border-slate-200 text-slate-400 text-lg flex items-center justify-center rounded-xl mx-auto shadow-inner">📂</div>
-                        <h4 class="font-black text-sm text-slate-900 uppercase tracking-tight">No Active Estimates Found</h4>
-                        <p class="text-xs text-slate-400 font-medium">Click "New Estimate" at the top action desk to log your first client quote sheet.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+
+                    <!-- LANE 1: DRAFTS COCKPIT -->
+                    <div class="bg-slate-100 border border-slate-200 rounded-2xl p-3 space-y-3 shadow-inner">
+                        <div class="flex justify-between items-center bg-white px-3 py-2 rounded-xl border border-slate-200/60 shadow-sm">
+                            <span class="text-xs font-black uppercase tracking-wider text-slate-500">🛠️ 1. Drafts</span>
+                            <span class="font-mono text-xs font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded-lg">{{ count($kanbanBids['draft']) }}</span>
+                        </div>
+                        <div class="space-y-2.5 max-h-[600px] overflow-y-auto pr-0.5">
+                            @forelse($kanbanBids['draft'] as $bid)
+                                <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm space-y-3 hover:border-slate-400 transition-all relative group">
+                                    <div class="flex justify-between items-start">
+                                        <span class="text-[10px] font-mono font-black text-slate-400 block tracking-tight group-hover:text-slate-900 transition-colors">{{ $bid->estimate_number }}</span>
+                                        <span class="text-sm font-mono font-black text-slate-900">${{ number_format($bid->grand_total, 2) }}</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-black text-xs text-slate-950 uppercase truncate">{{ $bid->customer->last_name }}, {{ $bid->customer->first_name }}</h4>
+                                        <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">Staged on {{ $bid->created_at->format('M j, Y') }}</p>
+                                    </div>
+                                    <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-1">
+                                        <form action="/estimates/{{ $bid->id }}/status" method="POST" class="inline-block flex-1">
+                                            @csrf
+                                            <input type="hidden" name="status" value="sent">
+                                            <button type="submit" class="w-full bg-slate-50 border border-slate-200 hover:bg-[#f58613] hover:text-white text-slate-800 text-[9px] font-black uppercase py-1.5 px-2 rounded-lg transition-colors cursor-pointer text-center">
+                                                Dispatch Out &rarr;
+                                            </button>
+                                        </form>
+                                        <form action="/estimates/{{ $bid->id }}" method="POST" class="inline-block" onsubmit="return confirm('🛑 Delete this draft record completely?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="bg-red-50 hover:bg-red-600 border border-red-200 text-red-600 hover:text-white font-black text-[11px] p-1.5 rounded-lg transition-colors cursor-pointer" title="Delete Quote">
+                                                🗑️
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="text-center py-8 text-[10px] text-slate-400 font-bold italic bg-white/40 border border-dashed border-slate-200 rounded-xl">No active drafts</div>
+                            @endforelse
+                        </div>
                     </div>
-                @else
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-xs border-collapse">
-                            <thead>
-                                <tr class="border-b border-slate-100 text-[10px] font-black uppercase text-slate-400 bg-slate-50/20">
-                                    <th class="py-3 px-6">Estimate No.</th>
-                                    <th class="py-3 px-6">Customer Name</th>
-                                    <th class="py-3 px-6 text-right">Total Price</th>
-                                    <th class="py-3 px-6 text-center">Status</th>
-                                    <th class="py-3 px-6 text-center">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100 text-slate-700">
-                                @foreach($estimates as $estimate)
-                                    <tr class="hover:bg-slate-50/80 font-semibold transition-colors">
-                                        <td class="py-4 px-6 font-mono font-black text-slate-950">{{ $estimate->estimate_number }}</td>
-                                        <td class="py-4 px-6 font-bold text-slate-900">
-                                            {{ $estimate->customer->last_name }}, {{ $estimate->customer->first_name }}
-                                        </td>
-                                        <td class="py-4 px-6 text-right font-mono font-black text-slate-950">${{ number_format($estimate->grand_total, 2) }}</td>
-                                        <td class="py-4 px-6 text-center">
-                                            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider
-                                                {{ $estimate->status === 'approved' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' : '' }}
-                                                {{ $estimate->status === 'sent' ? 'bg-orange-50 text-orange-700 border border-orange-200/60' : '' }}
-                                                {{ $estimate->status === 'draft' ? 'bg-slate-100 text-slate-700 border border-slate-200/40' : '' }}
-                                            ">
-                                                {{ $estimate->status }}
-                                            </span>
-                                        </td>
-                                        <td class="py-4 px-6 text-center">
-                                            <a href="/estimates/{{ $estimate->id }}" class="text-[#f58613] hover:text-orange-600 font-black uppercase text-[10px] tracking-wider">
-                                                Open Estimate →
-                                            </a>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+
+                    <!-- LANE 2: DISPATCHED / SENT -->
+                    <div class="bg-slate-100 border border-slate-200 rounded-2xl p-3 space-y-3 shadow-inner">
+                        <div class="flex justify-between items-center bg-white px-3 py-2 rounded-xl border border-slate-200/60 shadow-sm">
+                            <span class="text-xs font-black uppercase tracking-wider text-[#f58613]">📡 2. Dispatched</span>
+                            <span class="font-mono text-xs font-black text-white bg-[#f58613] px-2 py-0.5 rounded-lg">{{ count($kanbanBids['sent']) }}</span>
+                        </div>
+                        <div class="space-y-2.5 max-h-[600px] overflow-y-auto pr-0.5">
+                            @forelse($kanbanBids['sent'] as $bid)
+                                <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm space-y-3 hover:border-[#f58613] transition-all group">
+                                    <div class="flex justify-between items-start">
+                                        <a href="/estimates/{{ $bid->id }}" class="text-[10px] font-mono font-black text-slate-400 hover:text-[#f58613] tracking-tight block">{{ $bid->estimate_number }} 🔗</a>
+                                        <span class="text-sm font-mono font-black text-slate-900">${{ number_format($bid->grand_total, 2) }}</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-black text-xs text-slate-950 uppercase truncate">{{ $bid->customer->last_name }}, {{ $bid->customer->first_name }}</h4>
+                                        <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">Awaiting homeowner signature</p>
+                                    </div>
+                                    <div class="pt-2 border-t border-slate-100 flex gap-1">
+                                        <form action="/estimates/{{ $bid->id }}/status" method="POST" class="inline-block flex-1">
+                                            @csrf
+                                            <input type="hidden" name="status" value="approved">
+                                            <button type="submit" class="w-full bg-emerald-50 border border-emerald-200 hover:bg-emerald-600 text-emerald-700 hover:text-white text-[9px] font-black uppercase py-1.5 px-2 rounded-lg transition-colors cursor-pointer text-center">
+                                                ✓ Approve Contract
+                                            </button>
+                                        </form>
+                                        <form action="/estimates/{{ $bid->id }}/status" method="POST" class="inline-block">
+                                            @csrf
+                                            <input type="hidden" name="status" value="draft">
+                                            <button type="submit" class="bg-slate-50 hover:bg-slate-200 border border-slate-200 text-slate-600 font-black text-[10px] py-1.5 px-2 rounded-lg transition-colors cursor-pointer" title="Revert to Draft">
+                                                &larr;
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="text-center py-8 text-[10px] text-slate-400 font-bold italic bg-white/40 border border-dashed border-slate-200 rounded-xl">No pending bids sent</div>
+                            @endforelse
+                        </div>
                     </div>
-                @endif
+
+                    <!-- LANE 3: APPROVED / BOOKED REVENUE -->
+                    <div class="bg-slate-100 border border-slate-200 rounded-2xl p-3 space-y-3 shadow-inner">
+                        <div class="flex justify-between items-center bg-white px-3 py-2 rounded-xl border border-slate-200/60 shadow-sm">
+                            <span class="text-xs font-black uppercase tracking-wider text-emerald-700">🏗️ 3. Approved</span>
+                            <span class="font-mono text-xs font-black text-white bg-emerald-600 px-2 py-0.5 rounded-lg">{{ count($kanbanBids['approved']) }}</span>
+                        </div>
+                        <div class="space-y-2.5 max-h-[600px] overflow-y-auto pr-0.5">
+                            @forelse($kanbanBids['approved'] as $bid)
+                                <div class="bg-white border border-emerald-200 rounded-xl p-3.5 shadow-sm space-y-3 hover:border-emerald-500 transition-all group">
+                                    <div class="flex justify-between items-start">
+                                        <a href="/estimates/{{ $bid->id }}" class="text-[10px] font-mono font-black text-slate-400 hover:text-emerald-600 tracking-tight block">{{ $bid->estimate_number }} 🔗</a>
+                                        <span class="text-sm font-mono font-black text-emerald-600">${{ number_format($bid->grand_total, 2) }}</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-black text-xs text-slate-950 uppercase truncate">{{ $bid->customer->last_name }}, {{ $bid->customer->first_name }}</h4>
+                                        <p class="text-[10px] text-emerald-600 font-black tracking-tight uppercase text-[8px] mt-1 bg-emerald-50 border border-emerald-100/70 inline-block px-1.5 py-0.5 rounded shadow-sm">⚡ Active Production Order</p>
+                                    </div>
+                                    <div class="pt-2 border-t border-slate-100">
+                                        <form action="/estimates/{{ $bid->id }}/status" method="POST" class="w-full">
+                                            @csrf
+                                            <input type="hidden" name="status" value="closed">
+                                            <button type="submit" class="w-full bg-slate-900 border border-slate-950 hover:bg-black text-white text-[9px] font-black uppercase py-1.5 px-2 rounded-lg transition-colors cursor-pointer text-center">
+                                                📦 Close & Archive Job
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="text-center py-8 text-[10px] text-slate-400 font-bold italic bg-white/40 border border-dashed border-slate-200 rounded-xl">No active production runs</div>
+                            @endforelse
+                        </div>
+                    </div>
+
+                    <!-- LANE 4: CLOSED / ARCHIVED -->
+                    <div class="bg-slate-100 border border-slate-200 rounded-2xl p-3 space-y-3 shadow-inner">
+                        <div class="flex justify-between items-center bg-white px-3 py-2 rounded-xl border border-slate-200/60 shadow-sm">
+                            <span class="text-xs font-black uppercase tracking-wider text-slate-400">🔒 4. Archived</span>
+                            <span class="font-mono text-xs font-black text-slate-500 bg-slate-200 px-2 py-0.5 rounded-lg">{{ count($kanbanBids['closed']) }}</span>
+                        </div>
+                        <div class="space-y-2.5 max-h-[600px] overflow-y-auto pr-0.5">
+                            @forelse($kanbanBids['closed'] as $bid)
+                                <div class="bg-white/70 border border-slate-200 opacity-75 rounded-xl p-3.5 shadow-sm space-y-3 hover:opacity-100 transition-all group">
+                                    <div class="flex justify-between items-start">
+                                        <a href="/estimates/{{ $bid->id }}" class="text-[10px] font-mono font-black text-slate-400 tracking-tight block">{{ $bid->estimate_number }} 🔗</a>
+                                        <span class="text-sm font-mono font-bold text-slate-500">${{ number_format($bid->grand_total, 2) }}</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-black text-xs text-slate-700 uppercase truncate">{{ $bid->customer->last_name }}, {{ $bid->customer->first_name }}</h4>
+                                        <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">Fulfillment cycle completed</p>
+                                    </div>
+                                    <div class="pt-2 border-t border-slate-100">
+                                        <form action="/estimates/{{ $bid->id }}/status" method="POST" class="w-full">
+                                            @csrf
+                                            <input type="hidden" name="status" value="approved">
+                                            <button type="submit" class="w-full bg-white border border-slate-300 text-slate-500 text-[8px] font-black uppercase py-1 px-1.5 rounded hover:bg-slate-100 transition-all cursor-pointer text-center">
+                                                &larr; Pull back to production
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="text-center py-8 text-[10px] text-slate-400 font-bold italic bg-white/40 border border-dashed border-slate-200 rounded-xl">No historical records archived</div>
+                            @endforelse
+                        </div>
+                    </div>
+
+                </div>
             </section>
 
             <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -272,8 +381,8 @@
                         <form action="/user/security-phone" method="POST" class="space-y-3">
                             @csrf
                             <div>
-                                <label for="phone_2fa" class="block text-[10px] font-black uppercase text-slate-400 mb-1 tracking-wide">Secure Mobile Line</label>
-                                <input type="text" id="phone_2fa" name="phone_2fa" placeholder="e.g., 9195551234" value="{{ auth()->user()->phone_2fa ?? '' }}" required inputmode="numeric" pattern="[0-9]*" class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-3 text-sm font-mono font-bold focus:outline-none focus:border-[#f58613]">
+                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-1 tracking-wide">Secure Mobile Line</label>
+                                <input type="text" name="phone_2fa" placeholder="e.g., 9195551234" value="{{ auth()->user()->phone_2fa ?? '' }}" required inputmode="numeric" pattern="[0-9]*" class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-3 text-sm font-mono font-bold focus:outline-none focus:border-[#f58613]">
                             </div>
 
                             <button type="submit" class="w-full bg-slate-950 hover:bg-black text-white font-black text-xs py-2.5 px-4 rounded-xl uppercase tracking-wider shadow transition-all active:scale-[0.99] cursor-pointer">
@@ -388,7 +497,7 @@
                                         <span class="inline-block px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide border bg-emerald-50 text-emerald-700 border-emerald-200" x-text="job.status"></span>
                                         <template x-if="job.estimate_id">
                                             <a :href="'/estimates/' + job.estimate_id" class="text-[#f58613] hover:text-orange-600 font-black uppercase text-[10px] tracking-widest flex items-center gap-1">
-                                                Open Estimate →
+                                                Open Estimate &rarr;
                                             </a>
                                         </template>
                                     </div>
@@ -405,7 +514,7 @@
         </div>
 
         <footer class="border-t border-slate-900 bg-black text-slate-400 py-12">
-            <div class="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+            <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
 
                 <div class="md:col-span-5 flex flex-col items-center md:items-start gap-4">
                     <div class="w-[400px] max-w-full aspect-square bg-slate-950 border border-slate-900 rounded-2xl overflow-hidden shadow-lg flex items-center justify-center">
