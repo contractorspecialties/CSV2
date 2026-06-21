@@ -77,7 +77,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/estimates/{id}/close-job', [EstimateController::class, 'closeJob'])->name('estimates.close-job');
     Route::resource('estimates', EstimateController::class);
 
-    // Administrative System Cockpit Control Deck (Uses string class reference to clear stringification routines)
+    // Administrative System Cockpit Control Deck
     Route::middleware([\AdminGateMiddleware::class])->group(function () {
         Route::get('/admin/management', [AdminDashboardController::class, 'index'])->name('admin.index');
         Route::post('/admin/management/{id}/toggle', [AdminDashboardController::class, 'toggleAdminStatus'])->name('admin.toggle-rights');
@@ -112,17 +112,20 @@ Route::post('/webhooks/telnyx', [EstimateController::class, 'handleTelnyxWebhook
 | Runtime Class Extensions (Maintains Single File Swap Integration)
 |--------------------------------------------------------------------------
 */
-class AdminGateMiddleware
-{
-    /**
-     * Handle an incoming request and confirm authorization before allowing control deck execution.
-     */
-    public function handle($request, $next)
+// FIX: Shielded class definition against double-pass evaluation routing loops
+if (!class_exists('AdminGateMiddleware')) {
+    class AdminGateMiddleware
     {
-        if (!auth()->check() || !auth()->user()->is_admin) {
-            return redirect()->route('dashboard')->withErrors(['security' => '🛑 Clear operational clearance parameter mismatch. Entry route dropped.']);
-        }
+        /**
+         * Handle an incoming request and confirm authorization before allowing control deck execution.
+         */
+        public function handle($request, $next)
+        {
+            if (!auth()->check() || !auth()->user()->is_admin) {
+                return redirect()->route('dashboard')->withErrors(['security' => '🛑 Clear operational clearance parameter mismatch. Entry route dropped.']);
+            }
 
-        return $next($request);
+            return $next($request);
+        }
     }
 }
