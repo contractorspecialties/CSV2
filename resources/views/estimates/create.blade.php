@@ -162,7 +162,7 @@
                     <p class="text-xs text-slate-400 font-medium">Capture field layout evidence or launch the canvas editor to markup dimensions instantly.</p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
                     <div class="md:col-span-2 space-y-4">
 
                         <input type="file" id="studioFileInput" name="image" class="hidden">
@@ -172,11 +172,11 @@
                         <div>
                             <span class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-wide">Select Field Progress Photo</span>
                             <div class="grid grid-cols-2 gap-3">
-                                <button type="button" @click="document.getElementById('cameraInputDriver').click()" class="bg-slate-950 hover:bg-black text-white font-black text-xs py-3 px-4 rounded-xl uppercase tracking-wider shadow transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer">
+                                <button type="button" @click="document.getElementById('cameraInputDriver').click()" class="bg-slate-950 hover:bg-black text-white font-black text-xs py-3.5 px-4 rounded-xl uppercase tracking-wider shadow transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer">
                                     📷 Take Live Photo
                                 </button>
-                                <button type="button" @click="document.getElementById('galleryInputDriver').click()" class="bg-white border-2 border-slate-300 hover:border-slate-800 text-slate-800 hover:text-slate-950 font-black text-xs py-3 px-4 rounded-xl uppercase tracking-wider shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer">
-                                    🖼️ Open Gallery
+                                <button type="button" @click="document.getElementById('galleryInputDriver').click()" class="bg-white border-2 border-slate-300 hover:border-slate-800 text-slate-800 hover:text-slate-950 font-black text-xs py-3.5 px-4 rounded-xl uppercase tracking-wider shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer">
+                                    导 Open Gallery
                                 </button>
                             </div>
                         </div>
@@ -188,18 +188,48 @@
                         </div>
                     </div>
 
-                    <div class="flex flex-col items-center justify-center p-4 bg-slate-50 border border-slate-200 rounded-2xl h-36 relative overflow-hidden shadow-inner">
-                        <div class="absolute inset-0 w-full h-full" x-show="hasMarkupAttached" x-cloak>
-                            <img :src="markupPreviewUrl" class="w-full h-full object-cover">
-                            <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                <button type="button" @click="showStudio = true; $nextTick(() => initCanvasElements())" class="bg-white/90 text-slate-950 font-black text-[9px] uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-md cursor-pointer hover:bg-white">
-                                    Edit Markup ✏️
-                                </button>
+                    <div class="space-y-2">
+                        <span class="block text-[10px] font-black uppercase text-slate-500 tracking-wide">Active Field Thumbnail</span>
+
+                        <div class="flex flex-col items-center justify-center bg-slate-100 border border-slate-200 rounded-2xl aspect-video relative overflow-hidden group shadow-inner">
+
+                            <div class="absolute inset-0 w-full h-full" x-show="hasMarkupAttached" x-cloak>
+                                <img :src="markupPreviewUrl" class="w-full h-full object-cover">
+                                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer" @click="launchMarkupStudioWithCurrentImage()">
+                                    <span class="text-xl">✏️</span>
+                                    <span class="text-[9px] font-black uppercase text-white tracking-widest bg-[#f58613] px-2 py-1 rounded shadow">Edit Studio Markup</span>
+                                </div>
+                                <div class="absolute bottom-2 left-2 bg-emerald-600 text-white font-black text-[8px] uppercase tracking-wider px-2 py-0.5 rounded shadow">
+                                    ✓ Markup Active
+                                </div>
+                            </div>
+
+                            <div class="absolute inset-0 w-full h-full" x-show="hasImageSelected && !hasMarkupAttached" x-cloak>
+                                <img :src="rawPreviewUrl" class="w-full h-full object-cover">
+                                <div class="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-2 cursor-pointer" @click="launchMarkupStudioWithCurrentImage()">
+                                    <span class="text-xl animate-bounce">🎨</span>
+                                    <span class="text-[9px] font-black uppercase text-white tracking-widest bg-[#f58613] hover:bg-orange-600 px-3 py-1.5 rounded-xl shadow transition-colors">
+                                        Launch Markup Tools
+                                    </span>
+                                </div>
+                                <div class="absolute bottom-2 left-2 bg-amber-500 text-slate-950 font-black text-[8px] uppercase tracking-wider px-2 py-0.5 rounded shadow">
+                                    ⚠️ Raw Photo Un-Marked
+                                </div>
+                            </div>
+
+                            <div class="text-center text-slate-400 p-6 space-y-1 select-none" x-show="!hasImageSelected">
+                                <span class="text-3xl block filter grayscale opacity-40">🖼️</span>
+                                <span class="text-[10px] font-black uppercase tracking-wider block text-slate-400">No Image Selected</span>
                             </div>
                         </div>
-                        <div class="text-center text-slate-400 space-y-1" x-show="!hasMarkupAttached">
-                            <span class="text-2xl block">🖼 daylight_photo</span>
-                            <span class="text-[10px] font-black uppercase tracking-wider block">No Markups Loaded</span>
+
+                        <div x-show="hasImageSelected" x-cloak class="flex gap-2">
+                            <button type="button" @click="launchMarkupStudioWithCurrentImage()" class="flex-1 bg-slate-900 hover:bg-black text-slate-200 hover:text-white border border-slate-950 font-black text-[10px] py-2 rounded-lg uppercase tracking-wider text-center transition-all shadow-sm cursor-pointer">
+                                Open Markup Desk &rarr;
+                            </button>
+                            <button type="button" @click="purgeActivePhotoSelection()" class="bg-red-50 hover:bg-red-100 border border-red-200 text-red-600 font-black text-[10px] px-3 rounded-lg uppercase transition-colors cursor-pointer">
+                                Remove
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -297,7 +327,7 @@
             </button>
             <div class="flex items-center gap-3">
                 <button type="button" @click="undoLastShape()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all">
-                    ↩ Undo
+                    &larr; Undo
                 </button>
                 <button type="button" @click="clearStudioCanvas()" class="bg-red-950/40 text-red-400 hover:bg-red-900/40 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all">
                     🗑️ Clear
@@ -392,7 +422,11 @@
                 startY: 0,
                 history: [],
                 currentPoints: [],
+
+                // HYBRID PREVIEW HOOK DATA ATTRIBUTES
+                hasImageSelected: false,
                 hasMarkupAttached: false,
+                rawPreviewUrl: '',
                 markupPreviewUrl: '',
 
                 init() {
@@ -449,6 +483,10 @@
                     if (!file) return;
                     const reader = new FileReader();
                     reader.onload = (e) => {
+                        this.rawPreviewUrl = e.target.result;
+                        this.hasImageSelected = true;
+                        this.hasMarkupAttached = false; // Fresh image overrides previous markup state
+
                         this.bgImage = new Image();
                         this.bgImage.onload = () => {
                             this.showStudio = true;
@@ -458,6 +496,25 @@
                         this.bgImage.src = e.target.result;
                     };
                     reader.readAsDataURL(file);
+                },
+                launchMarkupStudioWithCurrentImage() {
+                    if (!this.rawPreviewUrl) return;
+                    this.bgImage = new Image();
+                    this.bgImage.onload = () => {
+                        this.showStudio = true;
+                        this.$nextTick(() => this.initCanvasElements());
+                    };
+                    this.bgImage.src = this.rawPreviewUrl;
+                },
+                purgeActivePhotoSelection() {
+                    this.hasImageSelected = false;
+                    this.hasMarkupAttached = false;
+                    this.rawPreviewUrl = '';
+                    this.markupPreviewUrl = '';
+                    this.history = [];
+                    document.getElementById('studioFileInput').value = '';
+                    document.getElementById('cameraInputDriver').value = '';
+                    document.getElementById('galleryInputDriver').value = '';
                 },
                 initCanvasElements() {
                     this.canvas = document.getElementById('studioCanvas');
@@ -578,11 +635,6 @@
                 },
                 closeStudio() {
                     this.showStudio = false;
-                    if (!this.hasMarkupAttached) {
-                        document.getElementById('studioFileInput').value = '';
-                        document.getElementById('cameraInputDriver').value = '';
-                        document.getElementById('galleryInputDriver').value = '';
-                    }
                 },
                 commitStudioMarkup() {
                     this.canvas.toBlob((blob) => {
@@ -591,7 +643,6 @@
                         const containerExchange = new DataTransfer();
                         containerExchange.items.add(editedFile);
 
-                        // Force final output data payload explicitly to master file wrapper node
                         document.getElementById('studioFileInput').files = containerExchange.files;
                         this.markupPreviewUrl = this.canvas.toDataURL('image/jpeg');
                         this.hasMarkupAttached = true;
