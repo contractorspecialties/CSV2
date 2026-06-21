@@ -10,7 +10,8 @@
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="flex flex-col min-h-full font-sans antialiased bg-slate-50 text-slate-900 selection:bg-[#f58613] selection:text-white">
+<body class="flex flex-col min-h-full font-sans antialiased bg-slate-50 text-slate-900 selection:bg-[#f58613] selection:text-white"
+      x-data="estimateForm">
 
     <header class="bg-black border-b border-slate-900 sticky top-0 z-50 shadow-md">
         <div class="max-w-5xl mx-auto px-4 h-24 flex items-center justify-between">
@@ -23,249 +24,7 @@
         </div>
     </header>
 
-    <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-8" x-data="{
-        items: [{ description: '', quantity: 1, unit_price: 0.00, save_to_pricebook: false }],
-        taxRate: 0,
-        requireDeposit: false,
-        depositAmount: 0,
-        isRecurring: false,
-        pricebook: {{ json_encode($pricebookItems ?? []) }},
-        customersList: {{ json_encode($customers ?? []) }},
-
-        // Inline Customer Management State
-        customerSource: 'directory',
-        customer_first_name: '',
-        customer_last_name: '',
-        customer_email: '',
-        customer_phone: '',
-        customer_address: '',
-
-        // PHOTO MARKUP TELEMETRY INTEGRATIONS
-        showStudio: false,
-        tool: 'pen',
-        color: '#f58613',
-        thickness: 6,
-        textSize: 22,
-        canvas: null,
-        ctx: null,
-        bgImage: null,
-        isDrawing: false,
-        startX: 0,
-        startY: 0,
-        history: [],
-        currentPoints: [],
-        hasMarkupAttached: false,
-        markupPreviewUrl: '',
-
-        init() {
-            // Check if there is a preselected customer forwarded from a directory route
-            const preselectedId = '{{ $preselectedCustomerId ?? '' }}';
-            if (preselectedId) {
-                this.loadDirectoryProfile(preselectedId);
-            }
-        },
-        addItem() {
-            this.items.push({ description: '', quantity: 1, unit_price: 0.00, save_to_pricebook: false });
-        },
-        removeItem(index) {
-            if (this.items.length > 1) {
-                this.items.splice(index, 1);
-            }
-        },
-        loadPricebookItem(index, itemId) {
-            const match = this.pricebook.find(i => i.id == itemId);
-            if (match) {
-                this.items[index].description = match.name;
-                const finalCost = parseFloat(match.base_unit_cost) * (1 + (parseFloat(match.markup_percentage) / 100));
-                this.items[index].unit_price = finalCost.toFixed(2);
-            }
-        },
-        loadDirectoryProfile(id) {
-            const match = this.customersList.find(c => c.id == id);
-            if (match) {
-                this.customer_first_name = match.first_name;
-                this.customer_last_name = match.last_name;
-                this.customer_email = match.email;
-                this.customer_phone = match.phone || '';
-                this.customer_address = match.billing_address || '';
-            } else {
-                this.clearCustomerFields();
-            }
-        },
-        clearCustomerFields() {
-            this.customer_first_name = '';
-            this.customer_last_name = '';
-            this.customer_email = '';
-            this.customer_phone = '';
-            this.customer_address = '';
-        },
-        get subtotal() {
-            return this.items.reduce((sum, item) => sum + ((parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0)), 0);
-        },
-        get taxTotal() {
-            return this.subtotal * ((parseFloat(this.taxRate) || 0) / 100);
-        },
-        get grandTotal() {
-            return this.subtotal + this.taxTotal;
-        },
-
-        // STUDIO CANVAS CONTROLLER ARCHITECTURE METHODS
-        loadPhotoToStudio(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                this.bgImage = new Image();
-                this.bgImage.onload = () => {
-                    this.showStudio = true;
-                    this.history = []; // Reset canvas array vectors
-                    this.$nextTick(() => {
-                        this.initCanvasElements();
-                    });
-                };
-                this.bgImage.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        },
-        initCanvasElements() {
-            this.canvas = document.getElementById('studioCanvas');
-            this.ctx = this.canvas.getContext('2d');
-            this.resizeCanvas();
-        },
-        resizeCanvas() {
-            if (!this.canvas || !this.bgImage) return;
-            const maxWidth = window.innerWidth * 0.90;
-            const maxHeight = window.innerHeight * 0.70;
-            let ratio = Math.min(maxWidth / this.bgImage.width, maxHeight / this.bgImage.height);
-            this.canvas.width = this.bgImage.width * ratio;
-            this.canvas.height = this.bgImage.height * ratio;
-            this.redrawCanvasWorkspace();
-        },
-        redrawCanvasWorkspace() {
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            this.ctx.drawImage(this.bgImage, 0, 0, this.canvas.width, this.canvas.height);
-            this.history.forEach(shape => this.drawShapePrimitive(shape));
-        },
-        getCoordinates(event) {
-            let clientX = event.touches ? event.touches[0].clientX : event.clientX;
-            let clientY = event.touches ? event.touches[0].clientY : event.clientY;
-            const rect = this.canvas.getBoundingClientRect();
-            return { x: clientX - rect.left, y: clientY - rect.top };
-        },
-        startDrawing(event) {
-            event.preventDefault();
-            const coords = this.getCoordinates(event);
-            this.isDrawing = true;
-            this.startX = coords.x;
-            this.startY = coords.y;
-            if (this.tool === 'pen') {
-                this.currentPoints = [{ x: coords.x, y: coords.y }];
-            } else if (this.tool === 'text') {
-                this.isDrawing = false;
-                const note = prompt("Enter text instruction to place at coordinates:");
-                if (note) {
-                    this.history.push({ type: 'text', x: this.startX, y: this.startY, text: note, color: this.color, size: this.textSize });
-                    this.redrawCanvasWorkspace();
-                }
-            }
-        },
-        drawMove(event) {
-            if (!this.isDrawing) return;
-            event.preventDefault();
-            const coords = this.getCoordinates(event);
-            this.redrawCanvasWorkspace();
-            const tempShape = { type: this.tool, startX: this.startX, startY: this.startY, endX: coords.x, endY: coords.y, color: this.color, thickness: this.thickness, points: this.currentPoints };
-            if (this.tool === 'pen') {
-                this.currentPoints.push({ x: coords.x, y: coords.y });
-                tempShape.points = this.currentPoints;
-            }
-            this.drawShapePrimitive(tempShape);
-        },
-        endDrawing(event) {
-            if (!this.isDrawing) return;
-            this.isDrawing = false;
-            event.preventDefault();
-            const coords = this.getCoordinates(event) || { x: this.startX, y: this.startY };
-            if (this.tool === 'pen') {
-                this.history.push({ type: 'pen', points: this.currentPoints, color: this.color, thickness: this.thickness });
-            } else if (this.tool !== 'text') {
-                this.history.push({ type: this.tool, startX: this.startX, startY: this.startY, endX: coords.x, endY: coords.y, color: this.color, thickness: this.thickness });
-            }
-            this.currentPoints = [];
-            this.redrawCanvasWorkspace();
-        },
-        drawShapePrimitive(shape) {
-            this.ctx.strokeStyle = shape.color;
-            this.ctx.fillStyle = shape.color;
-            this.ctx.lineWidth = shape.thickness;
-            this.ctx.lineCap = 'round';
-            this.ctx.lineJoin = 'round';
-            this.ctx.beginPath();
-            if (shape.type === 'pen' && shape.points && shape.points.length > 0) {
-                this.ctx.moveTo(shape.points[0].x, shape.points[0].y);
-                shape.points.forEach(p => this.ctx.lineTo(p.x, p.y));
-                this.ctx.stroke();
-            } else if (shape.type === 'line') {
-                this.ctx.moveTo(shape.startX, shape.startY);
-                this.ctx.lineTo(shape.endX, shape.endY);
-                this.ctx.stroke();
-            } else if (shape.type === 'box') {
-                this.ctx.rect(shape.startX, shape.startY, shape.endX - shape.startX, shape.endY - shape.startY);
-                this.ctx.stroke();
-            } else if (shape.type === 'circle') {
-                const radius = Math.sqrt(Math.pow(shape.endX - shape.startX, 2) + Math.pow(shape.endY - shape.startY, 2));
-                this.ctx.arc(shape.startX, shape.startY, radius, 0, 2 * Math.PI);
-                this.ctx.stroke();
-            } else if (shape.type === 'text') {
-                this.ctx.font = `bold ${shape.size}px sans-serif`;
-                this.ctx.fillText(shape.text, shape.x, shape.y);
-            } else if (shape.type === 'arrow') {
-                const angle = Math.atan2(shape.endY - shape.startY, shape.endX - shape.startX);
-                const headLength = Math.max(shape.thickness * 3, 15);
-                this.ctx.moveTo(shape.startX, shape.startY);
-                this.ctx.lineTo(shape.endX, shape.endY);
-                this.ctx.stroke();
-                this.ctx.beginPath();
-                this.ctx.moveTo(shape.endX, shape.endY);
-                this.ctx.lineTo(shape.endX - headLength * Math.cos(angle - Math.PI / 6), shape.endY - headLength * Math.sin(angle - Math.PI / 6));
-                this.ctx.lineTo(shape.endX - headLength * Math.cos(angle + Math.PI / 6), shape.endY - headLength * Math.sin(angle + Math.PI / 6));
-                this.ctx.closePath();
-                this.ctx.fill();
-            }
-        },
-        undoLastShape() {
-            if (this.history.length > 0) {
-                this.history.pop();
-                this.redrawCanvasWorkspace();
-            }
-        },
-        clearStudioCanvas() {
-            this.history = [];
-            this.redrawCanvasWorkspace();
-        },
-        closeStudio() {
-            this.showStudio = false;
-            if(!this.hasMarkupAttached) {
-                document.getElementById('studioFileInput').value = '';
-            }
-        },
-        commitStudioMarkup() {
-            this.canvas.toBlob((blob) => {
-                if (!blob) return;
-                const editedFile = new File([blob], "field_markup_capture.jpg", { type: "image/jpeg" });
-                const containerExchange = new DataTransfer();
-                containerExchange.items.add(editedFile);
-
-                document.getElementById('studioFileInput').files = containerExchange.files;
-
-                // Set page-level preview assets
-                this.markupPreviewUrl = this.canvas.toDataURL('image/jpeg');
-                this.hasMarkupAttached = true;
-                this.showStudio = false;
-            }, 'image/jpeg', 0.90);
-        }
-    }">
+    <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-8">
 
         <div class="border-b border-slate-200 pb-4 mb-6">
             <h1 class="text-2xl font-black text-slate-950 uppercase tracking-tight">Compile New Job Estimate</h1>
@@ -418,28 +177,23 @@
                     </div>
 
                     <div class="flex flex-col items-center justify-center p-4 bg-slate-50 border border-slate-200 rounded-2xl h-36 relative overflow-hidden">
-                        <template x-if="hasMarkupAttached">
-                            <div class="absolute inset-0 w-full h-full">
-                                <img :src="markupPreviewUrl" class="w-full h-full object-cover">
-                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                    <button type="button" @click="showStudio = true; $nextTick(() => initCanvasElements())" class="bg-white/90 text-slate-950 font-black text-[9px] uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-md cursor-pointer hover:bg-white">
-                                        Edit Markup ✏️
-                                    </button>
-                                </div>
+                        <div class="absolute inset-0 w-full h-full" x-show="hasMarkupAttached" x-cloak>
+                            <img :src="markupPreviewUrl" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                <button type="button" @click="showStudio = true; $nextTick(() => initCanvasElements())" class="bg-white/90 text-slate-950 font-black text-[9px] uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-md cursor-pointer hover:bg-white">
+                                    Edit Markup ✏️
+                                </button>
                             </div>
-                        </template>
-                        <template x-if="!hasMarkupAttached">
-                            <div class="text-center text-slate-400 space-y-1">
-                                <span class="text-2xl block">🖼️</span>
-                                <span class="text-[10px] font-black uppercase tracking-wider block">No Markups Loaded</span>
-                            </div>
-                        </template>
+                        </div>
+                        <div class="text-center text-slate-400 space-y-1" x-show="!hasMarkupAttached">
+                            <span class="text-2xl block">🖼️</span>
+                            <span class="text-[10px] font-black uppercase tracking-wider block">No Markups Loaded</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
                 <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                     <div class="border-b border-slate-100 pb-2">
                         <label class="flex items-center gap-2 font-black text-sm text-slate-900 uppercase tracking-wider cursor-pointer">
@@ -491,7 +245,6 @@
                         </div>
                     </div>
                 </div>
-
             </div>
 
             <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-2">
@@ -501,7 +254,6 @@
             </div>
 
             <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-md flex flex-col sm:flex-row justify-between items-center gap-6">
-
                 <div class="font-mono text-xs text-slate-600 space-y-1 w-full sm:w-auto">
                     <div class="flex justify-between sm:justify-start gap-4">
                         <span class="w-32 font-bold uppercase tracking-wider text-slate-400">Net Materials Subtotal:</span>
@@ -522,9 +274,7 @@
                         Compile & Save Estimate ⚡
                     </button>
                 </div>
-
             </div>
-
         </form>
     </main>
 
@@ -535,7 +285,7 @@
             </button>
             <div class="flex items-center gap-3">
                 <button type="button" @click="undoLastShape()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all">
-                    ↩ Undo
+                    &larr; Undo
                 </button>
                 <button type="button" @click="clearStudioCanvas()" class="bg-red-950/40 text-red-400 hover:bg-red-900/40 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all">
                     🗑️ Clear
@@ -599,5 +349,240 @@
         </div>
     </div>
 
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('estimateForm', () => ({
+                items: [{ description: '', quantity: 1, unit_price: 0.00, save_to_pricebook: false }],
+                taxRate: 0,
+                requireDeposit: false,
+                depositAmount: 0,
+                isRecurring: false,
+                pricebook: {{ json_encode($pricebookItems ?? []) }},
+                customersList: {{ json_encode($customers ?? []) }},
+
+                customerSource: 'directory',
+                customer_first_name: '',
+                customer_last_name: '',
+                customer_email: '',
+                customer_phone: '',
+                customer_address: '',
+
+                showStudio: false,
+                tool: 'pen',
+                color: '#f58613',
+                thickness: 6,
+                textSize: 22,
+                canvas: null,
+                ctx: null,
+                bgImage: null,
+                isDrawing: false,
+                startX: 0,
+                startY: 0,
+                history: [],
+                currentPoints: [],
+                hasMarkupAttached: false,
+                markupPreviewUrl: '',
+
+                init() {
+                    const preselectedId = '{{ $preselectedCustomerId ?? "" }}';
+                    if (preselectedId) {
+                        this.loadDirectoryProfile(preselectedId);
+                    }
+                },
+                addItem() {
+                    this.items.push({ description: '', quantity: 1, unit_price: 0.00, save_to_pricebook: false });
+                },
+                removeItem(index) {
+                    if (this.items.length > 1) this.items.splice(index, 1);
+                },
+                loadPricebookItem(index, itemId) {
+                    const match = this.pricebook.find(i => i.id == itemId);
+                    if (match) {
+                        this.items[index].description = match.name;
+                        const finalCost = parseFloat(match.base_unit_cost) * (1 + (parseFloat(match.markup_percentage) / 100));
+                        this.items[index].unit_price = finalCost.toFixed(2);
+                    }
+                },
+                loadDirectoryProfile(id) {
+                    const match = this.customersList.find(c => c.id == id);
+                    if (match) {
+                        this.customer_first_name = match.first_name;
+                        this.customer_last_name = match.last_name;
+                        this.customer_email = match.email;
+                        this.customer_phone = match.phone || '';
+                        this.customer_address = match.billing_address || '';
+                    } else {
+                        this.clearCustomerFields();
+                    }
+                },
+                clearCustomerFields() {
+                    this.customer_first_name = '';
+                    this.customer_last_name = '';
+                    this.customer_email = '';
+                    this.customer_phone = '';
+                    this.customer_address = '';
+                },
+                get subtotal() {
+                    return this.items.reduce((sum, item) => sum + ((parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0)), 0);
+                },
+                get taxTotal() {
+                    return this.subtotal * ((parseFloat(this.taxRate) || 0) / 100);
+                },
+                get grandTotal() {
+                    return this.subtotal + this.taxTotal;
+                },
+
+                loadPhotoToStudio(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.bgImage = new Image();
+                        this.bgImage.onload = () => {
+                            this.showStudio = true;
+                            this.history = [];
+                            this.$nextTick(() => this.initCanvasElements());
+                        };
+                        this.bgImage.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                },
+                initCanvasElements() {
+                    this.canvas = document.getElementById('studioCanvas');
+                    this.ctx = this.canvas.getContext('2d');
+                    this.resizeCanvas();
+                },
+                resizeCanvas() {
+                    if (!this.canvas || !this.bgImage) return;
+                    const maxWidth = window.innerWidth * 0.90;
+                    const maxHeight = window.innerHeight * 0.70;
+                    const ratio = Math.min(maxWidth / this.bgImage.width, maxHeight / this.bgImage.height);
+                    this.canvas.width = this.bgImage.width * ratio;
+                    this.canvas.height = this.bgImage.height * ratio;
+                    this.redrawCanvasWorkspace();
+                },
+                redrawCanvasWorkspace() {
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.ctx.drawImage(this.bgImage, 0, 0, this.canvas.width, this.canvas.height);
+                    this.history.forEach(shape => this.drawShapePrimitive(shape));
+                },
+                getCoordinates(event) {
+                    let clientX = event.touches ? event.touches[0].clientX : event.clientX;
+                    let clientY = event.touches ? event.touches[0].clientY : event.clientY;
+                    const rect = this.canvas.getBoundingClientRect();
+                    return { x: clientX - rect.left, y: clientY - rect.top };
+                },
+                startDrawing(event) {
+                    event.preventDefault();
+                    const coords = this.getCoordinates(event);
+                    this.isDrawing = true;
+                    this.startX = coords.x;
+                    this.startY = coords.y;
+                    if (this.tool === 'pen') {
+                        this.currentPoints = [{ x: coords.x, y: coords.y }];
+                    } else if (this.tool === 'text') {
+                        this.isDrawing = false;
+                        const note = prompt("Enter text instruction to place at coordinates:");
+                        if (note) {
+                            this.history.push({ type: 'text', x: this.startX, y: this.startY, text: note, color: this.color, size: this.textSize });
+                            this.redrawCanvasWorkspace();
+                        }
+                    }
+                },
+                drawMove(event) {
+                    if (!this.isDrawing) return;
+                    event.preventDefault();
+                    const coords = this.getCoordinates(event);
+                    this.redrawCanvasWorkspace();
+                    const tempShape = { type: this.tool, startX: this.startX, startY: this.startY, endX: coords.x, endY: coords.y, color: this.color, thickness: this.thickness, points: this.currentPoints };
+                    if (this.tool === 'pen') {
+                        this.currentPoints.push({ x: coords.x, y: coords.y });
+                        tempShape.points = this.currentPoints;
+                    }
+                    this.drawShapePrimitive(tempShape);
+                },
+                endDrawing(event) {
+                    if (!this.isDrawing) return;
+                    this.isDrawing = false;
+                    event.preventDefault();
+                    const coords = this.getCoordinates(event) || { x: this.startX, y: this.startY };
+                    if (this.tool === 'pen') {
+                        this.history.push({ type: 'pen', points: this.currentPoints, color: this.color, thickness: this.thickness });
+                    } else if (this.tool !== 'text') {
+                        this.history.push({ type: this.tool, startX: this.startX, startY: this.startY, endX: coords.x, endY: coords.y, color: this.color, thickness: this.thickness });
+                    }
+                    this.currentPoints = [];
+                    this.redrawCanvasWorkspace();
+                },
+                drawShapePrimitive(shape) {
+                    this.ctx.strokeStyle = shape.color;
+                    this.ctx.fillStyle = shape.color;
+                    this.ctx.lineWidth = shape.thickness;
+                    this.ctx.lineCap = 'round';
+                    this.ctx.lineJoin = 'round';
+                    this.ctx.beginPath();
+                    if (shape.type === 'pen' && shape.points && shape.points.length > 0) {
+                        this.ctx.moveTo(shape.points[0].x, shape.points[0].y);
+                        shape.points.forEach(p => this.ctx.lineTo(p.x, p.y));
+                        this.ctx.stroke();
+                    } else if (shape.type === 'line') {
+                        this.ctx.moveTo(shape.startX, shape.startY);
+                        this.ctx.lineTo(shape.endX, shape.endY);
+                        this.ctx.stroke();
+                    } else if (shape.type === 'box') {
+                        this.ctx.rect(shape.startX, shape.startY, shape.endX - shape.startX, shape.endY - shape.startY);
+                        this.ctx.stroke();
+                    } else if (shape.type === 'circle') {
+                        const radius = Math.sqrt(Math.pow(shape.endX - shape.startX, 2) + Math.pow(shape.endY - shape.startY, 2));
+                        this.ctx.arc(shape.startX, shape.startY, radius, 0, 2 * Math.PI);
+                        this.ctx.stroke();
+                    } else if (shape.type === 'text') {
+                        this.ctx.font = `bold ${shape.size}px sans-serif`;
+                        this.ctx.fillText(shape.text, shape.x, shape.y);
+                    } else if (shape.type === 'arrow') {
+                        const angle = Math.atan2(shape.endY - shape.startY, shape.endX - shape.startX);
+                        const headLength = Math.max(shape.thickness * 3, 15);
+                        this.ctx.moveTo(shape.startX, shape.startY);
+                        this.ctx.lineTo(shape.endX, shape.endY);
+                        this.ctx.stroke();
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(shape.endX, shape.endY);
+                        this.ctx.lineTo(shape.endX - headLength * Math.cos(angle - Math.PI / 6), shape.endY - headLength * Math.sin(angle - Math.PI / 6));
+                        this.ctx.lineTo(shape.endX - headLength * Math.cos(angle + Math.PI / 6), shape.endY - headLength * Math.sin(angle + Math.PI / 6));
+                        this.ctx.closePath();
+                        this.ctx.fill();
+                    }
+                },
+                undoLastShape() {
+                    if (this.history.length > 0) {
+                        this.history.pop();
+                        this.redrawCanvasWorkspace();
+                    }
+                },
+                clearStudioCanvas() {
+                    this.history = [];
+                    this.redrawCanvasWorkspace();
+                },
+                closeStudio() {
+                    this.showStudio = false;
+                    if (!this.hasMarkupAttached) {
+                        document.getElementById('studioFileInput').value = '';
+                    }
+                },
+                commitStudioMarkup() {
+                    this.canvas.toBlob((blob) => {
+                        if (!blob) return;
+                        const editedFile = new File([blob], "field_markup_capture.jpg", { type: "image/jpeg" });
+                        const containerExchange = new DataTransfer();
+                        containerExchange.items.add(editedFile);
+                        document.getElementById('studioFileInput').files = containerExchange.files;
+                        this.markupPreviewUrl = this.canvas.toDataURL('image/jpeg');
+                        this.hasMarkupAttached = true;
+                        this.showStudio = false;
+                    }, 'image/jpeg', 0.90);
+                }
+            }));
+        });
+    </script>
 </body>
 </html>
