@@ -100,7 +100,7 @@ class EstimateController extends Controller
 
             $estimateNumber = 'EST-' . strtoupper(Str::random(4)) . '-' . rand(1000, 9999);
 
-            // FIX: Converted to direct object instantiation to permanently bypass any hidden mass assignment fillable blocks
+            // Direct object instantiation to permanently bypass any hidden mass assignment fillable blocks
             $estimate = new Estimate();
             $estimate->company_id = $companyId;
             $estimate->customer_id = $customer->id;
@@ -120,7 +120,7 @@ class EstimateController extends Controller
                 $itemTotal = $itemData['quantity'] * $itemData['unit_price'];
                 $calculatedSubtotal += $itemTotal;
 
-                // FIX: Assigned explicitly to ensure child items bypass fillable constraints as well
+                // Assigned explicitly to ensure child items bypass fillable constraints as well
                 $item = new EstimateItem();
                 $item->estimate_id = $estimate->id;
                 $item->description = $itemData['description'];
@@ -474,5 +474,37 @@ class EstimateController extends Controller
         }
 
         return response()->json(['status' => 'received'], 200);
+    }
+
+    /**
+     * FIX: IMPLEMENTED MODEL-DRIVEN DELETION EXTENSION METHOD
+     * Remove the specified estimate and all nested child dependencies safely.
+     */
+    public function destroy($id)
+    {
+        $companyId = Auth::user()->company_id;
+
+        // Verify multi-tenant resource clearance parameter bounds
+        $estimate = Estimate::where('company_id', $companyId)->findOrFail($id);
+
+        DB::transaction(function () use ($estimate) {
+            // Purge dynamic nested children parameters via clean model plugins
+            EstimateItem::where('estimate_id', $estimate->id)->delete();
+
+            // Clear physical file server assets from disk storage spaces
+            $attachments = JobAttachment::where('estimate_id', $estimate->id)->get();
+            foreach ($attachments as $fileAsset) {
+                $cleanFilePath = str_replace('/storage/', '', $fileAsset->file_path);
+                if (Storage::disk('public')->exists($cleanFilePath)) {
+                    Storage::disk('public')->delete($cleanFilePath);
+                }
+                $fileAsset->delete();
+            }
+
+            // Drop parent master record
+            $estimate->delete();
+        });
+
+        return redirect()->route('dashboard')->with('status', '🗑️ Old estimate record and associated canvas markup archives permanently purged.');
     }
 }

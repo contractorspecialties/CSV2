@@ -35,13 +35,13 @@
 
                     @auth
                         @if(auth()->user()->is_admin)
-                            <a href="{{ route('admin.index') }}" class="bg-slate-990 hover:bg-slate-800 border border-slate-800 text-amber-400 hover:text-amber-300 font-black text-[10px] py-2.5 px-3.5 sm:px-4 rounded-xl uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer">
+                            <a href="{{ route('admin.index') }}" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-amber-400 hover:text-amber-300 font-black text-[10px] py-2.5 px-3.5 sm:px-4 rounded-xl uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer">
                                 <span>⚙️</span>
                                 <span class="hidden sm:inline">Admin Desk</span>
                             </a>
                         @endif
 
-                        <a href="{{ route('logout') }}" class="bg-slate-990 hover:bg-red-950/40 border border-slate-800 hover:border-red-900/40 text-slate-400 hover:text-red-400 font-black text-[10px] py-2.5 px-3.5 sm:px-4 rounded-xl uppercase tracking-wider transition-all shadow-sm cursor-pointer">
+                        <a href="{{ route('logout') }}" class="bg-slate-900 hover:bg-red-950/40 border border-slate-800 hover:border-red-900/40 text-slate-400 hover:text-red-400 font-black text-[10px] py-2.5 px-3.5 sm:px-4 rounded-xl uppercase tracking-wider transition-all shadow-sm cursor-pointer">
                             Sign Out
                         </a>
                     @endauth
@@ -160,15 +160,17 @@
                 </div>
             </section>
 
-            <!-- RE-ENGINEERED CPP-STYLE HIGH-CONTRAST KANBAN BOARD SYSTEM -->
+            <!-- KANBAN BOARD VIEWPORT LAYER -->
             <section class="space-y-4">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-slate-900 text-white p-4 rounded-2xl shadow-sm">
                     <div>
                         <h3 class="font-black text-sm uppercase tracking-wider text-slate-100">📋 Scope Pipeline Kanban Board</h3>
-                        <p class="text-slate-400 text-[11px] font-medium">Drag, track, or advance bid structures through fulfillment stages in real time.</p>
+                        <p class="text-slate-400 text-[11px] font-medium">Track or advance bid structures through fulfillment stages in real time.</p>
                     </div>
-                    <span class="text-[9px] bg-slate-800 text-amber-400 font-mono font-black px-2.5 py-1 rounded-xl uppercase tracking-widest border border-slate-700/60 shadow-inner">
-                        Multi-Lane Operational Engine
+
+                    <!-- DYNAMIC VERIFICATION DESK TERMINAL -->
+                    <span class="text-[10px] bg-slate-800 text-emerald-400 font-mono font-black px-3 py-1 rounded-xl uppercase border border-slate-700">
+                        Total Master Records Found: {{ $estimates->count() }}
                     </span>
                 </div>
 
@@ -188,7 +190,7 @@
                                         <span class="text-sm font-mono font-black text-slate-900">${{ number_format($bid->grand_total, 2) }}</span>
                                     </div>
                                     <div>
-                                        <h4 class="font-black text-xs text-slate-950 uppercase truncate">{{ $bid->customer->last_name }}, {{ $bid->customer->first_name }}</h4>
+                                        <h4 class="font-black text-xs text-slate-950 uppercase truncate">{{ $bid->customer->last_name ?? 'Unknown' }}, {{ $bid->customer->first_name ?? 'Client' }}</h4>
                                         <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">Staged on {{ $bid->created_at->format('M j, Y') }}</p>
                                     </div>
                                     <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-1">
@@ -228,7 +230,7 @@
                                         <span class="text-sm font-mono font-black text-slate-900">${{ number_format($bid->grand_total, 2) }}</span>
                                     </div>
                                     <div>
-                                        <h4 class="font-black text-xs text-slate-950 uppercase truncate">{{ $bid->customer->last_name }}, {{ $bid->customer->first_name }}</h4>
+                                        <h4 class="font-black text-xs text-slate-950 uppercase truncate">{{ $bid->customer->last_name ?? 'Unknown' }}, {{ $bid->customer->first_name ?? 'Client' }}</h4>
                                         <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">Awaiting homeowner signature</p>
                                     </div>
                                     <div class="pt-2 border-t border-slate-100 flex gap-1">
@@ -268,7 +270,7 @@
                                         <span class="text-sm font-mono font-black text-emerald-600">${{ number_format($bid->grand_total, 2) }}</span>
                                     </div>
                                     <div>
-                                        <h4 class="font-black text-xs text-slate-950 uppercase truncate">{{ $bid->customer->last_name }}, {{ $bid->customer->first_name }}</h4>
+                                        <h4 class="font-black text-xs text-slate-950 uppercase truncate">{{ $bid->customer->last_name ?? 'Unknown' }}, {{ $bid->customer->first_name ?? 'Client' }}</h4>
                                         <p class="text-[10px] text-emerald-600 font-black tracking-tight uppercase text-[8px] mt-1 bg-emerald-50 border border-emerald-100/70 inline-block px-1.5 py-0.5 rounded shadow-sm">⚡ Active Production Order</p>
                                     </div>
                                     <div class="pt-2 border-t border-slate-100">
@@ -301,7 +303,7 @@
                                         <span class="text-sm font-mono font-bold text-slate-500">${{ number_format($bid->grand_total, 2) }}</span>
                                     </div>
                                     <div>
-                                        <h4 class="font-black text-xs text-slate-700 uppercase truncate">{{ $bid->customer->last_name }}, {{ $bid->customer->first_name }}</h4>
+                                        <h4 class="font-black text-xs text-slate-700 uppercase truncate">{{ $bid->customer->last_name ?? 'Unknown' }}, {{ $bid->customer->first_name ?? 'Client' }}</h4>
                                         <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">Fulfillment cycle completed</p>
                                     </div>
                                     <div class="pt-2 border-t border-slate-100">
@@ -324,7 +326,6 @@
             </section>
 
             <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
                 <div class="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                         <h3 class="font-black text-sm tracking-tight text-slate-900 uppercase flex items-center gap-2">
@@ -369,7 +370,6 @@
                 </div>
 
                 <div class="space-y-6">
-
                     <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                         <div class="border-b border-slate-100 pb-3">
                             <h3 class="font-black text-sm tracking-tight text-slate-900 uppercase flex items-center gap-1.5">
@@ -414,11 +414,11 @@
                             Revenue tracking updates automatically as jobs are paid.
                         </div>
                     </div>
-
                 </div>
             </section>
         </main>
 
+        <!-- LIVE MODAL BLOCKS REMAIN COMPLETELY UNTOUCHED AND STABLE -->
         <div x-show="showInvoiceModal" x-cloak style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
             <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
                 <div x-show="showInvoiceModal" x-transition.opacity class="fixed inset-0 bg-slate-950/75 backdrop-blur-2xl transition-opacity" @click="showInvoiceModal = false"></div>
@@ -515,7 +515,6 @@
 
         <footer class="border-t border-slate-900 bg-black text-slate-400 py-12">
             <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-
                 <div class="md:col-span-5 flex flex-col items-center md:items-start gap-4">
                     <div class="w-[400px] max-w-full aspect-square bg-slate-950 border border-slate-900 rounded-2xl overflow-hidden shadow-lg flex items-center justify-center">
                         <img src="/images/footer-logo.webp" alt="Corporate Brand Mark" class="w-full h-full object-contain p-4">
@@ -552,7 +551,6 @@
                         <a href="/tutorial" class="text-[#f58613] hover:text-orange-500 transition-colors normal-case mt-1.5 font-black tracking-wide italic">How-To Manual 📺</a>
                     </div>
                 </div>
-
             </div>
         </footer>
 
