@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -65,6 +67,14 @@ class EstimateController extends Controller
 
         // Re-bind sanitized variables back into a clean workspace request array
         $request->merge($inputData);
+
+        // FIX: Dynamic Plugin-Driven Schema Update (Safely checks and builds missing structural blocks)
+        $estimateTable = (new Estimate())->getTable();
+        if (!Schema::hasColumn($estimateTable, 'deposit_amount')) {
+            Schema::table($estimateTable, function (Blueprint $table) {
+                $table->decimal('deposit_amount', 15, 2)->default(0.00)->after('tax_rate');
+            });
+        }
 
         $validated = $request->validate([
             'customer_first_name' => 'required|string|max:255',
@@ -477,21 +487,16 @@ class EstimateController extends Controller
     }
 
     /**
-     * FIX: IMPLEMENTED MODEL-DRIVEN DELETION EXTENSION METHOD
      * Remove the specified estimate and all nested child dependencies safely.
      */
     public function destroy($id)
     {
         $companyId = Auth::user()->company_id;
-
-        // Verify multi-tenant resource clearance parameter bounds
         $estimate = Estimate::where('company_id', $companyId)->findOrFail($id);
 
         DB::transaction(function () use ($estimate) {
-            // Purge dynamic nested children parameters via clean model plugins
             EstimateItem::where('estimate_id', $estimate->id)->delete();
 
-            // Clear physical file server assets from disk storage spaces
             $attachments = JobAttachment::where('estimate_id', $estimate->id)->get();
             foreach ($attachments as $fileAsset) {
                 $cleanFilePath = str_replace('/storage/', '', $fileAsset->file_path);
@@ -501,7 +506,6 @@ class EstimateController extends Controller
                 $fileAsset->delete();
             }
 
-            // Drop parent master record
             $estimate->delete();
         });
 
