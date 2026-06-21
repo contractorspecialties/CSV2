@@ -5,6 +5,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PricebookController;
 use App\Http\Controllers\EstimateController;
+use App\Http\Controllers\AdminDashboardController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -75,6 +76,17 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/estimates/{id}/attachments', [EstimateController::class, 'uploadAttachment'])->name('estimates.attachments');
     Route::post('/estimates/{id}/close-job', [EstimateController::class, 'closeJob'])->name('estimates.close-job');
     Route::resource('estimates', EstimateController::class);
+
+    // Administrative System Cockpit Control Deck
+    Route::middleware([function ($request, $next) {
+        if (!auth()->user()->is_admin) {
+            return redirect()->route('dashboard')->withErrors(['security' => '🛑 Clear operational clearance parameter mismatch. Entry route dropped.']);
+        }
+        return $next($request);
+    }])->group(function () {
+        Route::get('/admin/management', [AdminDashboardController::class, 'index'])->name('admin.index');
+        Route::post('/admin/management/{id}/toggle', [AdminDashboardController::class, 'toggleAdminStatus'])->name('admin.toggle-rights');
+    });
 });
 
 // Homeowner Viewport Portal Frames
