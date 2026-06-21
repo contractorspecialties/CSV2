@@ -25,17 +25,17 @@ class DashboardController extends Controller
         $bookedRevenue = Estimate::where('company_id', $companyId)->where('status', 'approved')->sum('grand_total');
 
         // 2. Fetch All Company Estimates with Customer Profiles for the Kanban Lane Compilation
-        $allEstimates = Estimate::where('company_id', $companyId)
+        $estimates = Estimate::where('company_id', $companyId)
             ->with('customer')
             ->orderBy('updated_at', 'desc')
             ->get();
 
-        // Separate estimates cleanly into dedicated Kanban operational lane arrays
+        // Separate estimates cleanly into dedicated Kanban operational lane arrays (Using loose string filters)
         $kanbanBids = [
-            'draft'    => $allEstimates->where('status', 'draft')->values(),
-            'sent'     => $allEstimates->where('status', 'sent')->values(),
-            'approved' => $allEstimates->where('status', 'approved')->values(),
-            'closed'   => $allEstimates->where('status', 'closed')->values(),
+            'draft'    => $estimates->filter(fn($e) => strtolower($e->status) === 'draft')->values(),
+            'sent'     => $estimates->filter(fn($e) => strtolower($e->status) === 'sent')->values(),
+            'approved' => $estimates->filter(fn($e) => strtolower($e->status) === 'approved')->values(),
+            'closed'   => $estimates->filter(fn($e) => strtolower($e->status) === 'closed')->values(),
         ];
 
         // 3. Fetch Recent Customers with dynamic lifetime approved calculations
@@ -104,7 +104,7 @@ class DashboardController extends Controller
             ];
         }
 
-        // Pass the structural kanbanBids matrix array down to the view layout variables smoothly
-        return view('dashboard', compact('kanbanBids', 'recentCustomers', 'daysOfWeek', 'draftCount', 'sentCount', 'bookedRevenue'));
+        // Pass both historical arrays and new Kanban matrices to bypass template collision locks
+        return view('dashboard', compact('estimates', 'kanbanBids', 'recentCustomers', 'daysOfWeek', 'draftCount', 'sentCount', 'bookedRevenue'));
     }
 }
