@@ -163,12 +163,24 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                    <div class="md:col-span-2 space-y-3">
+                    <div class="md:col-span-2 space-y-4">
+
+                        <input type="file" id="studioFileInput" name="image" class="hidden">
+                        <input type="file" id="cameraInputDriver" accept="image/*" capture="environment" class="hidden" @change="loadPhotoToStudio($event)">
+                        <input type="file" id="galleryInputDriver" accept="image/*" class="hidden" @change="loadPhotoToStudio($event)">
+
                         <div>
-                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Select Field Progress Photo</label>
-                            <input type="file" id="studioFileInput" name="image" accept="image/*" @change="loadPhotoToStudio($event)"
-                                   class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase file:bg-slate-950 file:text-white hover:file:bg-black file:cursor-pointer cursor-pointer border border-slate-200 rounded-xl p-1 bg-slate-50/50">
+                            <span class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-wide">Select Field Progress Photo</span>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button type="button" @click="document.getElementById('cameraInputDriver').click()" class="bg-slate-950 hover:bg-black text-white font-black text-xs py-3 px-4 rounded-xl uppercase tracking-wider shadow transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer">
+                                    📷 Take Live Photo
+                                </button>
+                                <button type="button" @click="document.getElementById('galleryInputDriver').click()" class="bg-white border-2 border-slate-300 hover:border-slate-800 text-slate-800 hover:text-slate-950 font-black text-xs py-3 px-4 rounded-xl uppercase tracking-wider shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer">
+                                    🖼️ Open Gallery
+                                </button>
+                            </div>
                         </div>
+
                         <div>
                             <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Photo Caption / Note</label>
                             <input type="text" name="caption" placeholder="e.g., Pre-existing structural rot on roof deck ledger"
@@ -176,7 +188,7 @@
                         </div>
                     </div>
 
-                    <div class="flex flex-col items-center justify-center p-4 bg-slate-50 border border-slate-200 rounded-2xl h-36 relative overflow-hidden">
+                    <div class="flex flex-col items-center justify-center p-4 bg-slate-50 border border-slate-200 rounded-2xl h-36 relative overflow-hidden shadow-inner">
                         <div class="absolute inset-0 w-full h-full" x-show="hasMarkupAttached" x-cloak>
                             <img :src="markupPreviewUrl" class="w-full h-full object-cover">
                             <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -186,7 +198,7 @@
                             </div>
                         </div>
                         <div class="text-center text-slate-400 space-y-1" x-show="!hasMarkupAttached">
-                            <span class="text-2xl block">🖼️</span>
+                            <span class="text-2xl block">🖼 daylight_photo</span>
                             <span class="text-[10px] font-black uppercase tracking-wider block">No Markups Loaded</span>
                         </div>
                     </div>
@@ -506,6 +518,7 @@
                     this.isDrawing = false;
                     event.preventDefault();
                     const coords = this.getCoordinates(event) || { x: this.startX, y: this.startY };
+                    if (this.history === undefined) this.history = [];
                     if (this.tool === 'pen') {
                         this.history.push({ type: 'pen', points: this.currentPoints, color: this.color, thickness: this.thickness });
                     } else if (this.tool !== 'text') {
@@ -567,6 +580,8 @@
                     this.showStudio = false;
                     if (!this.hasMarkupAttached) {
                         document.getElementById('studioFileInput').value = '';
+                        document.getElementById('cameraInputDriver').value = '';
+                        document.getElementById('galleryInputDriver').value = '';
                     }
                 },
                 commitStudioMarkup() {
@@ -575,6 +590,8 @@
                         const editedFile = new File([blob], "field_markup_capture.jpg", { type: "image/jpeg" });
                         const containerExchange = new DataTransfer();
                         containerExchange.items.add(editedFile);
+
+                        // Force final output data payload explicitly to master file wrapper node
                         document.getElementById('studioFileInput').files = containerExchange.files;
                         this.markupPreviewUrl = this.canvas.toDataURL('image/jpeg');
                         this.hasMarkupAttached = true;
