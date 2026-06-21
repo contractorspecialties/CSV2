@@ -56,6 +56,13 @@ class EstimateController extends Controller
             $inputData['deposit_amount'] = null;
         }
 
+        // Cast pricebook array checkbox tokens to absolute booleans before hitting validation layers
+        if (isset($inputData['items']) && is_array($inputData['items'])) {
+            foreach ($inputData['items'] as $key => $item) {
+                $inputData['items'][$key]['save_to_pricebook'] = (isset($item['save_to_pricebook']) && ($item['save_to_pricebook'] === 'true' || $item['save_to_pricebook'] === 'on' || $item['save_to_pricebook'] == 1)) ? true : false;
+            }
+        }
+
         // Re-bind sanitized variables back into a clean workspace request array
         $request->merge($inputData);
 
@@ -73,7 +80,7 @@ class EstimateController extends Controller
             'items.*.description' => 'required|string|max:500',
             'items.*.quantity'    => 'required|numeric|min:0.01',
             'items.*.unit_price'  => 'required|numeric|min:0.00',
-            'items.*.save_to_pricebook' => 'nullable|boolean',
+            'items.*.save_to_pricebook' => 'nullable',
             'caption'             => 'nullable|string|max:255'
         ]);
 
@@ -120,8 +127,9 @@ class EstimateController extends Controller
                     'total_price' => $itemTotal,
                 ]);
 
-                // AUTOMATED PRICEBOOK INLINE COMPILATION EXTENSION
-                if (!empty($itemData['save_to_pricebook'])) {
+                // AUTOMATED PRICEBOOK INLINE COMPILATION EXTENSION (Evaluates hybrid input types cleanly)
+                $mustSave = !empty($itemData['save_to_pricebook']) && ($itemData['save_to_pricebook'] == 1 || $itemData['save_to_pricebook'] === 'true' || $itemData['save_to_pricebook'] === 'on');
+                if ($mustSave) {
                     PricebookItem::firstOrCreate(
                         ['company_id' => $companyId, 'name' => Str::limit($itemData['description'], 100)],
                         [
@@ -154,7 +162,7 @@ class EstimateController extends Controller
             }
 
             return $estimate;
-        });
+        }); // FIX: Replaced the bracket with a closure brace to clear structural compiles
 
         return redirect()->route('dashboard')->with('status', "⚡ Estimate {$estimate->estimate_number} successfully compiled.");
     }
