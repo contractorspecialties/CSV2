@@ -80,7 +80,7 @@
                             <option value="{{ $customer->id }}" {{ old('customer_select') == $customer->id ? 'selected' : '' }}>
                                 {{ $customer->last_name }}, {{ $customer->first_name }} ({{ $customer->phone ?? 'No Phone' }})
                             </option>
-                        </foreach>
+                        @endforeach
                     </select>
                 </div>
 
@@ -230,7 +230,7 @@
                             </div>
 
                             <div class="text-center text-slate-400 p-6 space-y-1 select-none" x-show="!hasImageSelected">
-                                <span class="text-2xl block filter grayscale opacity-40">🖼️</span>
+                                <span class="text-2xl block">🖼️</span>
                                 <span class="text-[10px] font-black uppercase tracking-wider block text-slate-400">No Image Selected</span>
                             </div>
                         </div>
@@ -406,11 +406,20 @@
     <script>
         function estimateForm() {
             return {
-                // FIX: Hydrate dynamic line rows from memory with timestamp tracking fallback anchors
-                items: @js(array_map(function($item) {
-                    $item['id'] = $item['id'] ?? (microtime(true) * 1000 + rand(1, 1000));
-                    return $item;
-                }, old('items', [['description' => '', 'quantity' => 1, 'unit_price' => 0.00, 'save_to_pricebook' => false]]))),
+                // FIX: Map arrays safely via clear, isolated inline JS loops to keep Blade parsing clean
+                items: (() => {
+                    const oldData = @js(old('items'));
+                    if (oldData && Array.isArray(oldData) && oldData.length > 0) {
+                        return oldData.map((item, idx) => ({
+                            id: item.id || (Date.now() + idx + Math.random()),
+                            description: item.description || '',
+                            quantity: parseFloat(item.quantity) || 1,
+                            unit_price: parseFloat(item.unit_price) || 0.00,
+                            save_to_pricebook: (item.save_to_pricebook === true || item.save_to_pricebook === 'on' || item.save_to_pricebook == 1)
+                        }));
+                    }
+                    return [{ id: Date.now(), description: '', quantity: 1, unit_price: 0.00, save_to_pricebook: false }];
+                })(),
 
                 taxRate: @js(old('tax_rate', 0)),
                 requireDeposit: @js(old('require_deposit') ? true : false),
@@ -448,7 +457,7 @@
 
                 init() {
                     const preselectedId = '{{ $preselectedCustomerId ?? "" }}';
-                    if (preselectedId && !@js(old('customer_first_name'))) {
+                    if (preselectedId && !this.customer_first_name) {
                         this.loadDirectoryProfile(preselectedId);
                     }
                 },
