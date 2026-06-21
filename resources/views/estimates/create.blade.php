@@ -40,6 +40,23 @@
         customer_phone: '',
         customer_address: '',
 
+        // PHOTO MARKUP TELEMETRY INTEGRATIONS
+        showStudio: false,
+        tool: 'pen',
+        color: '#f58613',
+        thickness: 6,
+        textSize: 22,
+        canvas: null,
+        ctx: null,
+        bgImage: null,
+        isDrawing: false,
+        startX: 0,
+        startY: 0,
+        history: [],
+        currentPoints: [],
+        hasMarkupAttached: false,
+        markupPreviewUrl: '',
+
         init() {
             // Check if there is a preselected customer forwarded from a directory route
             const preselectedId = '{{ $preselectedCustomerId ?? '' }}';
@@ -90,6 +107,163 @@
         },
         get grandTotal() {
             return this.subtotal + this.taxTotal;
+        },
+
+        // STUDIO CANVAS CONTROLLER ARCHITECTURE METHODS
+        loadPhotoToStudio(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                this.bgImage = new Image();
+                this.bgImage.onload = () => {
+                    this.showStudio = true;
+                    this.history = []; // Reset canvas array vectors
+                    this.$nextTick(() => {
+                        this.initCanvasElements();
+                    });
+                };
+                this.bgImage.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        },
+        initCanvasElements() {
+            this.canvas = document.getElementById('studioCanvas');
+            this.ctx = this.canvas.getContext('2d');
+            this.resizeCanvas();
+        },
+        resizeCanvas() {
+            if (!this.canvas || !this.bgImage) return;
+            const maxWidth = window.innerWidth * 0.90;
+            const maxHeight = window.innerHeight * 0.70;
+            let ratio = Math.min(maxWidth / this.bgImage.width, maxHeight / this.bgImage.height);
+            this.canvas.width = this.bgImage.width * ratio;
+            this.canvas.height = this.bgImage.height * ratio;
+            this.redrawCanvasWorkspace();
+        },
+        redrawCanvasWorkspace() {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.drawImage(this.bgImage, 0, 0, this.canvas.width, this.canvas.height);
+            this.history.forEach(shape => this.drawShapePrimitive(shape));
+        },
+        getCoordinates(event) {
+            let clientX = event.touches ? event.touches[0].clientX : event.clientX;
+            let clientY = event.touches ? event.touches[0].clientY : event.clientY;
+            const rect = this.canvas.getBoundingClientRect();
+            return { x: clientX - rect.left, y: clientY - rect.top };
+        },
+        startDrawing(event) {
+            event.preventDefault();
+            const coords = this.getCoordinates(event);
+            this.isDrawing = true;
+            this.startX = coords.x;
+            this.startY = coords.y;
+            if (this.tool === 'pen') {
+                this.currentPoints = [{ x: coords.x, y: coords.y }];
+            } else if (this.tool === 'text') {
+                this.isDrawing = false;
+                const note = prompt("Enter text instruction to place at coordinates:");
+                if (note) {
+                    this.history.push({ type: 'text', x: this.startX, y: this.startY, text: note, color: this.color, size: this.textSize });
+                    this.redrawCanvasWorkspace();
+                }
+            }
+        },
+        drawMove(event) {
+            if (!this.isDrawing) return;
+            event.preventDefault();
+            const coords = this.getCoordinates(event);
+            this.redrawCanvasWorkspace();
+            const tempShape = { type: this.tool, startX: this.startX, startY: this.startY, endX: coords.x, endY: coords.y, color: this.color, thickness: this.thickness, points: this.currentPoints };
+            if (this.tool === 'pen') {
+                this.currentPoints.push({ x: coords.x, y: coords.y });
+                tempShape.points = this.currentPoints;
+            }
+            this.drawShapePrimitive(tempShape);
+        },
+        endDrawing(event) {
+            if (!this.isDrawing) return;
+            this.isDrawing = false;
+            event.preventDefault();
+            const coords = this.getCoordinates(event) || { x: this.startX, y: this.startY };
+            if (this.tool === 'pen') {
+                this.history.push({ type: 'pen', points: this.currentPoints, color: this.color, thickness: this.thickness });
+            } else if (this.tool !== 'text') {
+                this.history.push({ type: this.tool, startX: this.startX, startY: this.startY, endX: coords.x, endY: coords.y, color: this.color, thickness: this.thickness });
+            }
+            this.currentPoints = [];
+            this.redrawCanvasWorkspace();
+        },
+        drawShapePrimitive(shape) {
+            this.ctx.strokeStyle = shape.color;
+            this.ctx.fillStyle = shape.color;
+            this.ctx.lineWidth = shape.thickness;
+            this.ctx.lineCap = 'round';
+            this.ctx.lineJoin = 'round';
+            this.ctx.beginPath();
+            if (shape.type === 'pen' && shape.points && shape.points.length > 0) {
+                this.ctx.moveTo(shape.points[0].x, shape.points[0].y);
+                shape.points.forEach(p => this.ctx.lineTo(p.x, p.y));
+                this.ctx.stroke();
+            } else if (shape.type === 'line') {
+                this.ctx.moveTo(shape.startX, shape.startY);
+                this.ctx.lineTo(shape.endX, shape.endY);
+                this.ctx.stroke();
+            } else if (shape.type === 'box') {
+                this.ctx.rect(shape.startX, shape.startY, shape.endX - shape.startX, shape.endY - shape.startY);
+                this.ctx.stroke();
+            } else if (shape.type === 'circle') {
+                const radius = Math.sqrt(Math.pow(shape.endX - shape.startX, 2) + Math.pow(shape.endY - shape.startY, 2));
+                this.ctx.arc(shape.startX, shape.startY, radius, 0, 2 * Math.PI);
+                this.ctx.stroke();
+            } else if (shape.type === 'text') {
+                this.ctx.font = `bold ${shape.size}px sans-serif`;
+                this.ctx.fillText(shape.text, shape.x, shape.y);
+            } else if (shape.type === 'arrow') {
+                const angle = Math.atan2(shape.endY - shape.startY, shape.endX - shape.startX);
+                const headLength = Math.max(shape.thickness * 3, 15);
+                this.ctx.moveTo(shape.startX, shape.startY);
+                this.ctx.lineTo(shape.endX, shape.endY);
+                this.ctx.stroke();
+                this.ctx.beginPath();
+                this.ctx.moveTo(shape.endX, shape.endY);
+                this.ctx.lineTo(shape.endX - headLength * Math.cos(angle - Math.PI / 6), shape.endY - headLength * Math.sin(angle - Math.PI / 6));
+                this.ctx.lineTo(shape.endX - headLength * Math.cos(angle + Math.PI / 6), shape.endY - headLength * Math.sin(angle + Math.PI / 6));
+                this.ctx.closePath();
+                this.ctx.fill();
+            }
+        },
+        undoLastShape() {
+            if (this.history.length > 0) {
+                this.history.pop();
+                this.redrawCanvasWorkspace();
+            }
+        },
+        clearStudioCanvas() {
+            this.history = [];
+            this.redrawCanvasWorkspace();
+        },
+        closeStudio() {
+            this.showStudio = false;
+            if(!this.hasMarkupAttached) {
+                document.getElementById('studioFileInput').value = '';
+            }
+        },
+        commitStudioMarkup() {
+            this.canvas.toBlob((blob) => {
+                if (!blob) return;
+                const editedFile = new File([blob], "field_markup_capture.jpg", { type: "image/jpeg" });
+                const containerExchange = new DataTransfer();
+                containerExchange.items.add(editedFile);
+
+                document.getElementById('studioFileInput').files = containerExchange.files;
+
+                // Set page-level preview assets
+                this.markupPreviewUrl = this.canvas.toDataURL('image/jpeg');
+                this.hasMarkupAttached = true;
+                this.showStudio = false;
+            }, 'image/jpeg', 0.90);
         }
     }">
 
@@ -98,7 +272,7 @@
             <p class="text-sm text-slate-500 font-medium">Select a customer directory profile, map out your service line items, and configure deposit or billing loops.</p>
         </div>
 
-        <form action="/estimates" method="POST" class="space-y-6">
+        <form action="/estimates" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
 
             <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
@@ -223,6 +397,47 @@
                 </div>
             </div>
 
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+                <div class="border-b border-slate-100 pb-2">
+                    <h3 class="font-black text-sm text-slate-900 uppercase tracking-wider">3. 📸 Job Site Evidence & Photo Markup</h3>
+                    <p class="text-xs text-slate-400 font-medium">Capture field layout evidence or launch the canvas editor to markup dimensions instantly.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                    <div class="md:col-span-2 space-y-3">
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Select Field Progress Photo</label>
+                            <input type="file" id="studioFileInput" name="image" accept="image/*" @change="loadPhotoToStudio($event)"
+                                   class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase file:bg-slate-950 file:text-white hover:file:bg-black file:cursor-pointer cursor-pointer border border-slate-200 rounded-xl p-1 bg-slate-50/50">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Photo Caption / Note</label>
+                            <input type="text" name="caption" placeholder="e.g., Pre-existing structural rot on roof deck ledger"
+                                   class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-3 text-xs font-semibold focus:outline-none focus:border-[#f58613]">
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col items-center justify-center p-4 bg-slate-50 border border-slate-200 rounded-2xl h-36 relative overflow-hidden">
+                        <template x-if="hasMarkupAttached">
+                            <div class="absolute inset-0 w-full h-full">
+                                <img :src="markupPreviewUrl" class="w-full h-full object-cover">
+                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                    <button type="button" @click="showStudio = true; $nextTick(() => initCanvasElements())" class="bg-white/90 text-slate-950 font-black text-[9px] uppercase tracking-widest px-3 py-1.5 rounded-lg shadow-md cursor-pointer hover:bg-white">
+                                        Edit Markup ✏️
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                        <template x-if="!hasMarkupAttached">
+                            <div class="text-center text-slate-400 space-y-1">
+                                <span class="text-2xl block">🖼️</span>
+                                <span class="text-[10px] font-black uppercase tracking-wider block">No Markups Loaded</span>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
@@ -312,6 +527,77 @@
 
         </form>
     </main>
+
+    <div x-show="showStudio" x-cloak class="fixed inset-0 z-[100] bg-slate-950 flex flex-col select-none" @window:resize.debounce.200="resizeCanvas()">
+        <div class="bg-slate-900 border-b border-slate-800 px-4 h-16 shrink-0 flex items-center justify-between">
+            <button type="button" @click="closeStudio()" class="text-slate-400 hover:text-white font-black text-xs tracking-widest uppercase cursor-pointer">
+                &larr; Cancel
+            </button>
+            <div class="flex items-center gap-3">
+                <button type="button" @click="undoLastShape()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all">
+                    ↩ Undo
+                </button>
+                <button type="button" @click="clearStudioCanvas()" class="bg-red-950/40 text-red-400 hover:bg-red-900/40 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all">
+                    🗑️ Clear
+                </button>
+            </div>
+            <button type="button" @click="commitStudioMarkup()" class="bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs px-5 py-2.5 rounded-xl uppercase tracking-widest shadow transition-all active:scale-95 cursor-pointer">
+                Save Markup ✓
+            </button>
+        </div>
+
+        <div class="flex-grow relative bg-slate-950 overflow-hidden flex items-center justify-center p-2">
+            <div class="absolute left-3 top-1/2 -translate-y-1/2 bg-slate-900/90 backdrop-blur-md border border-slate-800 p-2.5 rounded-2xl flex flex-col gap-4 z-10 shadow-xl">
+                <div class="space-y-2">
+                    <span class="block text-[8px] font-black text-slate-500 uppercase tracking-wider text-center">Size</span>
+                    <button type="button" @click="thickness = 2; textSize = 14" :class="thickness === 2 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold cursor-pointer">F</button>
+                    <button type="button" @click="thickness = 6; textSize = 22" :class="thickness === 6 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold cursor-pointer">M</button>
+                    <button type="button" @click="thickness = 12; textSize = 32" :class="thickness === 12 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-base font-bold cursor-pointer">B</button>
+                </div>
+            </div>
+
+            <div class="absolute right-3 top-1/2 -translate-y-1/2 bg-slate-900/90 backdrop-blur-md border border-slate-800 p-2.5 rounded-2xl flex flex-col gap-3 z-10 shadow-xl">
+                <span class="block text-[8px] font-black text-slate-500 uppercase tracking-wider text-center">Color</span>
+                <button type="button" @click="color = '#f58613'" :class="color === '#f58613' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-[#f58613] cursor-pointer transition-transform"></button>
+                <button type="button" @click="color = '#eab308'" :class="color === '#eab308' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-yellow-500 cursor-pointer transition-transform"></button>
+                <button type="button" @click="color = '#dc2626'" :class="color === '#dc2626' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-red-600 cursor-pointer transition-transform"></button>
+                <button type="button" @click="color = '#ffffff'" :class="color === '#ffffff' ? 'ring-2 ring-orange-500 scale-110' : ''" class="w-6 h-6 rounded-full bg-white border border-slate-300 cursor-pointer transition-transform"></button>
+                <button type="button" @click="color = '#0f172a'" :class="color === '#0f172a' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-slate-900 border border-slate-800 cursor-pointer transition-transform"></button>
+            </div>
+
+            <canvas id="studioCanvas"
+                    class="max-w-full max-h-full shadow-2xl bg-black block touch-none"
+                    @mousedown="startDrawing($event)"
+                    @mousemove="drawMove($event)"
+                    @mouseup="endDrawing($event)"
+                    @mouseleave="endDrawing($event)"
+                    @touchstart="startDrawing($event)"
+                    @touchmove="drawMove($event)"
+                    @touchend="endDrawing($event)">
+            </canvas>
+        </div>
+
+        <div class="bg-slate-900 border-t border-slate-800 px-4 h-20 shrink-0 flex items-center justify-center gap-1.5 sm:gap-3 overflow-x-auto">
+            <button type="button" @click="tool = 'pen'" :class="tool === 'pen' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
+                <span>✏️</span> Pen
+            </button>
+            <button type="button" @click="tool = 'line'" :class="tool === 'line' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
+                <span>📏</span> Line
+            </button>
+            <button type="button" @click="tool = 'arrow'" :class="tool === 'arrow' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
+                <span>↗️</span> Arrow
+            </button>
+            <button type="button" @click="tool = 'box'" :class="tool === 'box' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
+                <span>⬜</span> Box
+            </button>
+            <button type="button" @click="tool = 'circle'" :class="tool === 'circle' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
+                <span>⚪</span> Circle
+            </button>
+            <button type="button" @click="tool = 'text'" :class="tool === 'text' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
+                <span>🔤</span> Text
+            </button>
+        </div>
+    </div>
 
 </body>
 </html>
