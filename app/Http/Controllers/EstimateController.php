@@ -68,7 +68,7 @@ class EstimateController extends Controller
         // Re-bind sanitized variables back into a clean workspace request array
         $request->merge($inputData);
 
-        // FIX: Dynamic Plugin-Driven Schema Update (Safely checks and builds missing structural blocks)
+        // Dynamic Plugin-Driven Schema Update (Safely checks and builds missing structural blocks)
         $estimateTable = (new Estimate())->getTable();
         if (!Schema::hasColumn($estimateTable, 'deposit_amount')) {
             Schema::table($estimateTable, function (Blueprint $table) {
@@ -97,16 +97,18 @@ class EstimateController extends Controller
         $companyId = Auth::user()->company_id;
 
         $estimate = DB::transaction(function () use ($validated, $companyId, $request) {
-            // Bind or generate the target client master record layout profile safely
-            $customer = Customer::firstOrCreate(
-                ['company_id' => $companyId, 'email' => $validated['customer_email']],
-                [
-                    'first_name'      => $validated['customer_first_name'],
-                    'last_name'       => $validated['customer_last_name'],
-                    'phone'           => $validated['customer_phone'],
-                    'billing_address' => $validated['customer_address'],
-                ]
-            );
+            // FIX: Manual lookup lookup and instantiation sequence to bypass Model Fillable blocks completely
+            $customer = Customer::where('company_id', $companyId)->where('email', $validated['customer_email'])->first();
+            if (!$customer) {
+                $customer = new Customer();
+                $customer->company_id = $companyId;
+                $customer->email = $validated['customer_email'];
+            }
+            $customer->first_name = $validated['customer_first_name'];
+            $customer->last_name = $validated['customer_last_name'];
+            $customer->phone = $validated['customer_phone'];
+            $customer->billing_address = $validated['customer_address'];
+            $customer->save();
 
             $estimateNumber = 'EST-' . strtoupper(Str::random(4)) . '-' . rand(1000, 9999);
 
@@ -139,18 +141,21 @@ class EstimateController extends Controller
                 $item->total_price = $itemTotal;
                 $item->save();
 
-                // AUTOMATED PRICEBOOK INLINE COMPILATION EXTENSION
+                // AUTOMATED PRICEBOOK INLINE COMPILATION EXTENSION (Bypasses mass assignment arrays)
                 $mustSave = !empty($itemData['save_to_pricebook']) && ($itemData['save_to_pricebook'] == 1 || $itemData['save_to_pricebook'] === 'true' || $itemData['save_to_pricebook'] === 'on');
                 if ($mustSave) {
-                    PricebookItem::firstOrCreate(
-                        ['company_id' => $companyId, 'name' => Str::limit($itemData['description'], 100)],
-                        [
-                            'category'         => 'Field Created Services',
-                            'base_unit_cost'   => $itemData['unit_price'],
-                            'markup_percentage'=> 0.00,
-                            'unit_type'        => 'Each'
-                        ]
-                    );
+                    $cleanDesc = Str::limit($itemData['description'], 100);
+                    $pbItem = PricebookItem::where('company_id', $companyId)->where('name', $cleanDesc)->first();
+                    if (!$pbItem) {
+                        $pbItem = new PricebookItem();
+                        $pbItem->company_id = $companyId;
+                        $pbItem->name = $cleanDesc;
+                    }
+                    $pbItem->category = 'Field Created Services';
+                    $pbItem->base_unit_cost = $itemData['unit_price'];
+                    $pbItem->markup_percentage = 0.00;
+                    $pbItem->unit_type = 'Each';
+                    $pbItem->save();
                 }
             }
 
