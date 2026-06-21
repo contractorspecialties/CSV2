@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Estimate | ContractorSpecialties</title>
+    <title>New Bid | ContractorSpecialties</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
@@ -24,6 +24,7 @@
         </div>
     </header>
 
+    <!-- MAIN APP COCKPIT LAYER -->
     <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-8">
 
         <div class="border-b border-slate-200 pb-4 mb-6">
@@ -34,6 +35,7 @@
         <form action="/estimates" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
 
+            <!-- 1. CUSTOMER ACCOUNT SELECT PANEL -->
             <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                 <div class="border-b border-slate-100 pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
@@ -100,18 +102,20 @@
                 </div>
             </div>
 
+            <!-- 2. SCOPE LINE ITEMS MATRIX -->
             <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                 <div class="border-b border-slate-100 pb-2 flex justify-between items-center">
-                    <h3 class="font-black text-sm text-slate-900 uppercase tracking-wider">2. Job Line Items & Specifications</h3>
+                    <h3 class="font-black text-sm text-slate-900 uppercase tracking-wider">2. Scope of Work & Bid Details</h3>
                     <button type="button" @click="addItem()" class="bg-slate-950 hover:bg-black text-white font-black text-xs py-1.5 px-3 rounded-lg uppercase tracking-wider transition-all cursor-pointer">
-                        + Add Custom Row
+                        + Add Line Item / Service
                     </button>
                 </div>
 
                 <div class="space-y-3">
-                    <template x-for="(item, index) in items" :key="index">
+                    <template x-for="(item, index) in items" :key="item.id">
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-slate-50/50 p-4 border border-slate-200 rounded-xl relative group">
 
+                            <!-- RESTORED COLUMN 1: KEPT ENTIRELY AS ORIGINAL -->
                             <div class="md:col-span-3">
                                 <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Auto-Fill from Pricebook</label>
                                 <select @change="loadPricebookItem(index, $event.target.value)" class="w-full bg-white border border-slate-300 rounded-lg py-2 px-2.5 text-xs font-bold focus:outline-none focus:border-[#f58613] cursor-pointer">
@@ -123,26 +127,26 @@
                             </div>
 
                             <div class="md:col-span-4">
-                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Service / Material Description</label>
-                                <input type="text" :name="`items[${index}][description]`" required x-model="item.description" placeholder="e.g., Premium Exterior Siding Treatment"
+                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Description of Work / Materials</label>
+                                <input type="text" :name="'items[' + index + '][description]'" required x-model="item.description" placeholder="e.g., Premium Exterior Siding Treatment"
                                        class="w-full bg-white border border-slate-300 rounded-lg py-2 px-2.5 text-xs font-semibold focus:outline-none focus:border-[#f58613]">
                             </div>
 
-                            <div class="md:col-span-1.5">
-                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Quantity</label>
-                                <input type="number" step="any" :name="`items[${index}][quantity]`" required x-model.number="item.quantity" min="0.01"
+                            <div class="md:col-span-2">
+                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-1 text-center">Quantity</label>
+                                <input type="number" step="any" :name="'items[' + index + '][quantity]'" required x-model.number="item.quantity" min="0.01"
                                        class="w-full bg-white border border-slate-300 rounded-lg py-2 px-2.5 text-xs font-mono font-black focus:outline-none focus:border-[#f58613] text-center">
                             </div>
 
                             <div class="md:col-span-2">
-                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Contract Price ($)</label>
-                                <input type="number" step="0.01" :name="`items[${index}][unit_price]`" required x-model.number="item.unit_price" placeholder="0.00"
+                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-1 text-right">Unit Cost / Rate ($)</label>
+                                <input type="number" step="0.01" :name="'items[' + index + '][unit_price]'" required x-model.number="item.unit_price" placeholder="0.00"
                                        class="w-full bg-white border border-slate-300 rounded-lg py-2 px-2.5 text-xs font-mono font-black focus:outline-none focus:border-[#f58613] text-right">
                             </div>
 
-                            <div class="md:col-span-1.5 flex items-center justify-between gap-2 h-9 pb-0.5">
+                            <div class="md:col-span-1 flex items-center justify-between gap-2 h-9 pb-0.5">
                                 <label class="flex items-center gap-1 cursor-pointer select-none">
-                                    <input type="checkbox" :name="`items[${index}][save_to_pricebook]`" x-model="item.save_to_pricebook" class="rounded border-slate-300 text-[#f58613] focus:ring-[#f58613]">
+                                    <input type="checkbox" :name="'items[' + index + '][save_to_pricebook]'" x-model="item.save_to_pricebook" class="rounded border-slate-300 text-[#f58613] focus:ring-[#f58613]">
                                     <span class="text-[9px] font-black text-slate-400 uppercase tracking-tight">Save</span>
                                 </label>
                                 <button type="button" @click="removeItem(index)" :disabled="items.length === 1"
@@ -156,6 +160,7 @@
                 </div>
             </div>
 
+            <!-- 3. Twin-ENGINE JOB SITE PHOTO MARKUP MODULE -->
             <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                 <div class="border-b border-slate-100 pb-2">
                     <h3 class="font-black text-sm text-slate-900 uppercase tracking-wider">3. 📸 Job Site Evidence & Photo Markup</h3>
@@ -176,7 +181,7 @@
                                     📷 Take Live Photo
                                 </button>
                                 <button type="button" @click="document.getElementById('galleryInputDriver').click()" class="bg-white border-2 border-slate-300 hover:border-slate-800 text-slate-800 hover:text-slate-950 font-black text-xs py-3.5 px-4 rounded-xl uppercase tracking-wider shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer">
-                                    导 Open Gallery
+                                    🖼️ Open Gallery
                                 </button>
                             </div>
                         </div>
@@ -188,11 +193,11 @@
                         </div>
                     </div>
 
+                    <!-- RE-ENGINEERED LIVE THUMBNAIL & STUDIO LINK COCKPIT -->
                     <div class="space-y-2">
                         <span class="block text-[10px] font-black uppercase text-slate-500 tracking-wide">Active Field Thumbnail</span>
 
                         <div class="flex flex-col items-center justify-center bg-slate-100 border border-slate-200 rounded-2xl aspect-video relative overflow-hidden group shadow-inner">
-
                             <div class="absolute inset-0 w-full h-full" x-show="hasMarkupAttached" x-cloak>
                                 <img :src="markupPreviewUrl" class="w-full h-full object-cover">
                                 <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer" @click="launchMarkupStudioWithCurrentImage()">
@@ -235,6 +240,7 @@
                 </div>
             </div>
 
+            <!-- 4. SCHEDULING & EXPIRES RULES -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                     <div class="border-b border-slate-100 pb-2">
@@ -289,37 +295,40 @@
                 </div>
             </div>
 
+            <!-- INTERNAL BRIEF REMARKS -->
             <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-2">
                 <label for="notes" class="block text-xs font-black uppercase text-slate-500 tracking-wider">Internal Job Scope Notes (Visible to Homeowner)</label>
                 <textarea id="notes" name="notes" rows="3" placeholder="Provide extra detail about scope parameters, material standards, or specific arrival updates..."
                           class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs font-medium focus:outline-none focus:border-[#f58613]"></textarea>
             </div>
 
+            <!-- PRICING SUMMARY PANEL -->
             <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-md flex flex-col sm:flex-row justify-between items-center gap-6">
                 <div class="font-mono text-xs text-slate-600 space-y-1 w-full sm:w-auto">
                     <div class="flex justify-between sm:justify-start gap-4">
-                        <span class="w-32 font-bold uppercase tracking-wider text-slate-400">Net Materials Subtotal:</span>
+                        <span class="w-32 font-bold uppercase tracking-wider text-slate-400">Base Scope Subtotal:</span>
                         <span class="font-black text-slate-900" x-text="'$' + subtotal.toFixed(2)">$0.00</span>
                     </div>
                     <div class="flex justify-between sm:justify-start gap-4" x-show="taxRate > 0" x-cloak>
-                        <span class="w-32 font-bold uppercase tracking-wider text-slate-400">Sales Surcharges Tax:</span>
+                        <span class="w-32 font-bold uppercase tracking-wider text-slate-400">Tax Surcharges:</span>
                         <span class="font-black text-slate-900" x-text="'+$' + taxTotal.toFixed(2)">+$0.00</span>
                     </div>
                     <div class="flex justify-between sm:justify-start gap-4 pt-2 border-t border-slate-100">
-                        <span class="w-32 font-black uppercase tracking-wider text-slate-800">Final Estimate Value:</span>
+                        <span class="w-32 font-black uppercase tracking-wider text-slate-800">Total Bid Amount:</span>
                         <span class="text-lg font-black text-emerald-600" x-text="'$' + grandTotal.toFixed(2)">$0.00</span>
                     </div>
                 </div>
 
                 <div class="w-full sm:w-auto">
                     <button type="submit" class="w-full sm:w-auto bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-4 px-8 rounded-xl uppercase tracking-widest shadow transition-all active:scale-[0.99] cursor-pointer">
-                        Compile & Save Estimate ⚡
+                        Generate & Lock Bid ⚡
                     </button>
                 </div>
             </div>
         </form>
     </main>
 
+    <!-- FULL SCREEN PHOTO ANNOTATION CANVAS HUDS -->
     <div x-show="showStudio" x-cloak class="fixed inset-0 z-[100] bg-slate-950 flex flex-col select-none" @window:resize.debounce.200="resizeCanvas()">
         <div class="bg-slate-900 border-b border-slate-800 px-4 h-16 shrink-0 flex items-center justify-between">
             <button type="button" @click="closeStudio()" class="text-slate-400 hover:text-white font-black text-xs tracking-widest uppercase cursor-pointer">
@@ -327,7 +336,7 @@
             </button>
             <div class="flex items-center gap-3">
                 <button type="button" @click="undoLastShape()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all">
-                    &larr; Undo
+                    ↩ Undo
                 </button>
                 <button type="button" @click="clearStudioCanvas()" class="bg-red-950/40 text-red-400 hover:bg-red-900/40 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all">
                     🗑️ Clear
@@ -391,10 +400,11 @@
         </div>
     </div>
 
+    <!-- GLOBAL COMPLEX SCRIPT ENGINE DECK -->
     <script>
         function estimateForm() {
             return {
-                items: [{ description: '', quantity: 1, unit_price: 0.00, save_to_pricebook: false }],
+                items: [{ id: Date.now(), description: '', quantity: 1, unit_price: 0.00, save_to_pricebook: false }],
                 taxRate: 0,
                 requireDeposit: false,
                 depositAmount: 0,
@@ -423,7 +433,6 @@
                 history: [],
                 currentPoints: [],
 
-                // HYBRID PREVIEW HOOK DATA ATTRIBUTES
                 hasImageSelected: false,
                 hasMarkupAttached: false,
                 rawPreviewUrl: '',
@@ -436,7 +445,7 @@
                     }
                 },
                 addItem() {
-                    this.items.push({ description: '', quantity: 1, unit_price: 0.00, save_to_pricebook: false });
+                    this.items.push({ id: Date.now() + Math.random(), description: '', quantity: 1, unit_price: 0.00, save_to_pricebook: false });
                 },
                 removeItem(index) {
                     if (this.items.length > 1) this.items.splice(index, 1);
@@ -485,7 +494,7 @@
                     reader.onload = (e) => {
                         this.rawPreviewUrl = e.target.result;
                         this.hasImageSelected = true;
-                        this.hasMarkupAttached = false; // Fresh image overrides previous markup state
+                        this.hasMarkupAttached = false;
 
                         this.bgImage = new Image();
                         this.bgImage.onload = () => {
@@ -642,7 +651,6 @@
                         const editedFile = new File([blob], "field_markup_capture.jpg", { type: "image/jpeg" });
                         const containerExchange = new DataTransfer();
                         containerExchange.items.add(editedFile);
-
                         document.getElementById('studioFileInput').files = containerExchange.files;
                         this.markupPreviewUrl = this.canvas.toDataURL('image/jpeg');
                         this.hasMarkupAttached = true;
