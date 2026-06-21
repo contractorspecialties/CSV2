@@ -24,15 +24,35 @@
 
         <header class="bg-black border-b border-slate-900 sticky top-0 z-50 shadow-md">
             <div class="max-w-6xl mx-auto px-4 h-24 flex items-center justify-between">
-                <div class="w-[400px] max-w-[65%] h-[100px] flex items-center">
+                <div class="w-[400px] max-w-[45%] h-[100px] flex items-center">
                     <img src="/images/header-logo.webp" alt="ContractorSpecialties Logo" class="w-full h-auto max-h-[90px] object-contain object-left">
                 </div>
 
-                <div class="flex items-center gap-4">
-                    <span class="text-slate-400 font-black text-xs uppercase tracking-widest hidden md:inline-block">
+                <div class="flex items-center gap-2 sm:gap-4">
+                    <span class="text-slate-400 font-black text-xs uppercase tracking-widest hidden lg:inline-block">
                         {{ now()->format('l, F jS') }}
                     </span>
-                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+
+                    @auth
+                        @if(auth()->user()->is_admin)
+                            <a href="{{ route('admin.index') }}" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-amber-400 hover:text-amber-300 font-black text-[10px] py-2.5 px-3.5 sm:px-4 rounded-xl uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer">
+                                <span>⚙️</span>
+                                <span class="hidden sm:inline">Admin Desk</span>
+                            </a>
+                        @endif
+
+                        <a href="{{ route('logout') }}" class="bg-slate-900 hover:bg-red-950/40 border border-slate-800 hover:border-red-900/40 text-slate-400 hover:text-red-400 font-black text-[10px] py-2.5 px-3.5 sm:px-4 rounded-xl uppercase tracking-wider transition-all shadow-sm cursor-pointer">
+                            Sign Out
+                        </a>
+                    @endauth
+
+                    @guest
+                        <a href="{{ route('welcome') }}" class="bg-[#f58613] hover:bg-orange-600 text-white font-black text-[10px] py-2.5 px-4 rounded-xl uppercase tracking-wider transition-all shadow-sm cursor-pointer">
+                            Sign In
+                        </a>
+                    @endguest
+
+                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></div>
                 </div>
             </div>
         </header>
@@ -43,6 +63,13 @@
                 <div class="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl p-4 flex items-center gap-3 shadow-sm">
                     <span class="text-lg">⚡</span>
                     <p class="text-xs font-black uppercase tracking-tight">{{ session('status') }}</p>
+                </div>
+            @endif
+
+            @if($errors->has('security'))
+                <div class="bg-red-50 border border-red-200 text-red-900 rounded-2xl p-4 flex items-center gap-3 shadow-sm">
+                    <span class="text-lg">🛑</span>
+                    <p class="text-xs font-black uppercase tracking-tight">{{ $errors->first('security') }}</p>
                 </div>
             @endif
 
