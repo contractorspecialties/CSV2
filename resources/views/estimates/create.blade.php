@@ -47,6 +47,8 @@
         <form action="/estimates" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
 
+            <input type="hidden" name="customer_id" x-model="customer_id">
+
             <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                 <div class="border-b border-slate-100 pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
@@ -417,6 +419,7 @@
                 customersList: @js($customers ?? []),
 
                 customerSource: @js(old('customerSource', 'directory')),
+                customer_id: @js(old('customer_id', '')), // FIX: Retain historical selected ID states safely
                 customer_first_name: @js(old('customer_first_name', '')),
                 customer_last_name: @js(old('customer_last_name', '')),
                 customer_email: @js(old('customer_email', '')),
@@ -443,7 +446,6 @@
                 markupPreviewUrl: '',
 
                 init() {
-                    // Force complete sequential hydration loop block for old validation arrays
                     @if(old('items'))
                         @foreach(old('items') as $idx => $oldItem)
                             this.items.push({
@@ -480,6 +482,7 @@
                 loadDirectoryProfile(id) {
                     const match = this.customersList.find(c => c.id == id);
                     if (match) {
+                        this.customer_id = match.id; // FIX: Lock ID carrier reference state
                         this.customer_first_name = match.first_name;
                         this.customer_last_name = match.last_name;
                         this.customer_email = match.email;
@@ -490,6 +493,7 @@
                     }
                 },
                 clearCustomerFields() {
+                    this.customer_id = ''; // FIX: Purge tracking reference cleanly
                     this.customer_first_name = '';
                     this.customer_last_name = '';
                     this.customer_email = '';

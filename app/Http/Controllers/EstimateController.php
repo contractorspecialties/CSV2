@@ -77,6 +77,7 @@ class EstimateController extends Controller
         }
 
         $validated = $request->validate([
+            'customer_id'         => 'nullable|integer', // FIX: Registered incoming profile token bounds
             'customer_first_name' => 'required|string|max:255',
             'customer_last_name'  => 'required|string|max:255',
             'customer_email'      => 'required|email|max:255',
@@ -97,15 +98,29 @@ class EstimateController extends Controller
         $companyId = Auth::user()->company_id;
 
         $estimate = DB::transaction(function () use ($validated, $companyId, $request) {
-            // FIX: Manual lookup lookup and instantiation sequence to bypass Model Fillable blocks completely
-            $customer = Customer::where('company_id', $companyId)->where('email', $validated['customer_email'])->first();
+            $customer = null;
+
+            // FIX: If an ID carrier was passed from the Directory panel, query that client directly
+            if (!empty($validated['customer_id'])) {
+                $customer = Customer::where('company_id', $companyId)->find($validated['customer_id']);
+            }
+
+            // If it's an explicit "New Lead" push, ONLY match existing profiles if an exact unique email hits
+            if (!$customer && !empty($validated['customer_email'])) {
+                $customer = Customer::where('company_id', $companyId)
+                    ->where('email', $validated['customer_email'])
+                    ->first();
+            }
+
+            // If it's a completely unique lead, initialize a clean data instance row
             if (!$customer) {
                 $customer = new Customer();
                 $customer->company_id = $companyId;
-                $customer->email = $validated['customer_email'];
             }
+
             $customer->first_name = $validated['customer_first_name'];
             $customer->last_name = $validated['customer_last_name'];
+            $customer->email = $validated['customer_email'];
             $customer->phone = $validated['customer_phone'];
             $customer->billing_address = $validated['customer_address'];
             $customer->save();
@@ -141,7 +156,7 @@ class EstimateController extends Controller
                 $item->total_price = $itemTotal;
                 $item->save();
 
-                // AUTOMATED PRICEBOOK INLINE COMPILATION EXTENSION (Bypasses mass assignment arrays)
+                // AUTOMATED PRICEBOOK INLINE COMPILATION EXTENSION
                 $mustSave = !empty($itemData['save_to_pricebook']) && ($itemData['save_to_pricebook'] == 1 || $itemData['save_to_pricebook'] === 'true' || $itemData['save_to_pricebook'] === 'on');
                 if ($mustSave) {
                     $cleanDesc = Str::limit($itemData['description'], 100);
@@ -299,7 +314,7 @@ class EstimateController extends Controller
             return back()->with('status', '📸 Progress photo successfully bound to job history archive.');
         }
 
-        return back()->with('error', 'Failed to read media asset configuration.');
+        return border()->with('error', 'Failed to read media asset configuration.');
     }
 
     /**
