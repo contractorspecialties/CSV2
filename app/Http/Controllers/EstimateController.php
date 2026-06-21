@@ -135,7 +135,8 @@ class EstimateController extends Controller
                         [
                             'category'         => 'Field Created Services',
                             'base_unit_cost'   => $itemData['unit_price'],
-                            'markup_percentage'=> 0.00
+                            'markup_percentage'=> 0.00,
+                            'unit_type'        => 'Each' // FIX: Passed fallback string variable value to satisfy database restrictions
                         ]
                     );
                 }
@@ -162,7 +163,7 @@ class EstimateController extends Controller
             }
 
             return $estimate;
-        }); // FIX: Replaced the bracket with a closure brace to clear structural compiles
+        });
 
         return redirect()->route('dashboard')->with('status', "⚡ Estimate {$estimate->estimate_number} successfully compiled.");
     }
