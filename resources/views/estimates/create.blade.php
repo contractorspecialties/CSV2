@@ -3,579 +3,315 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $estimate->estimate_number }} | Estimate Details</title>
+    <title>New Estimate | ContractorSpecialties</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="flex flex-col min-h-full font-sans antialiased bg-slate-50 text-slate-900 selection:bg-[#f58613] selection:text-white"
-      x-data="photoMarkupStudio()">
+<body class="flex flex-col min-h-full font-sans antialiased bg-slate-50 text-slate-900 selection:bg-[#f58613] selection:text-white">
 
     <header class="bg-black border-b border-slate-900 sticky top-0 z-50 shadow-md">
-        <div class="max-w-6xl mx-auto px-4 h-24 flex items-center justify-between">
+        <div class="max-w-5xl mx-auto px-4 h-24 flex items-center justify-between">
             <div class="w-[400px] max-w-[60%] h-[100px] flex items-center">
                 <img src="/images/header-logo.webp" alt="ContractorSpecialties Logo" class="w-full h-auto max-h-[90px] object-contain object-left">
             </div>
             <a href="/dashboard" class="text-xs font-black text-slate-400 hover:text-white uppercase tracking-wider bg-slate-900 border border-slate-800 px-4 py-2.5 rounded-xl transition-all shadow-inner">
-                ← Back to Dashboard
+                &larr; Cancel & Exit
             </a>
         </div>
     </header>
 
-    <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-8 space-y-6">
-
-        @if(session('status'))
-            <div class="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl p-4 flex items-center gap-3 shadow-sm">
-                <span class="text-lg">⚡</span>
-                <p class="text-xs font-black uppercase tracking-tight">{{ session('status') }}</p>
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div class="bg-red-50 border border-red-200 text-red-900 rounded-2xl p-4 flex items-center gap-3 shadow-sm">
-                <span class="text-lg">⚠️</span>
-                <p class="text-xs font-black uppercase tracking-tight">{{ session('error') }}</p>
-            </div>
-        @endif
-
-        <div class="border-b border-slate-200 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-                <span class="text-[10px] bg-slate-900 text-slate-300 font-mono font-black px-2 py-0.5 rounded uppercase tracking-wider">
-                    Current Status: {{ $estimate->status }}
-                </span>
-                <h1 class="text-2xl font-black text-slate-950 uppercase tracking-tight mt-1">Estimate {{ $estimate->estimate_number }}</h1>
-                <p class="text-sm text-slate-500 font-medium">Customer: <strong class="text-slate-900">{{ $estimate->customer->last_name }}, {{ $estimate->customer->first_name }}</strong></p>
-            </div>
-
-            <div class="bg-white border border-slate-200 rounded-xl p-2.5 flex items-center gap-2 shadow-sm">
-                <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 pl-1">Quick Actions:</span>
-                <form action="/estimates/{{ $estimate->id }}/status" method="POST" class="flex gap-1">
-                    @csrf
-                    <input type="hidden" name="status" value="sent">
-                    <button type="submit" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-[10px] px-2.5 py-1.5 rounded uppercase tracking-wide cursor-pointer transition-all">
-                        Mark Sent
-                    </button>
-                </form>
-                <form action="/estimates/{{ $estimate->id }}/status" method="POST" class="flex gap-1">
-                    @csrf
-                    <input type="hidden" name="status" value="approved">
-                    <button type="submit" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/50 font-black text-[10px] px-2.5 py-1.5 rounded uppercase tracking-wide cursor-pointer transition-all">
-                        Force Approve
-                    </button>
-                </form>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-            <div class="lg:col-span-2 space-y-6">
-
-                <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                    <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-                        <h3 class="font-black text-xs text-slate-900 uppercase tracking-wider">Job Scope & Line Items</h3>
-                    </div>
-
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="border-b border-slate-100 text-[10px] font-black uppercase text-slate-400 bg-slate-50/20">
-                                    <th class="py-3 px-6">Description</th>
-                                    <th class="py-3 px-4 text-center">Qty</th>
-                                    <th class="py-3 px-4 text-right">Unit Price</th>
-                                    <th class="py-3 px-6 text-right">Total Price</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
-                                @foreach($estimate->items as $item)
-                                    <tr>
-                                        <td class="py-4 px-6 font-bold text-slate-900 text-sm">{{ $item->description }}</td>
-                                        <td class="py-4 px-4 text-center font-mono">{{ number_format($item->quantity, 2) }}</td>
-                                        <td class="py-4 px-4 text-right font-mono">${{ number_format($item->unit_price, 2) }}</td>
-                                        <td class="py-4 px-6 text-right font-mono font-black text-slate-950">${{ number_format($item->total_price, 2) }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="bg-slate-50/80 border-t border-slate-100 p-6 flex justify-end">
-                        <div class="w-64 font-mono text-xs text-slate-600 space-y-1.5">
-                            <div class="flex justify-between">
-                                <span class="font-bold text-slate-400 uppercase">Subtotal:</span>
-                                <span class="font-black text-slate-900">${{ number_format($estimate->subtotal, 2) }}</span>
-                            </div>
-                            <div class="flex justify-between" {{ $estimate->tax_rate == 0 ? 'style=display:none' : '' }}>
-                                <span class="font-bold text-slate-400 uppercase">Tax ({{ $estimate->tax_rate }}%):</span>
-                                <span class="font-black text-slate-900">+${{ number_format($estimate->subtotal * ($estimate->tax_rate / 100), 2) }}</span>
-                            </div>
-                            <div class="flex justify-between pt-2 border-t border-slate-200 text-sm">
-                                <span class="font-black text-slate-800 uppercase">Total:</span>
-                                <span class="text-base font-black text-emerald-600">${{ number_format($estimate->grand_total, 2) }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                @if($estimate->notes && str_contains($estimate->notes, '🚨 Homeowner Modification Request:'))
-                    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-6 shadow-sm space-y-4">
-                        <div>
-                            <span class="text-[9px] bg-amber-600 text-white font-black px-2 py-0.5 rounded uppercase tracking-wider">Pending Customer Request</span>
-                            <h3 class="text-sm font-black uppercase text-slate-900 mt-2">Client Feedback History</h3>
-                        </div>
-                        <div class="text-xs font-medium text-slate-800 bg-white/80 p-4 border border-amber-200/60 rounded-xl whitespace-pre-wrap leading-relaxed">
-                            {{ $estimate->notes }}
-                        </div>
-
-                        <form action="/estimates/{{ $estimate->id }}/blueprint" method="POST" class="space-y-3 pt-2">
-                            @csrf
-                            <div>
-                                <label for="response_notes" class="block text-[10px] font-black uppercase text-slate-500 mb-1">Update Scope Notes / Post Your Response</label>
-                                <textarea id="response_notes" name="notes" rows="3" placeholder="Type clarification or updated contract parameters here..." class="w-full bg-white border border-slate-300 rounded-xl p-3 text-xs font-medium focus:outline-none focus:border-[#f58613]"></textarea>
-                            </div>
-                            <button type="submit" class="bg-slate-950 hover:bg-black text-white font-black text-xs py-2.5 px-4 rounded-xl uppercase tracking-wider transition-all cursor-pointer">
-                                Save Notes & Re-Send Link ⚡
-                            </button>
-                        </form>
-                    </div>
-                @else
-                    @if($estimate->notes)
-                        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-2">
-                            <span class="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Internal Project Scope Notes</span>
-                            <p class="text-xs font-medium text-slate-700 leading-relaxed whitespace-pre-wrap">{{ $estimate->notes }}</p>
-                        </div>
-                    @endif
-                @endif
-            </div>
-
-            <div class="space-y-6">
-
-                <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-                    <div class="border-b border-slate-100 pb-2">
-                        <h3 class="font-black text-xs text-slate-900 uppercase tracking-wider">📢 Customer Dispatch Hub</h3>
-                        <p class="text-[11px] text-slate-400 font-medium mt-0.5">Send the project checkout portal straight to the client.</p>
-                    </div>
-
-                    <div class="space-y-2 text-xs font-medium">
-                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex justify-between items-center">
-                            <div>
-                                <span class="text-[9px] text-slate-400 font-black uppercase block">Mobile Target</span>
-                                <span class="font-mono font-bold text-slate-900">{{ $estimate->customer->phone ?? 'No Phone Logged' }}</span>
-                            </div>
-                            <span class="text-[9px] {{ $estimate->customer->phone ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200' }} border font-mono font-black px-1.5 py-0.5 rounded uppercase">
-                                {{ $estimate->customer->phone ? 'Ready' : 'Missing' }}
-                            </span>
-                        </div>
-
-                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex justify-between items-center">
-                            <div>
-                                <span class="text-[9px] text-slate-400 font-black uppercase block">Email Target</span>
-                                <span class="font-sans font-bold text-slate-900 truncate max-w-[150px] block">{{ $estimate->customer->email }}</span>
-                            </div>
-                            <span class="text-[9px] bg-emerald-50 text-emerald-700 border border-emerald-200 border font-mono font-black px-1.5 py-0.5 rounded uppercase">
-                                Ready
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="space-y-2 pt-2">
-                        <form action="/estimates/{{ $estimate->id }}/text-dispatch" method="POST">
-                            @csrf
-                            <button type="submit" @empty($estimate->customer->phone) disabled @endempty class="w-full bg-[#f58613] hover:bg-orange-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-black text-xs py-3.5 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] flex justify-center items-center gap-2 cursor-pointer">
-                                📱 Send Link via Text Message Run
-                            </button>
-                        </form>
-
-                        <form action="/estimates/{{ $estimate->id }}/email-dispatch" method="POST">
-                            @csrf
-                            <button type="submit" class="w-full bg-slate-900 hover:bg-black text-white font-black text-xs py-3.5 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] flex justify-center items-center gap-2 cursor-pointer border border-slate-950">
-                                📧 Send Link via Official Email Trail
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-                    <div class="border-b border-slate-100 pb-2">
-                        <h3 class="font-black text-xs text-slate-900 uppercase tracking-wider">📸 Field Site Visual Timeline</h3>
-                        <p class="text-[11px] text-slate-400 font-medium mt-0.5">Upload visual proof or job status photos directly to this folder profile.</p>
-                    </div>
-
-                    <form action="/estimates/{{ $estimate->id }}/attachments" method="POST" enctype="multipart/form-data" class="space-y-3" id="attachmentForm">
-                        @csrf
-                        <div>
-                            <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Select Field Capture Image</label>
-                            <input type="file" id="studioFileInput" name="image" required accept="image/*" @change="loadPhotoToStudio($event)" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase file:bg-slate-950 file:text-white hover:file:bg-black file:cursor-pointer cursor-pointer border border-slate-200 rounded-xl p-1 bg-slate-50/50">
-                        </div>
-                        <div>
-                            <input type="text" name="caption" placeholder="Short description (e.g., Finished framing pass)" class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 px-2.5 text-xs font-medium focus:outline-none focus:border-[#f58613]">
-                        </div>
-                        <button type="submit" class="w-full bg-slate-950 hover:bg-black text-white font-black text-xs py-2.5 rounded-lg uppercase tracking-wider transition-all cursor-pointer">
-                            Commit Progress Asset ⚡
-                        </button>
-                    </form>
-
-                    <div class="pt-2 border-t border-slate-100 space-y-3">
-                        @forelse($attachments as $media)
-                            <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50 shadow-sm">
-                                <img src="{{ $media->file_path }}" alt="Field Upload Log" class="w-full h-auto object-cover max-h-48">
-                                <div class="p-2.5 bg-white text-[11px] font-medium text-slate-700 flex justify-between items-center">
-                                    <span>{{ $media->caption }}</span>
-                                    <span class="text-[9px] text-slate-400 font-mono font-bold">{{ $media->created_at->format('m/d H:i') }}</span>
-                                </div>
-                            </div>
-                        @empty
-                            <div class="text-center py-6 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 italic text-xs font-medium">
-                                No site attachments linked yet.
-                            </div>
-                        @endforelse
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </main>
-
-    <div x-show="showStudio" x-cloak class="fixed inset-0 z-[100] bg-slate-950 flex flex-col select-none" @window:resize.debounce.200="resizeCanvas()">
-
-        <div class="bg-slate-900 border-b border-slate-800 px-4 h-16 shrink-0 flex items-center justify-between">
-            <button type="button" @click="closeStudio()" class="text-slate-400 hover:text-white font-black text-xs tracking-widest uppercase cursor-pointer">
-                ← Cancel
-            </button>
-            <div class="flex items-center gap-3">
-                <button type="button" @click="undoLastShape()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all">
-                    ↩ Undo
-                </button>
-                <button type="button" @click="clearStudioCanvas()" class="bg-red-950/40 text-red-400 hover:bg-red-900/40 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all">
-                    🗑️ Clear
-                </button>
-            </div>
-            <button type="button" @click="commitStudioMarkup()" class="bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs px-5 py-2.5 rounded-xl uppercase tracking-widest shadow transition-all active:scale-95 cursor-pointer">
-                Save Markup ✓
-            </button>
-        </div>
-
-        <div class="flex-grow relative bg-slate-950 overflow-hidden flex items-center justify-center p-2">
-
-            <div class="absolute left-3 top-1/2 -translate-y-1/2 bg-slate-900/90 backdrop-blur-md border border-slate-800 p-2.5 rounded-2xl flex flex-col gap-4 z-10 shadow-xl">
-                <div class="space-y-2">
-                    <span class="block text-[8px] font-black text-slate-500 uppercase tracking-wider text-center">Size</span>
-                    <button type="button" @click="thickness = 2; textSize = 14" :class="thickness === 2 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold cursor-pointer">F</button>
-                    <button type="button" @click="thickness = 6; textSize = 22" :class="thickness === 6 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold cursor-pointer">M</button>
-                    <button type="button" @click="thickness = 12; textSize = 32" :class="thickness === 12 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-base font-bold cursor-pointer">B</button>
-                </div>
-            </div>
-
-            <div class="absolute right-3 top-1/2 -translate-y-1/2 bg-slate-900/90 backdrop-blur-md border border-slate-800 p-2.5 rounded-2xl flex flex-col gap-3 z-10 shadow-xl">
-                <span class="block text-[8px] font-black text-slate-500 uppercase tracking-wider text-center">Color</span>
-                <button type="button" @click="color = '#f58613'" :class="color === '#f58613' ? 'ring-2 ring-white scale-110' : '' = '#f58613'" class="w-6 h-6 rounded-full bg-[#f58613] cursor-pointer transition-transform"></button>
-                <button type="button" @click="color = '#eab308'" :class="color === '#eab308' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-yellow-500 cursor-pointer transition-transform"></button>
-                <button type="button" @click="color = '#dc2626'" :class="color === '#dc2626' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-red-600 cursor-pointer transition-transform"></button>
-                <button type="button" @click="color = '#ffffff'" :class="color === '#ffffff' ? 'ring-2 ring-orange-500 scale-110' : ''" class="w-6 h-6 rounded-full bg-white border border-slate-300 cursor-pointer transition-transform"></button>
-                <button type="button" @click="color = '#0f172a'" :class="color === '#0f172a' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-slate-900 border border-slate-800 cursor-pointer transition-transform"></button>
-            </div>
-
-            <canvas id="studioCanvas"
-                    class="max-w-full max-h-full shadow-2xl bg-black block touch-none"
-                    @mousedown="startDrawing($event)"
-                    @mousemove="drawMove($event)"
-                    @mouseup="endDrawing($event)"
-                    @mouseleave="endDrawing($event)"
-                    @touchstart="startDrawing($event)"
-                    @touchmove="drawMove($event)"
-                    @touchend="endDrawing($event)">
-            </canvas>
-        </div>
-
-        <div class="bg-slate-900 border-t border-slate-800 px-4 h-20 shrink-0 flex items-center justify-center gap-1.5 sm:gap-3 overflow-x-auto">
-            <button type="button" @click="tool = 'pen'" :class="tool === 'pen' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
-                <span>✏️</span> Pen
-            </button>
-            <button type="button" @click="tool = 'line'" :class="tool === 'line' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
-                <span>📏</span> Line
-            </button>
-            <button type="button" @click="tool = 'arrow'" :class="tool === 'arrow' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
-                <span>↗️</span> Arrow
-            </button>
-            <button type="button" @click="tool = 'box'" :class="tool === 'box' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
-                <span>⬜</span> Box
-            </button>
-            <button type="button" @click="tool = 'circle'" :class="tool === 'circle' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
-                <span>⚪</span> Circle
-            </button>
-            <button type="button" @click="tool = 'text'" :class="tool === 'text' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
-                <span>🔤</span> Text
-            </button>
-        </div>
-    </div>
-
-    <script>
-        function photoMarkupStudio() {
-            return {
-                showStudio: false,
-                tool: 'pen',
-                color: '#f58613',
-                thickness: 6,
-                textSize: 22,
-
-                // Active drawing telemetry context parameters
-                canvas: null,
-                ctx: null,
-                bgImage: null,
-                isDrawing: false,
-                startX: 0,
-                startY: 0,
-
-                // Object array action framework tracking records (allows pristine rendering & 1-step undo)
-                history: [],
-                currentPoints: [],
-
-                loadPhotoToStudio(event) {
-                    const file = event.target.files[0];
-                    if (!file) return;
-
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        this.bgImage = new Image();
-                        this.bgImage.onload = () => {
-                            this.showStudio = true;
-                            this.history = []; // Reset workspace matrix parameters
-                            this.$nextTick(() => {
-                                this.initCanvasElements();
-                            });
-                        };
-                        this.bgImage.src = e.target.result;
-                    };
-                    reader.readAsDataURL(file);
-                },
-
-                initCanvasElements() {
-                    this.canvas = document.getElementById('studioCanvas');
-                    this.ctx = this.canvas.getContext('2d');
-                    this.resizeCanvas();
-                },
-
-                resizeCanvas() {
-                    if (!this.canvas || !this.bgImage) return;
-
-                    // Match drawing display space to native layout dimensions
-                    const maxWidth = window.innerWidth * 0.90;
-                    const maxHeight = window.innerHeight * 0.70;
-
-                    let newWidth = this.bgImage.width;
-                    let newHeight = this.bgImage.height;
-
-                    const ratio = Math.min(maxWidth / newWidth, maxHeight / newHeight);
-
-                    this.canvas.width = newWidth * ratio;
-                    this.canvas.height = newHeight * ratio;
-
-                    this.redrawCanvasWorkspace();
-                },
-
-                redrawCanvasWorkspace() {
-                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-                    // Render image base back as base foundation layer
-                    this.ctx.drawImage(this.bgImage, 0, 0, this.canvas.width, this.canvas.height);
-
-                    // Re-render sequential vector structures from object storage history stack
-                    this.history.forEach(shape => {
-                        this.drawShapePrimitive(shape);
-                    });
-                },
-
-                getCoordinates(event) {
-                    let clientX, clientY;
-
-                    if (event.touches && event.touches.length > 0) {
-                        clientX = event.touches[0].clientX;
-                        clientY = event.touches[0].clientY;
-                    } else {
-                        clientX = event.clientX;
-                        clientY = event.clientY;
-                    }
-
-                    const rect = this.canvas.getBoundingClientRect();
-                    return {
-                        x: clientX - rect.left,
-                        y: clientY - rect.top
-                    };
-                },
-
-                startDrawing(event) {
-                    event.preventDefault();
-                    const coords = this.getCoordinates(event);
-                    this.isDrawing = true;
-                    this.startX = coords.x;
-                    this.startY = coords.y;
-
-                    if (this.tool === 'pen') {
-                        this.currentPoints = [{ x: coords.x, y: coords.y }];
-                    } else if (this.tool === 'text') {
-                        this.isDrawing = false;
-                        const note = prompt("Enter text instruction to place at coordinates:");
-                        if (note) {
-                            this.history.push({
-                                type: 'text',
-                                x: this.startX,
-                                y: this.startY,
-                                text: note,
-                                color: this.color,
-                                size: this.textSize
-                            });
-                            this.redrawCanvasWorkspace();
-                        }
-                    }
-                },
-
-                drawMove(event) {
-                    if (!this.isDrawing) return;
-                    event.preventDefault();
-                    const coords = this.getCoordinates(event);
-
-                    this.redrawCanvasWorkspace();
-
-                    // Render interactive preview traces to assist job site accuracy
-                    const tempShape = {
-                        type: this.tool,
-                        startX: this.startX,
-                        startY: this.startY,
-                        endX: coords.x,
-                        endY: coords.y,
-                        color: this.color,
-                        thickness: this.thickness,
-                        points: this.currentPoints
-                    };
-
-                    if (this.tool === 'pen') {
-                        this.currentPoints.push({ x: coords.x, y: coords.y });
-                        tempShape.points = this.currentPoints;
-                    }
-
-                    this.drawShapePrimitive(tempShape);
-                },
-
-                endDrawing(event) {
-                    if (!this.isDrawing) return;
-                    this.isDrawing = false;
-                    event.preventDefault();
-
-                    const coords = this.getCoordinates(event) || { x: this.startX, y: this.startY };
-
-                    if (this.tool === 'pen') {
-                        this.history.push({
-                            type: 'pen',
-                            points: this.currentPoints,
-                            color: this.color,
-                            thickness: this.thickness
-                        });
-                    } else if (this.tool !== 'text') {
-                        this.history.push({
-                            type: this.tool,
-                            startX: this.startX,
-                            startY: this.startY,
-                            endX: coords.x,
-                            endY: coords.y,
-                            color: this.color,
-                            thickness: this.thickness
-                        });
-                    }
-
-                    this.currentPoints = [];
-                    this.redrawCanvasWorkspace();
-                },
-
-                drawShapePrimitive(shape) {
-                    this.ctx.strokeStyle = shape.color;
-                    this.ctx.fillStyle = shape.color;
-                    this.ctx.lineWidth = shape.thickness;
-                    this.ctx.lineCap = 'round';
-                    this.ctx.lineJoin = 'round';
-
-                    this.ctx.beginPath();
-
-                    if (shape.type === 'pen' && shape.points && shape.points.length > 0) {
-                        this.ctx.moveTo(shape.points[0].x, shape.points[0].y);
-                        shape.points.forEach(p => this.ctx.lineTo(p.x, p.y));
-                        this.ctx.stroke();
-                    }
-                    else if (shape.type === 'line') {
-                        this.ctx.moveTo(shape.startX, shape.startY);
-                        this.ctx.lineTo(shape.endX, shape.endY);
-                        this.ctx.stroke();
-                    }
-                    else if (shape.type === 'box') {
-                        this.ctx.rect(shape.startX, shape.startY, shape.endX - shape.startX, shape.endY - shape.startY);
-                        this.ctx.stroke();
-                    }
-                    else if (shape.type === 'circle') {
-                        const radius = Math.sqrt(Math.pow(shape.endX - shape.startX, 2) + Math.pow(shape.endY - shape.startY, 2));
-                        this.ctx.arc(shape.startX, shape.startY, radius, 0, 2 * Math.PI);
-                        this.ctx.stroke();
-                    }
-                    else if (shape.type === 'text') {
-                        this.ctx.font = `bold ${shape.size}px sans-serif`;
-                        this.ctx.fillText(shape.text, shape.x, shape.y);
-                    }
-                    else if (shape.type === 'arrow') {
-                        // Core structural math translations to construct clean vector arrow terminal blocks dynamically
-                        const angle = Math.atan2(shape.endY - shape.startY, shape.endX - shape.startX);
-                        const headLength = Math.max(shape.thickness * 3, 15);
-
-                        this.ctx.moveTo(shape.startX, shape.startY);
-                        this.ctx.lineTo(shape.endX, shape.endY);
-                        this.ctx.stroke();
-
-                        this.ctx.beginPath();
-                        this.ctx.moveTo(shape.endX, shape.endY);
-                        this.ctx.lineTo(shape.endX - headLength * Math.cos(angle - Math.PI / 6), shape.endY - headLength * Math.sin(angle - Math.PI / 6));
-                        this.ctx.lineTo(shape.endX - headLength * Math.cos(angle + Math.PI / 6), shape.endY - headLength * Math.sin(angle + Math.PI / 6));
-                        this.ctx.closePath();
-                        this.ctx.fill();
-                    }
-                },
-
-                undoLastShape() {
-                    if (this.history.length > 0) {
-                        this.history.pop();
-                        this.redrawCanvasWorkspace();
-                    }
-                },
-
-                clearStudioCanvas() {
-                    this.history = [];
-                    this.redrawCanvasWorkspace();
-                },
-
-                closeStudio() {
-                    this.showStudio = false;
-                    document.getElementById('studioFileInput').value = ''; // Reset structural parameters
-                },
-
-                commitStudioMarkup() {
-                    // Convert drawn canvas asset directly into high density compressed JPEG blob data streams
-                    this.canvas.toBlob((blob) => {
-                        if (!blob) return;
-
-                        // Recast base container layer back into browser state tracking engine
-                        const editedFile = new File([blob], "field_markup_capture.jpg", { type: "image/jpeg" });
-                        const containerExchange = new DataTransfer();
-                        containerExchange.items.add(editedFile);
-
-                        // Force update target input element variables programmatically without triggering manual selection loops
-                        document.getElementById('studioFileInput').files = containerExchange.files;
-
-                        this.showStudio = false;
-
-                        // Flash message update indicating modification state parameters saved cleanly
-                        alert("⚡ Photo marked up successfully! Click 'Commit Progress Asset' to save to your project file loop.");
-                    }, 'image/jpeg', 0.90);
-                }
+    <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-8" x-data="{
+        items: [{ description: '', quantity: 1, unit_price: 0.00, save_to_pricebook: false }],
+        taxRate: 0,
+        requireDeposit: false,
+        depositAmount: 0,
+        isRecurring: false,
+        pricebook: {{ json_encode($pricebookItems ?? []) }},
+        customersList: {{ json_encode($customers ?? []) }},
+
+        // Inline Customer Management State
+        customerSource: 'directory',
+        customer_first_name: '',
+        customer_last_name: '',
+        customer_email: '',
+        customer_phone: '',
+        customer_address: '',
+
+        init() {
+            // Check if there is a preselected customer forwarded from a directory route
+            const preselectedId = '{{ $preselectedCustomerId ?? '' }}';
+            if (preselectedId) {
+                this.loadDirectoryProfile(preselectedId);
             }
+        },
+        addItem() {
+            this.items.push({ description: '', quantity: 1, unit_price: 0.00, save_to_pricebook: false });
+        },
+        removeItem(index) {
+            if (this.items.length > 1) {
+                this.items.splice(index, 1);
+            }
+        },
+        loadPricebookItem(index, itemId) {
+            const match = this.pricebook.find(i => i.id == itemId);
+            if (match) {
+                this.items[index].description = match.name;
+                const finalCost = parseFloat(match.base_unit_cost) * (1 + (parseFloat(match.markup_percentage) / 100));
+                this.items[index].unit_price = finalCost.toFixed(2);
+            }
+        },
+        loadDirectoryProfile(id) {
+            const match = this.customersList.find(c => c.id == id);
+            if (match) {
+                this.customer_first_name = match.first_name;
+                this.customer_last_name = match.last_name;
+                this.customer_email = match.email;
+                this.customer_phone = match.phone || '';
+                this.customer_address = match.billing_address || '';
+            } else {
+                this.clearCustomerFields();
+            }
+        },
+        clearCustomerFields() {
+            this.customer_first_name = '';
+            this.customer_last_name = '';
+            this.customer_email = '';
+            this.customer_phone = '';
+            this.customer_address = '';
+        },
+        get subtotal() {
+            return this.items.reduce((sum, item) => sum + ((parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0)), 0);
+        },
+        get taxTotal() {
+            return this.subtotal * ((parseFloat(this.taxRate) || 0) / 100);
+        },
+        get grandTotal() {
+            return this.subtotal + this.taxTotal;
         }
-    </script>
+    }">
+
+        <div class="border-b border-slate-200 pb-4 mb-6">
+            <h1 class="text-2xl font-black text-slate-950 uppercase tracking-tight">Compile New Job Estimate</h1>
+            <p class="text-sm text-slate-500 font-medium">Select a customer directory profile, map out your service line items, and configure deposit or billing loops.</p>
+        </div>
+
+        <form action="/estimates" method="POST" class="space-y-6">
+            @csrf
+
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+                <div class="border-b border-slate-100 pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                        <h3 class="font-black text-sm text-slate-900 uppercase tracking-wider">1. Customer Account Profile</h3>
+                        <p class="text-xs text-slate-400 font-medium">Link a historical client or input a brand new lead inline.</p>
+                    </div>
+
+                    <div class="flex p-1 bg-slate-100 rounded-xl max-w-xs border border-slate-200/60">
+                        <button type="button"
+                                @click="customerSource = 'directory'; loadDirectoryProfile(document.getElementById('customer_select').value)"
+                                :class="customerSource === 'directory' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-900'"
+                                class="flex-1 text-center py-1.5 px-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer">
+                            Directory
+                        </button>
+                        <button type="button"
+                                @click="customerSource = 'new'; clearCustomerFields()"
+                                :class="customerSource === 'new' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-900'"
+                                class="flex-1 text-center py-1.5 px-3 rounded-lg text-xs font-black uppercase tracking-wider transition-all cursor-pointer">
+                            + New Lead
+                        </button>
+                    </div>
+                </div>
+
+                <div class="max-w-md space-y-1" x-show="customerSource === 'directory'" x-transition>
+                    <label for="customer_select" class="block text-xs font-black uppercase text-slate-500">Choose Active Profile</label>
+                    <select id="customer_select"
+                            @change="loadDirectoryProfile($event.target.value)"
+                            class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-sm font-bold focus:outline-none focus:border-[#f58613] bg-white cursor-pointer">
+                        <option value="" {{ !($preselectedCustomerId ?? null) ? 'selected' : '' }}>-- Select a contractor directory profile --</option>
+                        @foreach($customers as $customer)
+                            <option value="{{ $customer->id }}" {{ ($preselectedCustomerId ?? null) == $customer->id ? 'selected' : '' }}>
+                                {{ $customer->last_name }}, {{ $customer->first_name }} ({{ $customer->phone ?? 'No Phone' }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-2">
+                    <div>
+                        <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">First Name *</label>
+                        <input type="text" name="customer_first_name" required x-model="customer_first_name" placeholder="John"
+                               class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-3 text-xs font-semibold focus:outline-none focus:border-[#f58613]">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Last Name *</label>
+                        <input type="text" name="customer_last_name" required x-model="customer_last_name" placeholder="Doe"
+                               class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-3 text-xs font-semibold focus:outline-none focus:border-[#f58613]">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Email Address *</label>
+                        <input type="email" name="customer_email" required x-model="customer_email" placeholder="johndoe@example.com"
+                               class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-3 text-xs font-semibold focus:outline-none focus:border-[#f58613]">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Phone Number</label>
+                        <input type="text" name="customer_phone" x-model="customer_phone" placeholder="(555) 123-4567"
+                               class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-3 text-xs font-semibold focus:outline-none focus:border-[#f58613]">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Project / Billing Address</label>
+                        <input type="text" name="customer_address" x-model="customer_address" placeholder="123 Construction Way, Suite 100"
+                               class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-3 text-xs font-semibold focus:outline-none focus:border-[#f58613]">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+                <div class="border-b border-slate-100 pb-2 flex justify-between items-center">
+                    <h3 class="font-black text-sm text-slate-900 uppercase tracking-wider">2. Job Line Items & Specifications</h3>
+                    <button type="button" @click="addItem()" class="bg-slate-950 hover:bg-black text-white font-black text-xs py-1.5 px-3 rounded-lg uppercase tracking-wider transition-all cursor-pointer">
+                        + Add Custom Row
+                    </button>
+                </div>
+
+                <div class="space-y-3">
+                    <template x-for="(item, index) in items" :key="index">
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-slate-50/50 p-4 border border-slate-200 rounded-xl relative group">
+
+                            <div class="md:col-span-3">
+                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Auto-Fill from Pricebook</label>
+                                <select @change="loadPricebookItem(index, $event.target.value)" class="w-full bg-white border border-slate-300 rounded-lg py-2 px-2.5 text-xs font-bold focus:outline-none focus:border-[#f58613] cursor-pointer">
+                                    <option value="">-- Choose Item --</option>
+                                    <template x-for="pItem in pricebook" :key="pItem.id">
+                                        <option :value="pItem.id" x-text="pItem.name"></option>
+                                    </template>
+                                </select>
+                            </div>
+
+                            <div class="md:col-span-4">
+                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Service / Material Description</label>
+                                <input type="text" :name="`items[${index}][description]`" required x-model="item.description" placeholder="e.g., Premium Exterior Siding Treatment"
+                                       class="w-full bg-white border border-slate-300 rounded-lg py-2 px-2.5 text-xs font-semibold focus:outline-none focus:border-[#f58613]">
+                            </div>
+
+                            <div class="md:col-span-1.5">
+                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Quantity</label>
+                                <input type="number" step="any" :name="`items[${index}][quantity]`" required x-model.number="item.quantity" min="0.01"
+                                       class="w-full bg-white border border-slate-300 rounded-lg py-2 px-2.5 text-xs font-mono font-black focus:outline-none focus:border-[#f58613] text-center">
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Contract Price ($)</label>
+                                <input type="number" step="0.01" :name="`items[${index}][unit_price]`" required x-model.number="item.unit_price" placeholder="0.00"
+                                       class="w-full bg-white border border-slate-300 rounded-lg py-2 px-2.5 text-xs font-mono font-black focus:outline-none focus:border-[#f58613] text-right">
+                            </div>
+
+                            <div class="md:col-span-1.5 flex items-center justify-between gap-2 h-9 pb-0.5">
+                                <label class="flex items-center gap-1 cursor-pointer select-none">
+                                    <input type="checkbox" :name="`items[${index}][save_to_pricebook]`" x-model="item.save_to_pricebook" class="rounded border-slate-300 text-[#f58613] focus:ring-[#f58613]">
+                                    <span class="text-[9px] font-black text-slate-400 uppercase tracking-tight">Save</span>
+                                </label>
+                                <button type="button" @click="removeItem(index)" :disabled="items.length === 1"
+                                        class="text-xs font-black text-red-500 disabled:opacity-30 bg-red-50 border border-red-200/40 px-2 py-1 rounded hover:bg-red-100 transition-all cursor-pointer">
+                                    &#10005;
+                                </button>
+                            </div>
+
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+                    <div class="border-b border-slate-100 pb-2">
+                        <label class="flex items-center gap-2 font-black text-sm text-slate-900 uppercase tracking-wider cursor-pointer">
+                            <input type="checkbox" name="is_recurring" x-model="isRecurring" class="rounded border-slate-300 text-[#f58613] focus:ring-[#f58613] w-4 h-4">
+                            🔄 Setup as Repeating Ongoing Service
+                        </label>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3" x-show="isRecurring" x-cloak x-transition>
+                        <div>
+                            <label class="block text-xs font-black uppercase text-slate-500 mb-1">Billing Interval</label>
+                            <select name="recurrence_interval" class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 px-3 text-xs font-bold focus:outline-none focus:border-[#f58613] bg-white cursor-pointer">
+                                <option value="weekly">Weekly Rotations</option>
+                                <option value="bi_weekly">Bi-Weekly Rotations</option>
+                                <option value="monthly">Monthly Rotations</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black uppercase text-slate-500 mb-1">Total Target Visits</label>
+                            <input type="number" name="recurrence_cycles" min="1" placeholder="e.g., 12"
+                                   class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 px-3 text-xs font-mono font-black focus:outline-none focus:border-[#f58613]">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+                    <div class="border-b border-slate-100 pb-2">
+                        <h3 class="font-black text-sm text-slate-900 uppercase tracking-wider">💰 Invoicing Rules & Expirations</h3>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="flex items-center gap-2 font-black text-[10px] text-slate-500 uppercase tracking-wider mb-2 cursor-pointer">
+                                <input type="checkbox" name="require_deposit" x-model="requireDeposit" class="rounded border-slate-300 text-[#f58613] focus:ring-[#f58613]">
+                                Upfront Deposit
+                            </label>
+                            <input type="number" name="deposit_amount" step="0.01" placeholder="0.00" x-show="requireDeposit" x-cloak x-transition x-model.number="depositAmount"
+                                   class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 px-3 text-xs font-mono font-black focus:outline-none focus:border-[#f58613]">
+                        </div>
+                        <div>
+                            <label for="tax_rate" class="block text-[10px] font-black uppercase text-slate-500 mb-2">Sales Tax (%)</label>
+                            <input type="number" id="tax_rate" name="tax_rate" step="0.01" min="0" max="100" x-model.number="taxRate" placeholder="0.00" required
+                                   class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 px-3 text-xs font-mono font-black focus:outline-none focus:border-[#f58613]">
+                        </div>
+                        <div>
+                            <label for="expires_at" class="block text-[10px] font-black uppercase text-slate-500 mb-2">Expiration Date</label>
+                            <input type="date" id="expires_at" name="expires_at" min="{{ now()->addDay()->format('Y-m-d') }}"
+                                   class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 px-3 text-xs font-semibold focus:outline-none focus:border-[#f58613] bg-white text-slate-700 cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-2">
+                <label for="notes" class="block text-xs font-black uppercase text-slate-500 tracking-wider">Internal Job Scope Notes (Visible to Homeowner)</label>
+                <textarea id="notes" name="notes" rows="3" placeholder="Provide extra detail about scope parameters, material standards, or specific arrival updates..."
+                          class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs font-medium focus:outline-none focus:border-[#f58613]"></textarea>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-md flex flex-col sm:flex-row justify-between items-center gap-6">
+
+                <div class="font-mono text-xs text-slate-600 space-y-1 w-full sm:w-auto">
+                    <div class="flex justify-between sm:justify-start gap-4">
+                        <span class="w-32 font-bold uppercase tracking-wider text-slate-400">Net Materials Subtotal:</span>
+                        <span class="font-black text-slate-900" x-text="'$' + subtotal.toFixed(2)">$0.00</span>
+                    </div>
+                    <div class="flex justify-between sm:justify-start gap-4" x-show="taxRate > 0" x-cloak>
+                        <span class="w-32 font-bold uppercase tracking-wider text-slate-400">Sales Surcharges Tax:</span>
+                        <span class="font-black text-slate-900" x-text="'+$' + taxTotal.toFixed(2)">+$0.00</span>
+                    </div>
+                    <div class="flex justify-between sm:justify-start gap-4 pt-2 border-t border-slate-100">
+                        <span class="w-32 font-black uppercase tracking-wider text-slate-800">Final Estimate Value:</span>
+                        <span class="text-lg font-black text-emerald-600" x-text="'$' + grandTotal.toFixed(2)">$0.00</span>
+                    </div>
+                </div>
+
+                <div class="w-full sm:w-auto">
+                    <button type="submit" class="w-full sm:w-auto bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-4 px-8 rounded-xl uppercase tracking-widest shadow transition-all active:scale-[0.99] cursor-pointer">
+                        Compile & Save Estimate ⚡
+                    </button>
+                </div>
+
+            </div>
+
+        </form>
+    </main>
 
 </body>
 </html>
