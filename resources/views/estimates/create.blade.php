@@ -166,7 +166,7 @@
                     <div class="md:col-span-2 space-y-3">
                         <div>
                             <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Select Field Progress Photo</label>
-                            <input type="file" id="studioFileInput" name="image" accept="image/*" @change="loadPhotoToStudio($event)"
+                            <input type="file" id="studioFileInput" name="image" accept="image/*" capture="environment" @change="loadPhotoToStudio($event)"
                                    class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase file:bg-slate-950 file:text-white hover:file:bg-black file:cursor-pointer cursor-pointer border border-slate-200 rounded-xl p-1 bg-slate-50/50">
                         </div>
                         <div>
