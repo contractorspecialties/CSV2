@@ -11,7 +11,7 @@
     </style>
 </head>
 <body class="flex flex-col min-h-full font-sans antialiased bg-slate-50 text-slate-900 selection:bg-[#f58613] selection:text-white"
-      x-data="estimateForm">
+      x-data="estimateForm()">
 
     <header class="bg-black border-b border-slate-900 sticky top-0 z-50 shadow-md">
         <div class="max-w-5xl mx-auto px-4 h-24 flex items-center justify-between">
@@ -166,7 +166,7 @@
                     <div class="md:col-span-2 space-y-3">
                         <div>
                             <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Select Field Progress Photo</label>
-                            <input type="file" id="studioFileInput" name="image" accept="image/*" capture="environment" @change="loadPhotoToStudio($event)"
+                            <input type="file" id="studioFileInput" name="image" accept="image/*" @change="loadPhotoToStudio($event)"
                                    class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase file:bg-slate-950 file:text-white hover:file:bg-black file:cursor-pointer cursor-pointer border border-slate-200 rounded-xl p-1 bg-slate-50/50">
                         </div>
                         <div>
@@ -285,7 +285,7 @@
             </button>
             <div class="flex items-center gap-3">
                 <button type="button" @click="undoLastShape()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all">
-                    &larr; Undo
+                    ↩ Undo
                 </button>
                 <button type="button" @click="clearStudioCanvas()" class="bg-red-950/40 text-red-400 hover:bg-red-900/40 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all">
                     🗑️ Clear
@@ -350,8 +350,8 @@
     </div>
 
     <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('estimateForm', () => ({
+        function estimateForm() {
+            return {
                 items: [{ description: '', quantity: 1, unit_price: 0.00, save_to_pricebook: false }],
                 taxRate: 0,
                 requireDeposit: false,
@@ -581,8 +581,8 @@
                         this.showStudio = false;
                     }, 'image/jpeg', 0.90);
                 }
-            }));
-        });
+            };
+        }
     </script>
 </body>
 </html>
