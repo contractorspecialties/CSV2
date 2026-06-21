@@ -13,10 +13,27 @@ class AdminDashboardController extends Controller
      */
     public function index()
     {
-        // Eager-load corporate company tenant groups safely across prefixes
-        $users = User::with(['company' => function ($query) {
-            $query->from((new \App\Models\User())->getTable() === 'sc_users' ? 'sc_companies' : 'sc_companies');
-        }])->latest()->get();
+        // Pull all users from the active configuration table
+        $users = User::latest()->get();
+
+        // Dynamically detect any customized database prefix rules (like 'sc_') from the active User model table name
+        $userTable = (new User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+        $companyTable = $prefix . 'companies';
+
+        // Extract all valid company ID anchors to execute a single-pass hydration map
+        $companyIds = $users->pluck('company_id')->filter()->unique();
+
+        // Fetch company data directly from the table to sidestep missing Eloquent relationships entirely
+        $companies = DB::table($companyTable)
+            ->whereIn('id', $companyIds)
+            ->get()
+            ->keyBy('id');
+
+        // Map the company database row assets back to the user instances in memory for view structure compatibility
+        foreach ($users as $user) {
+            $user->company = $companies->get($user->company_id);
+        }
 
         return view('admin.index', compact('users'));
     }
