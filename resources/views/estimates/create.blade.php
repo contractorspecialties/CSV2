@@ -27,7 +27,7 @@
     <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-8">
 
         @if ($errors->any())
-            <div class="bg-red-50 border border-red-200 text-red-900 rounded-2xl p-5 mb-6 space-y-2 shadow-sm animate-pulse">
+            <div class="bg-red-50 border border-red-200 text-red-900 rounded-2xl p-5 mb-6 space-y-2 shadow-sm">
                 <div class="flex items-center gap-2 font-black text-xs uppercase tracking-wider text-red-800">
                     <span>🛑</span> Form Submission Blocked By Validation Rules:
                 </div>
@@ -77,10 +77,10 @@
                             class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-sm font-bold focus:outline-none focus:border-[#f58613] bg-white cursor-pointer">
                         <option value="">-- Select a contractor directory profile --</option>
                         @foreach($customers as $customer)
-                            <option value="{{ $customer->id }}" {{ ($preselectedCustomerId ?? null) == $customer->id ? 'selected' : '' }}>
+                            <option value="{{ $customer->id }}" {{ old('customer_select') == $customer->id ? 'selected' : '' }}>
                                 {{ $customer->last_name }}, {{ $customer->first_name }} ({{ $customer->phone ?? 'No Phone' }})
                             </option>
-                        @endforeach
+                        </foreach>
                     </select>
                 </div>
 
@@ -196,7 +196,7 @@
 
                         <div>
                             <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Photo Caption / Note</label>
-                            <input type="text" name="caption" placeholder="e.g., Pre-existing structural rot on roof deck ledger"
+                            <input type="text" name="caption" value="{{ old('caption') }}" placeholder="e.g., Pre-existing structural rot on roof deck ledger"
                                    class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-3 text-xs font-semibold focus:outline-none focus:border-[#f58613]">
                         </div>
                     </div>
@@ -230,7 +230,7 @@
                             </div>
 
                             <div class="text-center text-slate-400 p-6 space-y-1 select-none" x-show="!hasImageSelected">
-                                <span class="text-2xl block">🖼️</span>
+                                <span class="text-2xl block filter grayscale opacity-40">🖼️</span>
                                 <span class="text-[10px] font-black uppercase tracking-wider block text-slate-400">No Image Selected</span>
                             </div>
                         </div>
@@ -260,14 +260,14 @@
                         <div>
                             <label class="block text-xs font-black uppercase text-slate-500 mb-1">Billing Interval</label>
                             <select name="recurrence_interval" class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 px-3 text-xs font-bold focus:outline-none focus:border-[#f58613] bg-white cursor-pointer">
-                                <option value="weekly">Weekly Rotations</option>
-                                <option value="bi_weekly">Bi-Weekly Rotations</option>
-                                <option value="monthly">Monthly Rotations</option>
+                                <option value="weekly" {{ old('recurrence_interval') == 'weekly' ? 'selected' : '' }}>Weekly Rotations</option>
+                                <option value="bi_weekly" {{ old('recurrence_interval') == 'bi_weekly' ? 'selected' : '' }}>Bi-Weekly Rotations</option>
+                                <option value="monthly" {{ old('recurrence_interval') == 'monthly' ? 'selected' : '' }}>Monthly Rotations</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-xs font-black uppercase text-slate-500 mb-1">Total Target Visits</label>
-                            <input type="number" name="recurrence_cycles" min="1" placeholder="e.g., 12"
+                            <input type="number" name="recurrence_cycles" value="{{ old('recurrence_cycles') }}" min="1" placeholder="e.g., 12"
                                    class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 px-3 text-xs font-mono font-black focus:outline-none focus:border-[#f58613]">
                         </div>
                     </div>
@@ -294,7 +294,7 @@
                         </div>
                         <div>
                             <label for="expires_at" class="block text-[10px] font-black uppercase text-slate-500 mb-2">Expiration Date</label>
-                            <input type="date" id="expires_at" name="expires_at"
+                            <input type="date" id="expires_at" name="expires_at" value="{{ old('expires_at') }}"
                                    class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 px-3 text-xs font-semibold focus:outline-none focus:border-[#f58613] bg-white text-slate-700 cursor-pointer">
                         </div>
                     </div>
@@ -304,7 +304,7 @@
             <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-2">
                 <label for="notes" class="block text-xs font-black uppercase text-slate-500 tracking-wider">Internal Job Scope Notes (Visible to Homeowner)</label>
                 <textarea id="notes" name="notes" rows="3" placeholder="Provide extra detail about scope parameters, material standards, or specific arrival updates..."
-                          class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs font-medium focus:outline-none focus:border-[#f58613]"></textarea>
+                          class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs font-medium focus:outline-none focus:border-[#f58613]">{{ old('notes') }}</textarea>
             </div>
 
             <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-md flex flex-col sm:flex-row justify-between items-center gap-6">
@@ -366,7 +366,7 @@
                 <button type="button" @click="color = '#eab308'" :class="color === '#eab308' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-yellow-500 cursor-pointer transition-transform"></button>
                 <button type="button" @click="color = '#dc2626'" :class="color === '#dc2626' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-red-600 cursor-pointer transition-transform"></button>
                 <button type="button" @click="color = '#ffffff'" :class="color === '#ffffff' ? 'ring-2 ring-orange-500 scale-110' : ''" class="w-6 h-6 rounded-full bg-white border border-slate-300 cursor-pointer transition-transform"></button>
-                <button type="button" @click="color = '#0f172a'" :class="color === '#0f172a' ? 'ring- ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-slate-900 border border-slate-800 cursor-pointer transition-transform"></button>
+                <button type="button" @click="color = '#0f172a'" :class="color === '#0f172a' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-slate-900 border border-slate-800 cursor-pointer transition-transform"></button>
             </div>
 
             <canvas id="studioCanvas"
@@ -406,21 +406,26 @@
     <script>
         function estimateForm() {
             return {
-                items: [{ id: Date.now(), description: '', quantity: 1, unit_price: 0.00, save_to_pricebook: false }],
-                taxRate: 0,
-                requireDeposit: false,
-                depositAmount: 0,
-                isRecurring: false,
+                // FIX: Hydrate dynamic line rows from memory with timestamp tracking fallback anchors
+                items: @js(array_map(function($item) {
+                    $item['id'] = $item['id'] ?? (microtime(true) * 1000 + rand(1, 1000));
+                    return $item;
+                }, old('items', [['description' => '', 'quantity' => 1, 'unit_price' => 0.00, 'save_to_pricebook' => false]]))),
+
+                taxRate: @js(old('tax_rate', 0)),
+                requireDeposit: @js(old('require_deposit') ? true : false),
+                depositAmount: @js(old('deposit_amount', 0)),
+                isRecurring: @js(old('is_recurring') ? true : false),
 
                 pricebook: @js($pricebookItems ?? []),
                 customersList: @js($customers ?? []),
 
-                customerSource: 'directory',
-                customer_first_name: '',
-                customer_last_name: '',
-                customer_email: '',
-                customer_phone: '',
-                customer_address: '',
+                customerSource: @js(old('customerSource', 'directory')),
+                customer_first_name: @js(old('customer_first_name', '')),
+                customer_last_name: @js(old('customer_last_name', '')),
+                customer_email: @js(old('customer_email', '')),
+                customer_phone: @js(old('customer_phone', '')),
+                customer_address: @js(old('customer_address', '')),
 
                 showStudio: false,
                 tool: 'pen',
@@ -443,7 +448,7 @@
 
                 init() {
                     const preselectedId = '{{ $preselectedCustomerId ?? "" }}';
-                    if (preselectedId) {
+                    if (preselectedId && !@js(old('customer_first_name'))) {
                         this.loadDirectoryProfile(preselectedId);
                     }
                 },
