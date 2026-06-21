@@ -24,11 +24,19 @@ class DashboardController extends Controller
         $sentCount = Estimate::where('company_id', $companyId)->where('status', 'sent')->count();
         $bookedRevenue = Estimate::where('company_id', $companyId)->where('status', 'approved')->sum('grand_total');
 
-        // 2. Fetch All Active Pipeline Estimates to populate the tracking ledger table view
-        $estimates = Estimate::where('company_id', $companyId)
+        // 2. Fetch All Company Estimates with Customer Profiles for the Kanban Lane Compilation
+        $allEstimates = Estimate::where('company_id', $companyId)
             ->with('customer')
-            ->orderBy('created_at', 'desc')
+            ->orderBy('updated_at', 'desc')
             ->get();
+
+        // Separate estimates cleanly into dedicated Kanban operational lane arrays
+        $kanbanBids = [
+            'draft'    => $allEstimates->where('status', 'draft')->values(),
+            'sent'     => $allEstimates->where('status', 'sent')->values(),
+            'approved' => $allEstimates->where('status', 'approved')->values(),
+            'closed'   => $allEstimates->where('status', 'closed')->values(),
+        ];
 
         // 3. Fetch Recent Customers with dynamic lifetime approved calculations
         $recentCustomers = Customer::where('company_id', $companyId)
@@ -96,6 +104,7 @@ class DashboardController extends Controller
             ];
         }
 
-        return view('dashboard', compact('estimates', 'recentCustomers', 'daysOfWeek', 'draftCount', 'sentCount', 'bookedRevenue'));
+        // Pass the structural kanbanBids matrix array down to the view layout variables smoothly
+        return view('dashboard', compact('kanbanBids', 'recentCustomers', 'daysOfWeek', 'draftCount', 'sentCount', 'bookedRevenue'));
     }
 }
