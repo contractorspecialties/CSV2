@@ -26,6 +26,19 @@
 
     <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-8">
 
+        @if ($errors->any())
+            <div class="bg-red-50 border border-red-200 text-red-900 rounded-2xl p-5 mb-6 space-y-2 shadow-sm animate-pulse">
+                <div class="flex items-center gap-2 font-black text-xs uppercase tracking-wider text-red-800">
+                    <span>🛑</span> Form Submission Blocked By Validation Rules:
+                </div>
+                <ul class="list-disc list-inside text-xs font-bold text-red-700 space-y-1 pl-1">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <div class="border-b border-slate-200 pb-4 mb-6">
             <h1 class="text-2xl font-black text-slate-950 uppercase tracking-tight">Compile New Job Estimate</h1>
             <p class="text-sm text-slate-500 font-medium">Select a customer directory profile, map out your service line items, and configure deposit or billing loops.</p>
@@ -217,7 +230,7 @@
                             </div>
 
                             <div class="text-center text-slate-400 p-6 space-y-1 select-none" x-show="!hasImageSelected">
-                                <span class="text-2xl block filter grayscale opacity-40">🖼️</span>
+                                <span class="text-2xl block">🖼️</span>
                                 <span class="text-[10px] font-black uppercase tracking-wider block text-slate-400">No Image Selected</span>
                             </div>
                         </div>
@@ -281,7 +294,7 @@
                         </div>
                         <div>
                             <label for="expires_at" class="block text-[10px] font-black uppercase text-slate-500 mb-2">Expiration Date</label>
-                            <input type="date" id="expires_at" name="expires_at" min="{{ now()->addDay()->format('Y-m-d') }}"
+                            <input type="date" id="expires_at" name="expires_at"
                                    class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 px-3 text-xs font-semibold focus:outline-none focus:border-[#f58613] bg-white text-slate-700 cursor-pointer">
                         </div>
                     </div>
@@ -353,7 +366,7 @@
                 <button type="button" @click="color = '#eab308'" :class="color === '#eab308' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-yellow-500 cursor-pointer transition-transform"></button>
                 <button type="button" @click="color = '#dc2626'" :class="color === '#dc2626' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-red-600 cursor-pointer transition-transform"></button>
                 <button type="button" @click="color = '#ffffff'" :class="color === '#ffffff' ? 'ring-2 ring-orange-500 scale-110' : ''" class="w-6 h-6 rounded-full bg-white border border-slate-300 cursor-pointer transition-transform"></button>
-                <button type="button" @click="color = '#0f172a'" :class="color === '#0f172a' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-slate-900 border border-slate-800 cursor-pointer transition-transform"></button>
+                <button type="button" @click="color = '#0f172a'" :class="color === '#0f172a' ? 'ring- ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-slate-900 border border-slate-800 cursor-pointer transition-transform"></button>
             </div>
 
             <canvas id="studioCanvas"
@@ -399,7 +412,6 @@
                 depositAmount: 0,
                 isRecurring: false,
 
-                // FIX: Implemented unescaped script compilation directives natively
                 pricebook: @js($pricebookItems ?? []),
                 customersList: @js($customers ?? []),
 
