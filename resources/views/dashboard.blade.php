@@ -160,7 +160,6 @@
                 </div>
             </section>
 
-            <!-- KANBAN BOARD VIEWPORT LAYER -->
             <section class="space-y-4">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-slate-900 text-white p-4 rounded-2xl shadow-sm">
                     <div>
@@ -168,7 +167,6 @@
                         <p class="text-slate-400 text-[11px] font-medium">Track or advance bid structures through fulfillment stages in real time.</p>
                     </div>
 
-                    <!-- DYNAMIC VERIFICATION DESK TERMINAL -->
                     <span class="text-[10px] bg-slate-800 text-emerald-400 font-mono font-black px-3 py-1 rounded-xl uppercase border border-slate-700">
                         Total Master Records Found: {{ $estimates->count() }}
                     </span>
@@ -176,7 +174,6 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
 
-                    <!-- LANE 1: DRAFTS COCKPIT -->
                     <div class="bg-slate-100 border border-slate-200 rounded-2xl p-3 space-y-3 shadow-inner">
                         <div class="flex justify-between items-center bg-white px-3 py-2 rounded-xl border border-slate-200/60 shadow-sm">
                             <span class="text-xs font-black uppercase tracking-wider text-slate-500">🛠️ 1. Drafts</span>
@@ -185,14 +182,18 @@
                         <div class="space-y-2.5 max-h-[600px] overflow-y-auto pr-0.5">
                             @forelse($kanbanBids['draft'] as $bid)
                                 <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm space-y-3 hover:border-slate-400 transition-all relative group">
-                                    <div class="flex justify-between items-start">
-                                        <span class="text-[10px] font-mono font-black text-slate-400 block tracking-tight group-hover:text-slate-900 transition-colors">{{ $bid->estimate_number }}</span>
-                                        <span class="text-sm font-mono font-black text-slate-900">${{ number_format($bid->grand_total, 2) }}</span>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-black text-xs text-slate-950 uppercase truncate">{{ $bid->customer->last_name ?? 'Unknown' }}, {{ $bid->customer->first_name ?? 'Client' }}</h4>
-                                        <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">Staged on {{ $bid->created_at->format('M j, Y') }}</p>
-                                    </div>
+
+                                    <a href="/estimates/{{ $bid->id }}" class="block space-y-2 group/link cursor-pointer">
+                                        <div class="flex justify-between items-start">
+                                            <span class="text-[10px] font-mono font-black text-slate-400 block tracking-tight group-hover/link:text-[#f58613] transition-colors">{{ $bid->estimate_number }} 🔗</span>
+                                            <span class="text-sm font-mono font-black text-slate-900">${{ number_format($bid->grand_total, 2) }}</span>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-black text-xs text-slate-950 uppercase truncate group-hover/link:text-[#f58613] transition-colors">{{ $bid->customer->last_name ?? 'Unknown' }}, {{ $bid->customer->first_name ?? 'Client' }}</h4>
+                                            <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">Staged on {{ $bid->created_at->format('M j, Y') }}</p>
+                                        </div>
+                                    </a>
+
                                     <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-1">
                                         <form action="/estimates/{{ $bid->id }}/status" method="POST" class="inline-block flex-1">
                                             @csrf
@@ -216,7 +217,6 @@
                         </div>
                     </div>
 
-                    <!-- LANE 2: DISPATCHED / SENT -->
                     <div class="bg-slate-100 border border-slate-200 rounded-2xl p-3 space-y-3 shadow-inner">
                         <div class="flex justify-between items-center bg-white px-3 py-2 rounded-xl border border-slate-200/60 shadow-sm">
                             <span class="text-xs font-black uppercase tracking-wider text-[#f58613]">📡 2. Dispatched</span>
@@ -225,14 +225,18 @@
                         <div class="space-y-2.5 max-h-[600px] overflow-y-auto pr-0.5">
                             @forelse($kanbanBids['sent'] as $bid)
                                 <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm space-y-3 hover:border-[#f58613] transition-all group">
-                                    <div class="flex justify-between items-start">
-                                        <a href="/estimates/{{ $bid->id }}" class="text-[10px] font-mono font-black text-slate-400 hover:text-[#f58613] tracking-tight block">{{ $bid->estimate_number }} 🔗</a>
-                                        <span class="text-sm font-mono font-black text-slate-900">${{ number_format($bid->grand_total, 2) }}</span>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-black text-xs text-slate-950 uppercase truncate">{{ $bid->customer->last_name ?? 'Unknown' }}, {{ $bid->customer->first_name ?? 'Client' }}</h4>
-                                        <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">Awaiting homeowner signature</p>
-                                    </div>
+
+                                    <a href="/estimates/{{ $bid->id }}" class="block space-y-2 group/link cursor-pointer">
+                                        <div class="flex justify-between items-start">
+                                            <span class="text-[10px] font-mono font-black text-slate-400 block tracking-tight group-hover/link:text-[#f58613] transition-colors">{{ $bid->estimate_number }} 🔗</span>
+                                            <span class="text-sm font-mono font-black text-slate-900">${{ number_format($bid->grand_total, 2) }}</span>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-black text-xs text-slate-950 uppercase truncate group-hover/link:text-[#f58613] transition-colors">{{ $bid->customer->last_name ?? 'Unknown' }}, {{ $bid->customer->first_name ?? 'Client' }}</h4>
+                                            <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">Awaiting homeowner signature</p>
+                                        </div>
+                                    </a>
+
                                     <div class="pt-2 border-t border-slate-100 flex gap-1">
                                         <form action="/estimates/{{ $bid->id }}/status" method="POST" class="inline-block flex-1">
                                             @csrf
@@ -256,7 +260,6 @@
                         </div>
                     </div>
 
-                    <!-- LANE 3: APPROVED / BOOKED REVENUE -->
                     <div class="bg-slate-100 border border-slate-200 rounded-2xl p-3 space-y-3 shadow-inner">
                         <div class="flex justify-between items-center bg-white px-3 py-2 rounded-xl border border-slate-200/60 shadow-sm">
                             <span class="text-xs font-black uppercase tracking-wider text-emerald-700">🏗️ 3. Approved</span>
@@ -265,14 +268,18 @@
                         <div class="space-y-2.5 max-h-[600px] overflow-y-auto pr-0.5">
                             @forelse($kanbanBids['approved'] as $bid)
                                 <div class="bg-white border border-emerald-200 rounded-xl p-3.5 shadow-sm space-y-3 hover:border-emerald-500 transition-all group">
-                                    <div class="flex justify-between items-start">
-                                        <a href="/estimates/{{ $bid->id }}" class="text-[10px] font-mono font-black text-slate-400 hover:text-emerald-600 tracking-tight block">{{ $bid->estimate_number }} 🔗</a>
-                                        <span class="text-sm font-mono font-black text-emerald-600">${{ number_format($bid->grand_total, 2) }}</span>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-black text-xs text-slate-950 uppercase truncate">{{ $bid->customer->last_name ?? 'Unknown' }}, {{ $bid->customer->first_name ?? 'Client' }}</h4>
-                                        <p class="text-[10px] text-emerald-600 font-black tracking-tight uppercase text-[8px] mt-1 bg-emerald-50 border border-emerald-100/70 inline-block px-1.5 py-0.5 rounded shadow-sm">⚡ Active Production Order</p>
-                                    </div>
+
+                                    <a href="/estimates/{{ $bid->id }}" class="block space-y-2 group/link cursor-pointer">
+                                        <div class="flex justify-between items-start">
+                                            <span class="text-[10px] font-mono font-black text-slate-400 block tracking-tight group-hover/link:text-emerald-600 transition-colors">{{ $bid->estimate_number }} 🔗</span>
+                                            <span class="text-sm font-mono font-black text-emerald-600">${{ number_format($bid->grand_total, 2) }}</span>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-black text-xs text-slate-950 uppercase truncate group-hover/link:text-emerald-600 transition-colors">{{ $bid->customer->last_name ?? 'Unknown' }}, {{ $bid->customer->first_name ?? 'Client' }}</h4>
+                                            <p class="text-[10px] text-emerald-600 font-black tracking-tight uppercase text-[8px] mt-1 bg-emerald-50 border border-emerald-100/70 inline-block px-1.5 py-0.5 rounded shadow-sm">⚡ Active Production Order</p>
+                                        </div>
+                                    </a>
+
                                     <div class="pt-2 border-t border-slate-100">
                                         <form action="/estimates/{{ $bid->id }}/status" method="POST" class="w-full">
                                             @csrf
@@ -289,7 +296,6 @@
                         </div>
                     </div>
 
-                    <!-- LANE 4: CLOSED / ARCHIVED -->
                     <div class="bg-slate-100 border border-slate-200 rounded-2xl p-3 space-y-3 shadow-inner">
                         <div class="flex justify-between items-center bg-white px-3 py-2 rounded-xl border border-slate-200/60 shadow-sm">
                             <span class="text-xs font-black uppercase tracking-wider text-slate-400">🔒 4. Archived</span>
@@ -298,14 +304,18 @@
                         <div class="space-y-2.5 max-h-[600px] overflow-y-auto pr-0.5">
                             @forelse($kanbanBids['closed'] as $bid)
                                 <div class="bg-white/70 border border-slate-200 opacity-75 rounded-xl p-3.5 shadow-sm space-y-3 hover:opacity-100 transition-all group">
-                                    <div class="flex justify-between items-start">
-                                        <a href="/estimates/{{ $bid->id }}" class="text-[10px] font-mono font-black text-slate-400 tracking-tight block">{{ $bid->estimate_number }} 🔗</a>
-                                        <span class="text-sm font-mono font-bold text-slate-500">${{ number_format($bid->grand_total, 2) }}</span>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-black text-xs text-slate-700 uppercase truncate">{{ $bid->customer->last_name ?? 'Unknown' }}, {{ $bid->customer->first_name ?? 'Client' }}</h4>
-                                        <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">Fulfillment cycle completed</p>
-                                    </div>
+
+                                    <a href="/estimates/{{ $bid->id }}" class="block space-y-2 group/link cursor-pointer">
+                                        <div class="flex justify-between items-start">
+                                            <span class="text-[10px] font-mono font-black text-slate-400 block tracking-tight group-hover/link:text-slate-950 transition-colors">{{ $bid->estimate_number }} 🔗</span>
+                                            <span class="text-sm font-mono font-bold text-slate-500">${{ number_format($bid->grand_total, 2) }}</span>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-black text-xs text-slate-700 uppercase truncate group-hover/link:text-slate-950 transition-colors">{{ $bid->customer->last_name ?? 'Unknown' }}, {{ $bid->customer->first_name ?? 'Client' }}</h4>
+                                            <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">Fulfillment cycle completed</p>
+                                        </div>
+                                    </a>
+
                                     <div class="pt-2 border-t border-slate-100">
                                         <form action="/estimates/{{ $bid->id }}/status" method="POST" class="w-full">
                                             @csrf
@@ -326,6 +336,7 @@
             </section>
 
             <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
                 <div class="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                         <h3 class="font-black text-sm tracking-tight text-slate-900 uppercase flex items-center gap-2">
@@ -370,6 +381,7 @@
                 </div>
 
                 <div class="space-y-6">
+
                     <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                         <div class="border-b border-slate-100 pb-3">
                             <h3 class="font-black text-sm tracking-tight text-slate-900 uppercase flex items-center gap-1.5">
@@ -414,11 +426,11 @@
                             Revenue tracking updates automatically as jobs are paid.
                         </div>
                     </div>
+
                 </div>
             </section>
         </main>
 
-        <!-- LIVE MODAL BLOCKS REMAIN COMPLETELY UNTOUCHED AND STABLE -->
         <div x-show="showInvoiceModal" x-cloak style="display: none;" class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
             <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
                 <div x-show="showInvoiceModal" x-transition.opacity class="fixed inset-0 bg-slate-950/75 backdrop-blur-2xl transition-opacity" @click="showInvoiceModal = false"></div>
@@ -516,7 +528,7 @@
         <footer class="border-t border-slate-900 bg-black text-slate-400 py-12">
             <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
                 <div class="md:col-span-5 flex flex-col items-center md:items-start gap-4">
-                    <div class="w-[400px] max-w-full aspect-square bg-slate-950 border border-slate-900 rounded-2xl overflow-hidden shadow-lg flex items-center justify-center">
+                    <div class="w-[400px] max-w-[full] aspect-square bg-slate-950 border border-slate-900 rounded-2xl overflow-hidden shadow-lg flex items-center justify-center">
                         <img src="/images/footer-logo.webp" alt="Corporate Brand Mark" class="w-full h-full object-contain p-4">
                     </div>
                     <div class="text-xs font-medium text-slate-500 text-center md:text-left mt-1">
