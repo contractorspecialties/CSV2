@@ -24,7 +24,6 @@
         </div>
     </header>
 
-    <!-- MAIN APP COCKPIT LAYER -->
     <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-8">
 
         <div class="border-b border-slate-200 pb-4 mb-6">
@@ -35,7 +34,6 @@
         <form action="/estimates" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
 
-            <!-- 1. CUSTOMER ACCOUNT SELECT PANEL -->
             <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                 <div class="border-b border-slate-100 pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
@@ -64,7 +62,7 @@
                     <select id="customer_select"
                             @change="loadDirectoryProfile($event.target.value)"
                             class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-sm font-bold focus:outline-none focus:border-[#f58613] bg-white cursor-pointer">
-                        <option value="" {{ !($preselectedCustomerId ?? null) ? 'selected' : '' }}>-- Select a contractor directory profile --</option>
+                        <option value="">-- Select a contractor directory profile --</option>
                         @foreach($customers as $customer)
                             <option value="{{ $customer->id }}" {{ ($preselectedCustomerId ?? null) == $customer->id ? 'selected' : '' }}>
                                 {{ $customer->last_name }}, {{ $customer->first_name }} ({{ $customer->phone ?? 'No Phone' }})
@@ -102,7 +100,6 @@
                 </div>
             </div>
 
-            <!-- 2. SCOPE LINE ITEMS MATRIX -->
             <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                 <div class="border-b border-slate-100 pb-2 flex justify-between items-center">
                     <h3 class="font-black text-sm text-slate-900 uppercase tracking-wider">2. Scope of Work & Bid Details</h3>
@@ -115,7 +112,6 @@
                     <template x-for="(item, index) in items" :key="item.id">
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-slate-50/50 p-4 border border-slate-200 rounded-xl relative group">
 
-                            <!-- RESTORED COLUMN 1: KEPT ENTIRELY AS ORIGINAL -->
                             <div class="md:col-span-3">
                                 <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Auto-Fill from Pricebook</label>
                                 <select @change="loadPricebookItem(index, $event.target.value)" class="w-full bg-white border border-slate-300 rounded-lg py-2 px-2.5 text-xs font-bold focus:outline-none focus:border-[#f58613] cursor-pointer">
@@ -160,7 +156,6 @@
                 </div>
             </div>
 
-            <!-- 3. Twin-ENGINE JOB SITE PHOTO MARKUP MODULE -->
             <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                 <div class="border-b border-slate-100 pb-2">
                     <h3 class="font-black text-sm text-slate-900 uppercase tracking-wider">3. 📸 Job Site Evidence & Photo Markup</h3>
@@ -193,7 +188,6 @@
                         </div>
                     </div>
 
-                    <!-- RE-ENGINEERED LIVE THUMBNAIL & STUDIO LINK COCKPIT -->
                     <div class="space-y-2">
                         <span class="block text-[10px] font-black uppercase text-slate-500 tracking-wide">Active Field Thumbnail</span>
 
@@ -223,7 +217,7 @@
                             </div>
 
                             <div class="text-center text-slate-400 p-6 space-y-1 select-none" x-show="!hasImageSelected">
-                                <span class="text-3xl block filter grayscale opacity-40">🖼️</span>
+                                <span class="text-2xl block filter grayscale opacity-40">🖼️</span>
                                 <span class="text-[10px] font-black uppercase tracking-wider block text-slate-400">No Image Selected</span>
                             </div>
                         </div>
@@ -240,7 +234,6 @@
                 </div>
             </div>
 
-            <!-- 4. SCHEDULING & EXPIRES RULES -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                     <div class="border-b border-slate-100 pb-2">
@@ -295,14 +288,12 @@
                 </div>
             </div>
 
-            <!-- INTERNAL BRIEF REMARKS -->
             <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-2">
                 <label for="notes" class="block text-xs font-black uppercase text-slate-500 tracking-wider">Internal Job Scope Notes (Visible to Homeowner)</label>
                 <textarea id="notes" name="notes" rows="3" placeholder="Provide extra detail about scope parameters, material standards, or specific arrival updates..."
                           class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs font-medium focus:outline-none focus:border-[#f58613]"></textarea>
             </div>
 
-            <!-- PRICING SUMMARY PANEL -->
             <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-md flex flex-col sm:flex-row justify-between items-center gap-6">
                 <div class="font-mono text-xs text-slate-600 space-y-1 w-full sm:w-auto">
                     <div class="flex justify-between sm:justify-start gap-4">
@@ -328,7 +319,6 @@
         </form>
     </main>
 
-    <!-- FULL SCREEN PHOTO ANNOTATION CANVAS HUDS -->
     <div x-show="showStudio" x-cloak class="fixed inset-0 z-[100] bg-slate-950 flex flex-col select-none" @window:resize.debounce.200="resizeCanvas()">
         <div class="bg-slate-900 border-b border-slate-800 px-4 h-16 shrink-0 flex items-center justify-between">
             <button type="button" @click="closeStudio()" class="text-slate-400 hover:text-white font-black text-xs tracking-widest uppercase cursor-pointer">
@@ -336,7 +326,7 @@
             </button>
             <div class="flex items-center gap-3">
                 <button type="button" @click="undoLastShape()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all">
-                    ↩ Undo
+                    &larr; Undo
                 </button>
                 <button type="button" @click="clearStudioCanvas()" class="bg-red-950/40 text-red-400 hover:bg-red-900/40 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all">
                     🗑️ Clear
@@ -400,7 +390,6 @@
         </div>
     </div>
 
-    <!-- GLOBAL COMPLEX SCRIPT ENGINE DECK -->
     <script>
         function estimateForm() {
             return {
@@ -409,8 +398,10 @@
                 requireDeposit: false,
                 depositAmount: 0,
                 isRecurring: false,
-                pricebook: {{ json_encode($pricebookItems ?? []) }},
-                customersList: {{ json_encode($customers ?? []) }},
+
+                // FIX: Implemented unescaped script compilation directives natively
+                pricebook: @js($pricebookItems ?? []),
+                customersList: @js($customers ?? []),
 
                 customerSource: 'directory',
                 customer_first_name: '',
