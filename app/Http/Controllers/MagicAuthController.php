@@ -26,18 +26,22 @@ class MagicAuthController extends Controller
             'email.unique' => '🛑 This professional email address is already registered to a workspace engine framework.',
         ]);
 
+        // Resolve customized database prefix schemas dynamically matching model structures safely
+        $userTable = (new User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+
         // Algorithmic slug compiler with dynamic collision safety checks
         $slug = Str::slug($validated['company_name']);
         $baseSlug = $slug;
         $counter = 1;
 
-        while (DB::table('sc_companies')->where('slug', $slug)->exists()) {
+        while (DB::table($prefix . 'companies')->where('slug', $slug)->exists()) {
             $slug = $baseSlug . '-' . $counter;
             $counter++;
         }
 
         // Securely provision company tenant block specifying explicit slug criteria
-        $companyId = DB::table('sc_companies')->insertGetId([
+        $companyId = DB::table($prefix . 'companies')->insertGetId([
             'name'       => $validated['company_name'],
             'slug'       => $slug,
             'created_at' => now(),
@@ -52,7 +56,6 @@ class MagicAuthController extends Controller
         // Satisfy database schema strictness with clean placeholder assignments
         $user->first_name = 'Contractor';
         $user->last_name = 'Owner';
-
         $user->save();
 
         // Package instant verification token using a bulletproof pipe (|) delimiter
@@ -60,22 +63,24 @@ class MagicAuthController extends Controller
         $expirationEpoch = time() + (60 * 15); // 15 Minute window
         $combinedToken = $randomPart . '|' . $expirationEpoch;
 
-        $user->update([
-            'login_token' => $combinedToken,
-            'token_expires_at' => now()->addMinutes(15),
-        ]);
+        $user->login_token = $combinedToken;
+        $user->token_expires_at = now()->addMinutes(15);
+        $user->save();
 
         $magicLink = route('magic.verify', ['token' => $combinedToken]);
 
-        try {
-            Mail::raw("Welcome to ContractorSpecialties! Click the secure activation link below to verify your email and launch your new company management workspace dashboard layout:\n\n{$magicLink}", function ($message) use ($user) {
-                $message->to($user->email)
-                        ->subject('⚡ Your New Company Workspace Activation Route');
-            });
-            Log::info("🏗️ Fresh company workspace provisioned for {$user->email} with slug identifier: {$slug}");
-        } catch (\Exception $e) {
-            Log::error("🚨 Onboarding activation mail failed transmission sequence: " . $e->getMessage());
-        }
+        // OFFLOAD OUTBOUND SMTP HANDSHAKE ASYNC TO ELIMINATE USER WEB BUFFERING LATENCY
+        dispatch(function () use ($user, $magicLink, $slug) {
+            try {
+                Mail::raw("Welcome to ContractorSpecialties! Click the secure activation link below to verify your email and launch your new company management workspace dashboard layout:\n\n{$magicLink}", function ($message) use ($user) {
+                    $message->to($user->email)
+                            ->subject('⚡ Your New Company Workspace Activation Route');
+                });
+                Log::info("🏗️ Fresh company workspace provisioned for {$user->email} with slug identifier: {$slug}");
+            } catch (\Exception $e) {
+                Log::error("🚨 Onboarding activation mail failed transmission sequence: " . $e->getMessage());
+            }
+        })->afterResponse();
 
         return redirect()->route('welcome')->with('status', '🏗️ Your company workspace has been successfully provisioned! Check your inbox for your direct activation link.');
     }
@@ -100,24 +105,24 @@ class MagicAuthController extends Controller
         $expirationEpoch = time() + (60 * 15); // Valid for exactly 15 minutes
         $combinedToken = $randomPart . '|' . $expirationEpoch;
 
-        $user->update([
-            'login_token' => $combinedToken,
-            'token_expires_at' => now()->addMinutes(15), // Kept for general database schema alignment
-        ]);
+        $user->login_token = $combinedToken;
+        $user->token_expires_at = now()->addMinutes(15);
+        $user->save();
 
         $magicLink = route('magic.verify', ['token' => $combinedToken]);
 
-        try {
-            Mail::raw("Hello, click the link below to log securely into your ContractorSpecialties company dashboard. This link will expire in 15 minutes for your security.\n\n{$magicLink}", function ($message) use ($user) {
-                $message->to($user->email)
-                        ->subject('⚡ Your Secure Dashboard Sign-In Link');
-            });
-
-            Log::info("🔑 Secure token compiled for {$user->email}: {$combinedToken}");
-
-        } catch (\Exception $e) {
-            Log::error("🚨 Mail service could not dispatch sign-in link: " . $e->getMessage());
-        }
+        // OFFLOAD SYSTEM TRANSMISSION LOOP OUT OF ACTIVE REQUEST STREAM
+        dispatch(function () use ($user, $magicLink, $combinedToken) {
+            try {
+                Mail::raw("Hello, click the link below to log securely into your ContractorSpecialties company dashboard. This link will expire in 15 minutes for your security.\n\n{$magicLink}", function ($message) use ($user) {
+                    $message->to($user->email)
+                            ->subject('⚡ Your Secure Dashboard Sign-In Link');
+                });
+                Log::info("🔑 Secure token compiled for {$user->email}: {$combinedToken}");
+            } catch (\Exception $e) {
+                Log::error("🚨 Mail service could not dispatch sign-in link: " . $e->getMessage());
+            }
+        })->afterResponse();
 
         return back()->with('status', '📨 If your business email is registered, your secure login link has been sent.');
     }
@@ -138,7 +143,9 @@ class MagicAuthController extends Controller
         $expiresAtEpoch = isset($parts[1]) ? (int)$parts[1] : 0;
 
         if (time() > $expiresAtEpoch) {
-            $user->update(['login_token' => null, 'token_expires_at' => null]);
+            $user->login_token = null;
+            $user->token_expires_at = null;
+            $user->save();
             return redirect()->route('welcome')->withErrors(['email' => '🛑 This secure login link has expired. Please request a new link.']);
         }
 
@@ -151,10 +158,10 @@ class MagicAuthController extends Controller
                 <title>Secure Workspace Entrance</title>
                 <script src=\"https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4\"></script>
             </head>
-            <body class=\"flex flex-col justify-center min-h-full font-sans antialiased bg-slate-50 px-4 py-12\">
+            <body class=\"flex flex-col justify-center min-h-full font-sans antialiased bg-slate-50 px-4 py-12 selection:bg-[#f58613] selection:text-white\">
                 <div class=\"w-full max-w-md mx-auto bg-white border border-slate-200 rounded-2xl shadow-xl p-8 text-center space-y-6\">
                     <div class=\"space-y-2\">
-                        <div class=\"inline-flex items-center justify-center w-12 h-12 rounded-xl bg-orange-50 text-[#f58613] text-xl font-bold mb-1\">🏗️</div>
+                        <div class=\"inline-flex items-center justify-center w-12 h-12 rounded-xl bg-orange-50 text-[#f58613] text-xl font-bold mb-1 shadow-sm\">🏗️</div>
                         <h2 class=\"text-xl font-black text-slate-950 uppercase tracking-tight\">Contractor Specialties Portal</h2>
                         <p class=\"text-xs text-slate-500 font-semibold max-w-[280px] mx-auto leading-normal\">Click below to confirm your identity and open your secure workspace dashboard manager.</p>
                     </div>
@@ -162,7 +169,7 @@ class MagicAuthController extends Controller
                     <form action=\"" . route('magic.verify.submit', ['token' => $token]) . "\" method=\"POST\">
                         <input type=\"hidden\" name=\"_token\" value=\"" . csrf_token() . "\">
                         <button type=\"submit\" class=\"w-full bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-4 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer\">
-                            Securely Enter Dashboard →
+                            Securely Enter Dashboard &rarr;
                         </button>
                     </form>
                 </div>
@@ -186,12 +193,17 @@ class MagicAuthController extends Controller
         $expiresAtEpoch = isset($parts[1]) ? (int)$parts[1] : 0;
 
         if (time() > $expiresAtEpoch) {
-            $user->update(['login_token' => null, 'token_expires_at' => null]);
+            $user->login_token = null;
+            $user->token_expires_at = null;
+            $user->save();
             return redirect()->route('welcome')->withErrors(['email' => '🛑 This secure login link has expired. Please request a new link.']);
         }
 
         if (empty($user->phone_2fa)) {
-            $user->update(['login_token' => null, 'token_expires_at' => null]);
+            $user->login_token = null;
+            $user->token_expires_at = null;
+            $user->save();
+
             Auth::login($user, true);
             return redirect()->route('dashboard')->with('status', '⚡ Welcome back! Save your mobile number to arm your text-code security options.');
         }
@@ -205,23 +217,29 @@ class MagicAuthController extends Controller
             'auth_2fa_expires_at' => time() + (60 * 10), // Valid for 10 minutes
         ]);
 
-        $company = DB::table('sc_companies')->where('id', $user->company_id)->first();
+        $userTable = (new User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+
+        $company = DB::table($prefix . 'companies')->where('id', $user->company_id)->first();
         $companyName = $company->name ?? 'ContractorSpecialties';
         $fromLine = $company->sms_phone_number ?? env('TELNYX_DEFAULT_FROM');
 
+        // OFFLOAD THE TELNYX OUTBOUND DISPATCH NETWORK PORT TRANSACTION ASYNC
         if (!empty($fromLine)) {
-            try {
-                Http::withHeaders([
-                    'Authorization' => 'Bearer ' . env('TELNYX_API_KEY'),
-                    'Content-Type'  => 'application/json',
-                ])->post('https://api.telnyx.com/v2/messages', [
-                    'from' => $fromLine,
-                    'to'   => $user->phone_2fa,
-                    'text' => "Your 6-digit security code for your {$companyName} account is: {$securityCode}. This code expires in 10 minutes.",
-                ]);
-            } catch (\Exception $e) {
-                Log::error("🚨 Text security verification gateway could not send code: " . $e->getMessage());
-            }
+            dispatch(function () use ($fromLine, $user, $companyName, $securityCode) {
+                try {
+                    Http::withHeaders([
+                        'Authorization' => 'Bearer ' . env('TELNYX_API_KEY'),
+                        'Content-Type'  => 'application/json',
+                    ])->post('https://api.telnyx.com/v2/messages', [
+                        'from' => $fromLine,
+                        'to'   => $user->phone_2fa,
+                        'text' => "Your 6-digit security code for your {$companyName} account is: {$securityCode}. This code expires in 10 minutes.",
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error("🚨 Text security verification gateway could not send code: " . $e->getMessage());
+                }
+            })->afterResponse();
         }
 
         return redirect()->route('magic.2fa.view');
@@ -245,16 +263,16 @@ class MagicAuthController extends Controller
                 <title>Account Verification | Security Gate</title>
                 <script src=\"https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4\"></script>
             </head>
-            <body class=\"flex flex-col justify-center min-h-full font-sans antialiased bg-slate-50 px-4 py-12\">
+            <body class=\"flex flex-col justify-center min-h-full font-sans antialiased bg-slate-50 px-4 py-12 selection:bg-[#f58613] selection:text-white\">
                 <div class=\"w-full max-w-md mx-auto bg-white border border-slate-200 rounded-2xl shadow-xl p-8 space-y-6\">
                     <div class=\"text-center space-y-2\">
-                        <div class=\"inline-flex items-center justify-center w-12 h-12 rounded-xl bg-orange-50 text-[#f58613] text-xl font-bold mb-2\">📱</div>
+                        <div class=\"inline-flex items-center justify-center w-12 h-12 rounded-xl bg-orange-50 text-[#f58613] text-xl font-bold mb-2 shadow-sm\">📱</div>
                         <h2 class=\"text-xl font-black text-slate-950 uppercase tracking-tight\">Confirm Your Identity</h2>
                         <p class=\"text-xs text-slate-500 font-semibold max-w-[280px] mx-auto leading-normal\">We just texted a 6-digit security code to your phone for extra verification.</p>
                     </div>
 
                     " . (session()->has('errors') ? "
-                        <div class=\"p-3 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-bold text-center\">
+                        <div class=\"p-3 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-bold text-center shadow-inner\">
                             " . session('errors')->first() . "
                         </div>
                     " : "") . "
@@ -263,11 +281,11 @@ class MagicAuthController extends Controller
                         <input type=\"hidden\" name=\"_token\" value=\"" . csrf_token() . "\">
                         <div>
                             <label for=\"secure_code\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Enter 6-Digit Security Code</label>
-                            <input type=\"text\" id=\"secure_code\" name=\"two_factor_code\" required maxlength=\"6\" placeholder=\"000000\" inputmode=\"numeric\" pattern=\"[0-9]*\" autocomplete=\"one-time-code\" class=\"w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-center text-lg font-mono font-black tracking-[0.5em] text-slate-900 focus:outline-none focus:border-[#f58613]\">
+                            <input type=\"text\" id=\"secure_code\" name=\"two_factor_code\" required maxlength=\"6\" placeholder=\"000000\" inputmode=\"numeric\" pattern=\"[0-9]*\" autocomplete=\"one-time-code\" class=\"w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-center text-lg font-mono font-black tracking-[0.5em] text-slate-900 focus:outline-none focus:border-[#f58613] shadow-inner\">
                         </div>
 
                         <button type=\"submit\" class=\"w-full bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-3.5 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer\">
-                            Verify Code & Log In →
+                            Verify Code & Log In &rarr;
                         </button>
                     </form>
                 </div>
@@ -290,7 +308,7 @@ class MagicAuthController extends Controller
         $expiresAt = session('auth_2fa_expires_at');
 
         if (!$userId || !$savedCode || !$expiresAt) {
-            return redirect()->route('welcome')->withErrors(['email' => '🛑 Verification session expired. Please sign in again.']);
+            return redirect()->route('welcome')->withErrors(['email' => '🛑 Your verification session has expired. Please sign in again.']);
         }
 
         if (time() > $expiresAt || $savedCode !== $request->two_factor_code) {
@@ -304,12 +322,11 @@ class MagicAuthController extends Controller
         }
 
         // Wipe single-use token details from the database now that authentication is complete
-        $user->update([
-            'two_factor_code' => null,
-            'two_factor_expires_at' => null,
-            'login_token' => null,
-            'token_expires_at' => null,
-        ]);
+        $user->two_factor_code = null;
+        $user->two_factor_expires_at = null;
+        $user->login_token = null;
+        $user->token_expires_at = null;
+        $user->save();
 
         Auth::login($user, true);
         $request->session()->regenerate();
