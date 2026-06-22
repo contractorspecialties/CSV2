@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PricebookController;
 use App\Http\Controllers\EstimateController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\OnboardingController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -35,52 +36,74 @@ Route::post('/login/two-factor-verify', [MagicAuthController::class, 'verifyTwoF
 
 Route::match(['get', 'post'], '/logout', [MagicAuthController::class, 'logout'])->name('logout');
 
-// Authenticated Contractor Workspace
+// Authenticated Contractor Workspace Framework
 Route::middleware(['auth'])->group(function () {
 
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    /*
+    |--------------------------------------------------------------------------
+    | Isolated Onboarding Configuration Setup Pipeline
+    |--------------------------------------------------------------------------
+    | These routes must remain completely exempt from the onboarding intercept
+    | gate middleware to eliminate cascading infinite loop execution sequences.
+    */
+    Route::get('/workspace/setup', [OnboardingController::class, 'showWizard'])->name('onboarding.view');
+    Route::post('/workspace/setup', [OnboardingController::class, 'processWizard'])->name('onboarding.submit');
 
-    // Secure Login Line Configuration (With Smart String Normalization)
-    Route::post('/user/security-phone', function (Illuminate\Http\Request $request) {
-        $request->validate(['phone_2fa' => 'required|string|max:50']);
+    /*
+    |--------------------------------------------------------------------------
+    | Active Business Operations Layer (Protected via Intercept Guard)
+    |--------------------------------------------------------------------------
+    | The user must possess a valid 'onboarding_completed_at' timestamp token
+    | inside database memory to pierce this boundary layer. If incomplete,
+    | they are gracefully rerouted back to the workspace configurator.
+    */
+    Route::middleware([\EnsureOnboardingIsCompleted::class])->group(function () {
 
-        $digits = preg_replace('/[^0-9]/', '', $request->phone_2fa);
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-        if (strlen($digits) === 10) {
-            $cleanE164 = '+1' . $digits;
-        } elseif (strlen($digits) === 11 && str_starts_with($digits, '1')) {
-            $cleanE164 = '+' . $digits;
-        } else {
-            $cleanE164 = '+' . $digits;
-        }
+        // Secure Login Line Configuration (With Smart String Normalization)
+        Route::post('/user/security-phone', function (Illuminate\Http\Request $request) {
+            $request->validate(['phone_2fa' => 'required|string|max:50']);
 
-        $user = Illuminate\Support\Facades\Auth::user();
-        $user->phone_2fa = $cleanE164;
-        $user->save();
+            $digits = preg_replace('/[^0-9]/', '', $request->phone_2fa);
 
-        return back()->with('status', "🔒 Number verified and formatted to {$cleanE164} successfully.");
-    })->name('user.security-phone');
+            if (strlen($digits) === 10) {
+                $cleanE164 = '+1' . $digits;
+            } elseif (strlen($digits) === 11 && str_starts_with($digits, '1')) {
+                $cleanE164 = '+' . $digits;
+            } else {
+                $cleanE164 = '+' . $digits;
+            }
 
-    // Customers Management
-    Route::get('/customers/export', [CustomerController::class, 'exportCsv'])->name('customers.export');
-    Route::resource('customers', CustomerController::class);
+            $user = Illuminate\Support\Facades\Auth::user();
+            $user->phone_2fa = $cleanE164;
+            $user->save();
 
-    // Pricebook Management
-    Route::resource('pricebook', PricebookController::class)->only(['index', 'store', 'destroy']);
+            return back()->with('status', "🔒 Number verified and formatted to {$cleanE164} successfully.");
+        })->name('user.security-phone');
 
-    // Estimates & Job Operational Processing (Unified under EstimateController)
-    Route::post('/estimates/{id}/blueprint', [EstimateController::class, 'saveBlueprint'])->name('estimates.blueprint');
-    Route::post('/estimates/{id}/text-dispatch', [EstimateController::class, 'sendEstimateSms'])->name('estimates.text-dispatch');
-    Route::post('/estimates/{id}/email-dispatch', [EstimateController::class, 'sendEstimateEmail'])->name('estimates.email-dispatch');
-    Route::post('/estimates/{id}/status', [EstimateController::class, 'updateStatus'])->name('estimates.status');
-    Route::post('/estimates/{id}/attachments', [EstimateController::class, 'uploadAttachment'])->name('estimates.attachments');
-    Route::post('/estimates/{id}/close-job', [EstimateController::class, 'closeJob'])->name('estimates.close-job');
-    Route::resource('estimates', EstimateController::class);
+        // Customers Management
+        Route::get('/customers/export', [CustomerController::class, 'exportCsv'])->name('customers.export');
+        Route::resource('customers', CustomerController::class);
 
-    // Administrative System Cockpit Control Deck
-    Route::middleware([\AdminGateMiddleware::class])->group(function () {
-        Route::get('/admin/management', [AdminDashboardController::class, 'index'])->name('admin.index');
-        Route::post('/admin/management/{id}/toggle', [AdminDashboardController::class, 'toggleAdminStatus'])->name('admin.toggle-rights');
+        // Pricebook Management
+        Route::resource('pricebook', PricebookController::class)->only(['index', 'store', 'destroy']);
+
+        // Estimates & Job Operational Processing (Unified under EstimateController)
+        Route::post('/estimates/{id}/blueprint', [EstimateController::class, 'saveBlueprint'])->name('estimates.blueprint');
+        Route::post('/estimates/{id}/text-dispatch', [EstimateController::class, 'sendEstimateSms'])->name('estimates.text-dispatch');
+        Route::post('/estimates/{id}/email-dispatch', [EstimateController::class, 'sendEstimateEmail'])->name('estimates.email-dispatch');
+        Route::post('/estimates/{id}/status', [EstimateController::class, 'updateStatus'])->name('estimates.status');
+        Route::post('/estimates/{id}/attachments', [EstimateController::class, 'uploadAttachment'])->name('estimates.attachments');
+        Route::post('/estimates/{id}/close-job', [EstimateController::class, 'closeJob'])->name('estimates.close-job');
+        Route::resource('estimates', EstimateController::class);
+
+        // Administrative System Cockpit Control Deck
+        Route::middleware([\AdminGateMiddleware::class])->group(function () {
+            Route::get('/admin/management', [AdminDashboardController::class, 'index'])->name('admin.index');
+            Route::post('/admin/management/{id}/toggle', [AdminDashboardController::class, 'toggleAdminStatus'])->name('admin.toggle-rights');
+        });
+
     });
 });
 
@@ -112,6 +135,27 @@ Route::post('/webhooks/telnyx', [EstimateController::class, 'handleTelnyxWebhook
 | Runtime Class Extensions (Maintains Single File Swap Integration)
 |--------------------------------------------------------------------------
 */
+
+// SHIELD: Verification intercept check preventing raw asset exposure before setup completes
+if (!class_exists('EnsureOnboardingIsCompleted')) {
+    class EnsureOnboardingIsCompleted
+    {
+        /**
+         * Confirm profile details are populated before exposing core management modules.
+         */
+        public function handle($request, $next)
+        {
+            $user = auth()->user();
+
+            if ($user && !$user->onboarding_completed_at) {
+                return redirect()->route('onboarding.view');
+            }
+
+            return $next($request);
+        }
+    }
+}
+
 // FIX: Shielded class definition against double-pass evaluation routing loops
 if (!class_exists('AdminGateMiddleware')) {
     class AdminGateMiddleware
