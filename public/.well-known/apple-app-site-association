@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "YOUR_APPLE_TEAM_ID.com.contractorspecialties.app",
+        "paths": [
+          "/login/magic/*"
+        ]
+      }
+    ]
+  }
+}

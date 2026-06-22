@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.contractorspecialties.app",
+      "sha256_cert_fingerprints": [
+        "14:6D:E9:83:C5:22:75:40:5E:4D:3C:A9:3F:8A:2F:32:0A:6D:A4:54:E7:F1:C9:82:13:5F:A7:24:99:A8:11:F5"
+      ]
+    }
+  }
+]
