@@ -129,8 +129,9 @@ class MagicAuthController extends Controller
 
     /**
      * Display a secure intermediate bridge confirmation layout without burning the token.
+     * Incorporates automatic authentication routing fallback parameters for app shell context.
      */
-    public function showVerifyBridge($token)
+    public function showVerifyBridge(Request $request, $token)
     {
         $user = User::where('login_token', $token)->first();
 
@@ -147,6 +148,21 @@ class MagicAuthController extends Controller
             $user->token_expires_at = null;
             $user->save();
             return redirect()->route('welcome')->withErrors(['email' => '🛑 This secure login link has expired. Please request a new link.']);
+        }
+
+        // 🚀 VIP APP CONTAINER BYPASS ENGINE
+        // If the request carries the Capacitor header or your middleware session flag, bypass all gates instantly.
+        if ($request->header('X-Capacitor-Shell') || session('app_shell_active')) {
+            $user->login_token = null;
+            $user->token_expires_at = null;
+            $user->save();
+
+            Auth::login($user, true);
+            $request->session()->regenerate();
+            $request->session()->put('auth.password_confirmed_at', time());
+            $request->session()->save();
+
+            return redirect()->route('dashboard')->with('status', '⚡ Authenticated via Secure App Link. Welcome back to your native workspace container!');
         }
 
         return response("
@@ -181,7 +197,7 @@ class MagicAuthController extends Controller
     /**
      * Process user confirmation and send the 2FA code via Telnyx.
      */
-    public function processVerifyBridge($token)
+    public function processVerifyBridge(Request $request, $token)
     {
         $user = User::where('login_token', $token)->first();
 
@@ -197,6 +213,21 @@ class MagicAuthController extends Controller
             $user->token_expires_at = null;
             $user->save();
             return redirect()->route('welcome')->withErrors(['email' => '🛑 This secure login link has expired. Please request a new link.']);
+        }
+
+        // 🚀 DUAL-LAYER APP SHELL IMMUNITY
+        // Fail-safe protection layer to catch any native interface requests hitting the processing pipeline.
+        if ($request->header('X-Capacitor-Shell') || session('app_shell_active')) {
+            $user->login_token = null;
+            $user->token_expires_at = null;
+            $user->save();
+
+            Auth::login($user, true);
+            $request->session()->regenerate();
+            $request->session()->put('auth.password_confirmed_at', time());
+            $request->session()->save();
+
+            return redirect()->route('dashboard')->with('status', '⚡ Authenticated via Secure App Link. Welcome back to your native workspace container!');
         }
 
         if (empty($user->phone_2fa)) {
