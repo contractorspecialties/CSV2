@@ -1,0 +1,16 @@
+{
+  "appId": "com.contractorspecialties.app",
+  "appName": "ContractorSpecialties Mobile",
+  "webDir": "public",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://contractorspecialties.com",
+    "allowNavigation": [
+      "contractorspecialties.com"
+    ],
+    "cleartext": false
+  },
+  "android": {
+    "backgroundColor": "#0f172a"
+  }
+}

@@ -10,12 +10,11 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withMiddleware(function (Middleware $middleware): void {
-        // Bypass CSRF validation gates for incoming telephony carrier webhook threads
-        $middleware->validateCsrfTokens(except: [
-            'webhooks/telnyx',
-        ]);
-    })
+    ->withMiddleware(function (Middleware $middleware) {
+    $middleware->web(append: [
+        \App\Http\Middleware\EnsureMobileWrapperHeaders::class,
+    ]);
+})
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
