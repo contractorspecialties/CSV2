@@ -150,9 +150,16 @@ class MagicAuthController extends Controller
             return redirect()->route('welcome')->withErrors(['email' => '🛑 This secure login link has expired. Please request a new link.']);
         }
 
-        // 🚀 VIP APP CONTAINER BYPASS ENGINE
-        // If the request carries the Capacitor header or your middleware session flag, bypass all gates instantly.
-        if ($request->header('X-Capacitor-Shell') || session('app_shell_active')) {
+        // 🚀 BULLETPROOF DUAL-GATE APP CONTAINER DETECTION ENGINE
+        // Mobile operating systems drop custom headers during cold-boot deep linking launches.
+        // We evaluate custom headers, session state flags, and look inside the raw User-Agent for standard mobile webview signatures.
+        $userAgent = strtolower($request->userAgent() ?? '');
+        $isNativeAppShell = $request->header('X-Capacitor-Shell')
+            || session('app_shell_active')
+            || str_contains($userAgent, 'capacitor')
+            || str_contains($userAgent, '; wv'); // Standard Android System Webview signature
+
+        if ($isNativeAppShell) {
             $user->login_token = null;
             $user->token_expires_at = null;
             $user->save();
@@ -215,9 +222,14 @@ class MagicAuthController extends Controller
             return redirect()->route('welcome')->withErrors(['email' => '🛑 This secure login link has expired. Please request a new link.']);
         }
 
-        // 🚀 DUAL-LAYER APP SHELL IMMUNITY
-        // Fail-safe protection layer to catch any native interface requests hitting the processing pipeline.
-        if ($request->header('X-Capacitor-Shell') || session('app_shell_active')) {
+        // 🚀 DUAL-LAYER APP SHELL IMMUNITY (With User-Agent Validation Fallback)
+        $userAgent = strtolower($request->userAgent() ?? '');
+        $isNativeAppShell = $request->header('X-Capacitor-Shell')
+            || session('app_shell_active')
+            || str_contains($userAgent, 'capacitor')
+            || str_contains($userAgent, '; wv');
+
+        if ($isNativeAppShell) {
             $user->login_token = null;
             $user->token_expires_at = null;
             $user->save();
@@ -259,6 +271,7 @@ class MagicAuthController extends Controller
         if (!empty($fromLine)) {
             dispatch(function () use ($fromLine, $user, $companyName, $securityCode) {
                 try {
+                    // 🛠️ Added explicit ->throw() error interceptors below to capture API configuration errors natively
                     Http::withHeaders([
                         'Authorization' => 'Bearer ' . env('TELNYX_API_KEY'),
                         'Content-Type'  => 'application/json',
@@ -266,7 +279,7 @@ class MagicAuthController extends Controller
                         'from' => $fromLine,
                         'to'   => $user->phone_2fa,
                         'text' => "Your 6-digit security code for your {$companyName} account is: {$securityCode}. This code expires in 10 minutes.",
-                    ]);
+                    ])->throw();
                 } catch (\Exception $e) {
                     Log::error("🚨 Text security verification gateway could not send code: " . $e->getMessage());
                 }
