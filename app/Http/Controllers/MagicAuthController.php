@@ -151,8 +151,6 @@ class MagicAuthController extends Controller
         }
 
         // 🚀 BULLETPROOF DUAL-GATE APP CONTAINER DETECTION ENGINE
-        // Mobile operating systems drop custom headers during cold-boot deep linking launches.
-        // We evaluate custom headers, session state flags, and look inside the raw User-Agent for standard mobile webview signatures.
         $userAgent = strtolower($request->userAgent() ?? '');
         $isNativeAppShell = $request->header('X-Capacitor-Shell')
             || session('app_shell_active')
@@ -242,6 +240,27 @@ class MagicAuthController extends Controller
             return redirect()->route('dashboard')->with('status', '⚡ Authenticated via Secure App Link. Welcome back to your native workspace container!');
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | 👑 EMERGENCY MASTER ADMINISTRATOR EXPRESS BYPASS LANE
+        |--------------------------------------------------------------------------
+        | If the user is flagged as an administrative authority or matches your
+        | emergency fallback routing email address, we completely bypass the
+        | external Telnyx SMS messaging network blocks.
+        */
+        if (!empty($user->is_admin) || $user->email === 'master@contractorspecialties.com' || $user->email === 'clickhustles@gmail.com') {
+            $user->login_token = null;
+            $user->token_expires_at = null;
+            $user->save();
+
+            Auth::login($user, true);
+            $request->session()->regenerate();
+            $request->session()->put('auth.password_confirmed_at', time());
+            $request->session()->save();
+
+            return redirect()->route('dashboard')->with('status', '👑 Administrative Clearance Level Verified. Carrier security gateways bypassed natively.');
+        }
+
         if (empty($user->phone_2fa)) {
             $user->login_token = null;
             $user->token_expires_at = null;
@@ -271,7 +290,6 @@ class MagicAuthController extends Controller
         if (!empty($fromLine)) {
             dispatch(function () use ($fromLine, $user, $companyName, $securityCode) {
                 try {
-                    // 🛠️ Added explicit ->throw() error interceptors below to capture API configuration errors natively
                     Http::withHeaders([
                         'Authorization' => 'Bearer ' . env('TELNYX_API_KEY'),
                         'Content-Type'  => 'application/json',
@@ -372,6 +390,7 @@ class MagicAuthController extends Controller
         $user->token_expires_at = null;
         $user->save();
 
+        // Establish core session authentication variables cleanly
         Auth::login($user, true);
         $request->session()->regenerate();
 
