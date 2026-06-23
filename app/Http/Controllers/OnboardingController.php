@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class OnboardingController extends Controller
@@ -210,6 +211,7 @@ class OnboardingController extends Controller
             return redirect()->route('dashboard');
         }
 
+        // 🚀 Validation isolated above the try block to pass validation errors straight to the UI
         $validated = $request->validate([
             'first_name'              => 'required|string|max:255',
             'last_name'               => 'required|string|max:255',
@@ -234,7 +236,6 @@ class OnboardingController extends Controller
             $logoFile = $request->file('logo');
             $logoName = 'logo_' . $user->company_id . '_' . time() . '.' . $logoFile->getClientOriginalExtension();
 
-            // Safe initialization ensuring directories exist on target server environments
             if (!file_exists(public_path('uploads/logos'))) {
                 mkdir(public_path('uploads/logos'), 0755, true);
             }
@@ -266,21 +267,28 @@ class OnboardingController extends Controller
             $user->onboarding_completed_at = now();
             $user->save();
 
-            // 2. Resolve Hyper-Local City Constraints against the Directory Database
+            // 2. Resolve Hyper-Local City Constraints Defensively
             $citySlug = Str::slug($validated['city']);
             $stateSlug = strtolower($validated['state']);
-
-            // Search the directory map to see if this explicit city block has been built or flagged active
-            $cityDirectoryRecord = DB::table($prefix . 'directory_cities')
-                ->where('slug', $citySlug)
-                ->where('state_code', $stateSlug)
-                ->first();
-
-            // If the market city is live and verified, flag the profile publicly listed instantly.
-            // If the market is unlaunched or doesn't exist yet, it defaults to false (Staging Mode)
             $isPubliclyListed = false;
-            if ($cityDirectoryRecord && $cityDirectoryRecord->status === 'active') {
-                $isPubliclyListed = true;
+
+            /*
+            |--------------------------------------------------------------------------
+            | 🛡️ HYPER-LOCAL DEFENSIVE SCHEMA GUARD
+            |--------------------------------------------------------------------------
+            | If the directory mapping table is not migrated yet, we gracefully
+            | drop the query and default to false. This prevents unlaunched table
+            | dependencies from breaking the onboarding funnel for active workspaces.
+            */
+            if (Schema::hasTable($prefix . 'directory_cities')) {
+                $cityDirectoryRecord = DB::table($prefix . 'directory_cities')
+                    ->where('slug', $citySlug)
+                    ->where('state_code', $stateSlug)
+                    ->first();
+
+                if ($cityDirectoryRecord && $cityDirectoryRecord->status === 'active') {
+                    $isPubliclyListed = true;
+                }
             }
 
             // 3. Populate Corporate Workspace Payload
@@ -297,7 +305,6 @@ class OnboardingController extends Controller
                 'updated_at'               => now(),
             ];
 
-            // Conditional mapping preventing existing column value wipe-outs
             if ($logoPath) {
                 $companyUpdate['logo_path'] = $logoPath;
             }
@@ -311,12 +318,11 @@ class OnboardingController extends Controller
 
             DB::commit();
 
-            // 4. Future Ledger Gateway Hook Mapping Location
             if (!empty(env('STRIPE_SECRET'))) {
                 Log::info("💳 Stripe Credentials recognized. Initializing gateway router hooks for Company ID: {$user->company_id}");
             }
 
-            Log::info("🚀 Onboarding pipeline successful for Workspace ID: {$user->company_id}. City Staging Flag: " . ($isPubliclyListed ? 'LIVE' : 'STAGED/HIDDEN'));
+            Log::info("🚀 Onboarding pipeline successful for Workspace ID: {$user->company_id}. Listed Status: " . ($isPubliclyListed ? 'LIVE' : 'STAGED/HIDDEN'));
 
             return redirect()->route('dashboard')->with('status', '⚡ Configuration locked. Welcome to your active company control hub!');
 
