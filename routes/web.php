@@ -7,6 +7,7 @@ use App\Http\Controllers\PricebookController;
 use App\Http\Controllers\EstimateController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Middleware\EnsureOnboardingIsCompleted;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -43,8 +44,8 @@ Route::middleware(['auth'])->group(function () {
     |--------------------------------------------------------------------------
     | Isolated Onboarding Configuration Setup Pipeline
     |--------------------------------------------------------------------------
-    | These routes must remain completely exempt from the onboarding intercept
-    | gate middleware to eliminate cascading infinite loop execution sequences.
+    | These routes remain exempt from the onboarding intercept gate middleware
+    | to eliminate cascading infinite loop execution sequences.
     */
     Route::get('/workspace/setup', [OnboardingController::class, 'showWizard'])->name('onboarding.view');
     Route::post('/workspace/setup', [OnboardingController::class, 'processWizard'])->name('onboarding.submit');
@@ -57,7 +58,7 @@ Route::middleware(['auth'])->group(function () {
     | inside database memory to pierce this boundary layer. If incomplete,
     | they are gracefully rerouted back to the workspace configurator.
     */
-    Route::middleware([\EnsureOnboardingIsCompleted::class])->group(function () {
+    Route::middleware([EnsureOnboardingIsCompleted::class])->group(function () {
 
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -135,26 +136,6 @@ Route::post('/webhooks/telnyx', [EstimateController::class, 'handleTelnyxWebhook
 | Runtime Class Extensions (Maintains Single File Swap Integration)
 |--------------------------------------------------------------------------
 */
-
-// SHIELD: Verification intercept check preventing raw asset exposure before setup completes
-if (!class_exists('EnsureOnboardingIsCompleted')) {
-    class EnsureOnboardingIsCompleted
-    {
-        /**
-         * Confirm profile details are populated before exposing core management modules.
-         */
-        public function handle($request, $next)
-        {
-            $user = auth()->user();
-
-            if ($user && !$user->onboarding_completed_at) {
-                return redirect()->route('onboarding.view');
-            }
-
-            return $next($request);
-        }
-    }
-}
 
 // FIX: Shielded class definition against double-pass evaluation routing loops
 if (!class_exists('AdminGateMiddleware')) {
