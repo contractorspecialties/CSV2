@@ -120,7 +120,7 @@ Route::post('/portal/action/{id}', [EstimateController::class, 'handlePortalActi
 Route::get('/portal/success/{token}', [EstimateController::class, 'paymentSuccess'])->name('quotes.payment.success');
 
 // High-Conversion Public Client-Facing Gateway (Dynamic SEO/Estimate Anchor View)
-Route::get('/brand/{slug}', [CompanyProfileController::class, 'show'])->name('brand.show')->name('brand.show');
+Route::get('/brand/{slug}', [CompanyProfileController::class, 'show'])->name('brand.show');
 
 // Public Legal Compliance Frames
 Route::view('/privacy', 'privacy')->name('legal.privacy');
