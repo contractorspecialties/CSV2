@@ -34,6 +34,11 @@
                     </span>
 
                     @auth
+                        <a href="{{ route('workspace.profile.edit') }}" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 hover:text-white font-black text-[10px] py-2.5 px-3.5 sm:px-4 rounded-xl uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer">
+                            <span>🎨</span>
+                            <span class="hidden sm:inline">Brand Profile</span>
+                        </a>
+
                         @if(auth()->user()->is_admin)
                             <a href="{{ route('admin.index') }}" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-amber-400 hover:text-amber-300 font-black text-[10px] py-2.5 px-3.5 sm:px-4 rounded-xl uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer">
                                 <span>⚙️</span>
@@ -99,9 +104,9 @@
                     <span class="text-xs font-black uppercase tracking-wider text-center px-1 text-slate-200">App Shortcut</span>
                 </button>
 
-                <a href="#" class="relative flex flex-col items-center justify-center aspect-square bg-slate-900 border border-slate-950 rounded-2xl shadow-sm text-[#f58613] active:scale-95 transition-all group overflow-hidden cursor-pointer">
+                <a href="{{ route('workspace.profile.edit') }}" class="relative flex flex-col items-center justify-center aspect-square bg-slate-900 border border-slate-950 hover:border-[#f58613] rounded-2xl shadow-sm text-[#f58613] active:scale-95 transition-all group overflow-hidden cursor-pointer">
                     <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">🌐</span>
-                    <span class="text-xs font-black uppercase tracking-wider text-center px-1 text-slate-200">My Review Page</span>
+                    <span class="text-xs font-black uppercase tracking-wider text-center px-1 text-slate-200">Brand Profile</span>
                 </a>
             </section>
 
@@ -173,16 +178,14 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
-
                     <div class="bg-slate-100 border border-slate-200 rounded-2xl p-3 space-y-3 shadow-inner">
                         <div class="flex justify-between items-center bg-white px-3 py-2 rounded-xl border border-slate-200/60 shadow-sm">
                             <span class="text-xs font-black uppercase tracking-wider text-slate-500">🛠️ 1. Drafts</span>
-                            <span class="font-mono text-xs font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded-lg">{{ count($kanbanBids['draft']) }}</span>
+                            <span class="font-mono text-xs font-black text-slate-990 bg-slate-100 px-2 py-0.5 rounded-lg">{{ count($kanbanBids['draft']) }}</span>
                         </div>
                         <div class="space-y-2.5 max-h-[600px] overflow-y-auto pr-0.5">
                             @forelse($kanbanBids['draft'] as $bid)
                                 <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm space-y-3 hover:border-slate-400 transition-all relative group">
-
                                     <a href="/estimates/{{ $bid->id }}" class="block space-y-2 group/link cursor-pointer">
                                         <div class="flex justify-between items-start">
                                             <span class="text-[10px] font-mono font-black text-slate-400 block tracking-tight group-hover/link:text-[#f58613] transition-colors">{{ $bid->estimate_number }} 🔗</span>
@@ -193,7 +196,6 @@
                                             <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">Staged on {{ $bid->created_at->format('M j, Y') }}</p>
                                         </div>
                                     </a>
-
                                     <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-1">
                                         <form action="/estimates/{{ $bid->id }}/status" method="POST" class="inline-block flex-1">
                                             @csrf
@@ -225,7 +227,6 @@
                         <div class="space-y-2.5 max-h-[600px] overflow-y-auto pr-0.5">
                             @forelse($kanbanBids['sent'] as $bid)
                                 <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm space-y-3 hover:border-[#f58613] transition-all group">
-
                                     <a href="/estimates/{{ $bid->id }}" class="block space-y-2 group/link cursor-pointer">
                                         <div class="flex justify-between items-start">
                                             <span class="text-[10px] font-mono font-black text-slate-400 block tracking-tight group-hover/link:text-[#f58613] transition-colors">{{ $bid->estimate_number }} 🔗</span>
@@ -236,7 +237,6 @@
                                             <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">Awaiting homeowner signature</p>
                                         </div>
                                     </a>
-
                                     <div class="pt-2 border-t border-slate-100 flex gap-1">
                                         <form action="/estimates/{{ $bid->id }}/status" method="POST" class="inline-block flex-1">
                                             @csrf
@@ -268,7 +268,6 @@
                         <div class="space-y-2.5 max-h-[600px] overflow-y-auto pr-0.5">
                             @forelse($kanbanBids['approved'] as $bid)
                                 <div class="bg-white border border-emerald-200 rounded-xl p-3.5 shadow-sm space-y-3 hover:border-emerald-500 transition-all group">
-
                                     <a href="/estimates/{{ $bid->id }}" class="block space-y-2 group/link cursor-pointer">
                                         <div class="flex justify-between items-start">
                                             <span class="text-[10px] font-mono font-black text-slate-400 block tracking-tight group-hover/link:text-emerald-600 transition-colors">{{ $bid->estimate_number }} 🔗</span>
@@ -279,7 +278,6 @@
                                             <p class="text-[10px] text-emerald-600 font-black tracking-tight uppercase text-[8px] mt-1 bg-emerald-50 border border-emerald-100/70 inline-block px-1.5 py-0.5 rounded shadow-sm">⚡ Active Production Order</p>
                                         </div>
                                     </a>
-
                                     <div class="pt-2 border-t border-slate-100">
                                         <form action="/estimates/{{ $bid->id }}/status" method="POST" class="w-full">
                                             @csrf
@@ -304,7 +302,6 @@
                         <div class="space-y-2.5 max-h-[600px] overflow-y-auto pr-0.5">
                             @forelse($kanbanBids['closed'] as $bid)
                                 <div class="bg-white/70 border border-slate-200 opacity-75 rounded-xl p-3.5 shadow-sm space-y-3 hover:opacity-100 transition-all group">
-
                                     <a href="/estimates/{{ $bid->id }}" class="block space-y-2 group/link cursor-pointer">
                                         <div class="flex justify-between items-start">
                                             <span class="text-[10px] font-mono font-black text-slate-400 block tracking-tight group-hover/link:text-slate-950 transition-colors">{{ $bid->estimate_number }} 🔗</span>
@@ -315,7 +312,6 @@
                                             <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">Fulfillment cycle completed</p>
                                         </div>
                                     </a>
-
                                     <div class="pt-2 border-t border-slate-100">
                                         <form action="/estimates/{{ $bid->id }}/status" method="POST" class="w-full">
                                             @csrf
@@ -331,12 +327,10 @@
                             @endforelse
                         </div>
                     </div>
-
                 </div>
             </section>
 
             <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
                 <div class="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                         <h3 class="font-black text-sm tracking-tight text-slate-900 uppercase flex items-center gap-2">
@@ -381,7 +375,6 @@
                 </div>
 
                 <div class="space-y-6">
-
                     <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                         <div class="border-b border-slate-100 pb-3">
                             <h3 class="font-black text-sm tracking-tight text-slate-900 uppercase flex items-center gap-1.5">
@@ -426,7 +419,6 @@
                             Revenue tracking updates automatically as jobs are paid.
                         </div>
                     </div>
-
                 </div>
             </section>
         </main>
@@ -488,33 +480,35 @@
                         </div>
 
                         <div class="space-y-3 max-h-96 overflow-y-auto pr-1">
-                            <template x-for="job in selectedDayJobs" :key="job.id">
-                                <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2 hover:border-slate-300 transition-all text-left">
-                                    <div class="flex justify-between items-start gap-4">
-                                        <div>
-                                            <h4 class="font-black text-slate-950 text-sm uppercase tracking-tight" x-text="job.title"></h4>
-                                            <p class="text-xs font-semibold text-slate-600 mt-0.5">
-                                                👤 Client: <span class="text-slate-900 font-bold" x-text="job.customer_name"></span>
-                                            </p>
+                            <table class="w-full">
+                                <template x-for="job in selectedDayJobs" :key="job.id">
+                                    <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2 hover:border-slate-300 transition-all text-left">
+                                        <div class="flex justify-between items-start gap-4">
+                                            <div>
+                                                <h4 class="font-black text-slate-950 text-sm uppercase tracking-tight" x-text="job.title"></h4>
+                                                <p class="text-xs font-semibold text-slate-600 mt-0.5">
+                                                    👤 Client: <span class="text-slate-900 font-bold" x-text="job.customer_name"></span>
+                                                </p>
+                                            </div>
+                                            <span class="font-mono font-black text-xs text-white bg-[#f58613] px-2 py-0.5 rounded shadow-sm shrink-0" x-text="job.time"></span>
                                         </div>
-                                        <span class="font-mono font-black text-xs text-white bg-[#f58613] px-2 py-0.5 rounded shadow-sm shrink-0" x-text="job.time"></span>
-                                    </div>
 
-                                    <div x-show="job.notes" class="p-2.5 bg-white border border-slate-100 rounded-lg text-xs font-medium text-slate-500 italic">
-                                        <span class="font-bold text-slate-400 block not-italic uppercase text-[9px] tracking-wide mb-0.5">Field Instructions:</span>
-                                        <span x-text="job.notes"></span>
-                                    </div>
+                                        <div x-show="job.notes" class="p-2.5 bg-white border border-slate-100 rounded-lg text-xs font-medium text-slate-500 italic">
+                                            <span class="font-bold text-slate-400 block not-italic uppercase text-[9px] tracking-wide mb-0.5">Field Instructions:</span>
+                                            <span x-text="job.notes"></span>
+                                        </div>
 
-                                    <div class="flex justify-between items-center pt-2 border-t border-slate-100 text-xs">
-                                        <span class="inline-block px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide border bg-emerald-50 text-emerald-700 border-emerald-200" x-text="job.status"></span>
-                                        <template x-if="job.estimate_id">
-                                            <a :href="'/estimates/' + job.estimate_id" class="text-[#f58613] hover:text-orange-600 font-black uppercase text-[10px] tracking-widest flex items-center gap-1">
-                                                Open Estimate &rarr;
-                                            </a>
-                                        </template>
+                                        <div class="flex justify-between items-center pt-2 border-t border-slate-100 text-xs">
+                                            <span class="inline-block px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide border bg-emerald-50 text-emerald-700 border-emerald-200" x-text="job.status"></span>
+                                            <template x-if="job.estimate_id">
+                                                <a :href="'/estimates/' + job.estimate_id" class="text-[#f58613] hover:text-orange-600 font-black uppercase text-[10px] tracking-widest flex items-center gap-1">
+                                                    Open Estimate &rarr;
+                                                </a>
+                                            </template>
+                                        </div>
                                     </div>
-                                </div>
-                            </template>
+                                </template>
+                            </table>
 
                             <div x-show="selectedDayJobs.length === 0" class="text-center py-8 text-slate-400 font-bold italic text-xs">
                                 No jobs scheduled for this calendar date block.
