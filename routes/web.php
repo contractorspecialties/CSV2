@@ -7,6 +7,7 @@ use App\Http\Controllers\PricebookController;
 use App\Http\Controllers\EstimateController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\CompanyProfileController;
 use App\Http\Middleware\EnsureOnboardingIsCompleted;
 use Illuminate\Support\Facades\Route;
 
@@ -62,6 +63,10 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+        // Dedicated Company Identity Trust Signal Control Panel (Decoupled Hub)
+        Route::get('/workspace/profile', [CompanyProfileController::class, 'edit'])->name('workspace.profile.edit');
+        Route::post('/workspace/profile', [CompanyProfileController::class, 'update'])->name('workspace.profile.update');
+
         // Secure Login Line Configuration (With Smart String Normalization)
         Route::post('/user/security-phone', function (Illuminate\Http\Request $request) {
             $request->validate(['phone_2fa' => 'required|string|max:50']);
@@ -111,9 +116,11 @@ Route::middleware(['auth'])->group(function () {
 // Homeowner Viewport Portal Frames
 Route::get('/portal', function () { return view('portal'); })->name('portal');
 Route::get('/portal/checkout/{token}', [EstimateController::class, 'checkout'])->name('portal.checkout');
-
 Route::post('/portal/action/{id}', [EstimateController::class, 'handlePortalAction'])->name('portal.action');
 Route::get('/portal/success/{token}', [EstimateController::class, 'paymentSuccess'])->name('quotes.payment.success');
+
+// High-Conversion Public Client-Facing Gateway (Dynamic SEO/Estimate Anchor View)
+Route::get('/brand/{slug}', [CompanyProfileController::class, 'show'])->name('brand.show')->name('brand.show');
 
 // Public Legal Compliance Frames
 Route::view('/privacy', 'privacy')->name('legal.privacy');
