@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Launch Your Company Workspace | ContractorSpecialties</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
 </head>
 <body class="flex flex-col justify-center min-h-full font-sans antialiased bg-slate-50 px-4 py-12 selection:bg-[#f58613] selection:text-white">
 
@@ -12,7 +15,7 @@
 
         <div class="text-center space-y-2">
             <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-slate-950 text-[#f58613] text-xl font-bold mb-1 shadow-sm">
-                🏗️
+                制造 🏗️
             </div>
             <h2 class="text-xl font-black text-slate-950 uppercase tracking-tight">Launch Your Workspace</h2>
             <p class="text-xs text-slate-500 font-semibold max-w-[280px] mx-auto leading-normal">
@@ -35,19 +38,27 @@
             @csrf
 
             <div>
-                <label for="company_name" class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5">Business / Company Name</label>
-                <input type="text" id=\"company_name\" name="company_name" value="{{ old('company_name') }}" required placeholder="e.g., Apex Roofing LLC" autocomplete="organization"
+                <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="company_name">Business / Company Name</label>
+                <input type="text" id="company_name" name="company_name" value="{{ old('company_name') }}" required placeholder="e.g., Apex Roofing LLC" autocomplete="organization"
                        class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-sm font-bold text-slate-950 placeholder:text-slate-400 focus:outline-none focus:border-[#f58613] focus:ring-1 focus:ring-[#f58613] shadow-inner">
             </div>
 
             <div>
-                <label for="email" class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5">Your Professional Email Address</label>
+                <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="email">Your Professional Email Address</label>
                 <input type="email" id="email" name="email" value="{{ old('email') }}" required placeholder="name@yourcompany.com" autocomplete="email"
                        class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-sm font-bold text-slate-950 placeholder:text-slate-400 focus:outline-none focus:border-[#f58613] focus:ring-1 focus:ring-[#f58613] shadow-inner">
             </div>
 
+            <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-start gap-3 text-[11px] text-slate-500 font-medium leading-normal shadow-inner">
+                <span class="text-base select-none">⚡</span>
+                <div>
+                    <span class="font-black text-slate-950 uppercase text-[9px] block tracking-wide mb-0.5">Passwordless Device Authentication</span>
+                    Zero passwords to remember, manage, or lose. Our engine sends a secure single-use access route straight to your email to authorize your browser environment instantly.
+                </div>
+            </div>
+
             <div class="pt-2">
-                <button type="submit" class="w-full bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-4 px-4 rounded-xl tracking-widest uppercase shadow-md transition-all active:scale-[0.99] flex justify-center items-center gap-2 cursor-pointer">
+                <button type="submit" class="w-full bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-4 px-4 rounded-xl tracking-widest uppercase shadow-md transition-all active:scale-[0.99] flex justify-center items-center gap-2 cursor-pointer border-0 outline-none">
                     Build My Company Workspace →
                 </button>
             </div>

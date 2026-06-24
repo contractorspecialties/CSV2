@@ -15,13 +15,30 @@
     <header class="bg-black border-b border-slate-900 sticky top-0 z-50 shadow-md">
         <div class="max-w-6xl mx-auto px-4 h-24 flex items-center justify-between">
 
-            <div class="w-[400px] max-w-[65%] h-[100px] flex items-center">
-                <img src="/images/header-logo.webp" alt="ContractorSpecialties Logo" class="w-full h-auto max-h-[90px] object-contain object-left">
+            <div class="w-[400px] max-w-[50%] h-[100px] flex items-center">
+                <a href="/">
+                    <img src="/images/header-logo.webp" alt="ContractorSpecialties Logo" class="w-full h-auto max-h-[90px] object-contain object-left">
+                </a>
             </div>
 
-            <div class="flex items-center gap-4">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span class="text-[10px] font-mono font-black uppercase text-slate-500 tracking-widest hidden sm:inline">Secure Access Route</span>
+            <!-- 📡 Split Discovery Header Navigation -->
+            <div class="flex items-center gap-3 sm:gap-6">
+                @auth
+                    <a href="{{ route('dashboard') }}" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 hover:text-white font-black text-[10px] py-2.5 px-4 rounded-xl uppercase tracking-wider transition-all cursor-pointer">
+                        Operations Desk &rarr;
+                    </a>
+                @endauth
+
+                @guest
+                    <a href="#access-hub" class="text-slate-400 hover:text-white font-black text-[10px] uppercase tracking-wider transition-all cursor-pointer py-2.5 px-2">
+                        Sign In
+                    </a>
+
+                    <a href="{{ route('register') }}" class="bg-[#f58613] hover:bg-orange-600 text-white font-black text-[10px] py-2.5 px-4 rounded-xl uppercase tracking-wider transition-all shadow-md flex items-center gap-1 cursor-pointer">
+                        <span>Get Started Free</span>
+                        <span class="text-xs font-normal">&rarr;</span>
+                    </a>
+                @endguest
             </div>
         </div>
     </header>
@@ -40,14 +57,14 @@
                 </p>
             </div>
 
-            <div id="access-hub" class="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xl relative">
+            <div id="access-hub" class="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xl relative > border-t-4 border-t-slate-950">
                 <div class="absolute -top-3 -right-3 w-12 h-12 rounded-xl bg-slate-900 text-[#f58613] border border-slate-800 flex items-center justify-center text-xl shadow-md font-bold">
                     🔑
                 </div>
 
                 <div class="space-y-2 border-b border-slate-100 pb-4 mb-6">
-                    <h3 class="text-xl font-black text-slate-950 uppercase tracking-tight">Get Your Secure Access Link</h3>
-                    <p class="text-xs text-slate-500 font-semibold max-w-[280px] leading-normal">No passwords. No setup fees. No commitment. Just tools that make your business run smoother.</p>
+                    <h3 class="text-xl font-black text-slate-950 uppercase tracking-tight">Operator Dashboard Sign-In</h3>
+                    <p class="text-xs text-slate-500 font-semibold max-w-[280px] leading-normal">Enter your business email. We will route a direct token link to drop you straight onto your management command tools.</p>
                 </div>
 
                 @if($errors->any())
@@ -70,16 +87,23 @@
                 <form action="{{ route('magic.send') }}" method="POST" class="space-y-4">
                     @csrf
                     <div>
-                        <label for="email" class="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5">Your Account Email</label>
+                        <label class="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1.5">Registered Account Email</label>
                         <input type="email" id="email" name="email" required autocomplete="email" placeholder="name@yourcompany.com"
                                class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-sm font-bold text-slate-950 placeholder:text-slate-400 focus:outline-none focus:border-[#f58613] focus:ring-1 focus:ring-[#f58613] shadow-inner">
                     </div>
 
-                    <button type="submit" class="w-full bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-4 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] flex justify-center items-center gap-2 cursor-pointer">
-                        Request Secure Access Link →
+                    <button type="submit" class="w-full bg-slate-950 hover:bg-black text-white font-black text-xs py-4 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] flex justify-center items-center gap-2 cursor-pointer">
+                        Request Secure Access Link &rarr;
                     </button>
 
-                    <div class="pt-3 border-t border-slate-100 text-[10px] text-slate-400 leading-normal font-medium">
+                    <!-- Frictionless Inter-Gateway Redirection Link Line -->
+                    <div class="text-center pt-1.5 pb-1 border-b border-slate-100">
+                        <p class="text-[11px] font-bold text-slate-500">
+                            New partner? <a href="{{ route('register') }}" class="text-[#f58613] hover:underline">Provision a fresh workspace here &rarr;</a>
+                        </p>
+                    </div>
+
+                    <div class="pt-3 text-[10px] text-slate-400 leading-normal font-medium">
                         By requesting an access link, you agree to receive automated account confirmations, system status alerts, and operational estimate notifications via text message from ContractorSpecialties. Consent is completely voluntary and is not a condition of purchase. Message frequency varies based on project utilization loops. Message & data rates may apply. Reply <span class="font-bold text-slate-700 tracking-tight">STOP</span> to instantly block lines, or <span class="font-bold text-slate-700 tracking-tight">HELP</span> for engineering routing diagnostics. View our <a href="/privacy" class="underline hover:text-[#f58613] transition-colors">Privacy Policy</a> and <a href="/terms" class="underline hover:text-[#f58613] transition-colors">Terms of Use</a>.
                     </div>
                 </form>
