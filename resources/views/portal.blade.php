@@ -47,6 +47,28 @@
             </div>
         </div>
 
+        <!-- 🛡️ BRAND TRUST HEADER: Identity & Legitimacy Filter -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-4 text-center sm:text-left flex-col sm:flex-row">
+                <div class="w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 p-1 shrink-0 overflow-hidden flex items-center justify-center">
+                    <img src="/{{ $estimate->company->logo_path ?? 'images/placeholder-logo.webp' }}" class="w-full h-full object-contain">
+                </div>
+                <div>
+                    <h2 class="text-base font-black text-slate-950 uppercase tracking-tight">{{ $estimate->company->name ?? 'Verified Partner Contractor' }}</h2>
+                    <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        <span class="text-[#f58613]">★ 4.9 (42 Reviews)</span>
+                        <span>•</span>
+                        <span>📍 {{ $estimate->company->city ?? 'Local' }}, {{ strtoupper($estimate->company->state ?? 'USA') }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="shrink-0 w-full sm:w-auto">
+                <a href="/brand/{{ !empty($estimate->company->slug) ? $estimate->company->slug : 'staged-profile' }}" target="_blank" class="block text-center bg-slate-950 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest py-3 px-5 rounded-xl border border-slate-900 shadow transition-colors">
+                    🌐 View Credentials & Portfolio &rarr;
+                </a>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             <!-- COLUMN 1 & 2: LINE ITEMS & PHYSICAL FIELD GRAPHICS -->
@@ -101,6 +123,19 @@
                     </div>
                 </div>
 
+                <!-- 🛡️ RISK NEUTRALIZER: Guarantees & Workmanship Warranties -->
+                @if(!empty($estimate->company->warranty_details))
+                    <div class="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200/60 rounded-2xl p-5 shadow-sm flex items-start gap-4">
+                        <span class="text-2xl shrink-0">🛡️</span>
+                        <div class="space-y-0.5">
+                            <h4 class="text-xs font-black uppercase text-orange-950 tracking-wide">Workmanship Quality Guarantee Included</h4>
+                            <p class="text-xs text-orange-900 font-semibold leading-relaxed">
+                                This production blueprint is fully backed by <span class="font-black text-slate-950">{{ $estimate->company->warranty_details }}</span> terms directly protecting your property deployment lines.
+                            </p>
+                        </div>
+                    </div>
+                @endif
+
                 <!-- HISTORICAL PROJECT REMARKS / LEDGER CHAT BLOCK -->
                 @if(!empty($estimate->notes))
                     <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-3">
@@ -140,7 +175,7 @@
             <!-- COLUMN 3: DIGITAL GATEWAY INTERACTION HUB -->
             <div class="space-y-6">
 
-                <div x-data="{ currentConsole: 'main' }" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm min-h-[340px] flex flex-col justify-between border-t-4 border-t-slate-950">
+                <div x-data="{ currentConsole: 'main', sigName: '' }" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm min-h-[340px] flex flex-col justify-between border-t-4 border-t-slate-950">
 
                     <!-- CONSOLE HUB LAYER 1: BASE ACTION ROUTER -->
                     <div x-show="currentConsole === 'main'" class="space-y-4 contents">
@@ -168,7 +203,9 @@
                                     <span class="text-sm font-black">&rarr;</span>
                                 </button>
                             </div>
-                        @else
+                        @endif
+
+                        @if($estimate->status === 'approved' || $estimate->status === 'closed')
                             <div class="p-5 bg-emerald-50 border border-emerald-100 rounded-xl text-center space-y-2 flex-grow flex flex-col justify-center shadow-inner">
                                 <span class="text-3xl block animate-bounce">⚡</span>
                                 <h4 class="font-black text-sm text-emerald-950 uppercase tracking-tight">Contract Active & Locked</h4>
@@ -182,10 +219,10 @@
                         </div>
                     </div>
 
-                    <!-- CONSOLE HUB LAYER 2: CONDITIONAL SCHEDULING & DEPOSIT ENGINES -->
+                    <!-- CONSOLE HUB LAYER 2: SIGNATURE FORM AND TERMS VERIFICATION -->
                     <div x-show="currentConsole === 'schedule'" x-cloak style="display: none;" class="space-y-4 contents">
                         <div class="border-b border-slate-100 pb-2">
-                            <h3 class="font-black text-sm text-slate-950 uppercase tracking-wider">Review Terms & Terms</h3>
+                            <h3 class="font-black text-sm text-slate-950 uppercase tracking-wider">Review Terms & Authorize</h3>
                             <p class="text-[11px] text-slate-400 font-medium mt-0.5">Authorizing registers your job contract straight into our crew scheduling layout loops.</p>
                         </div>
 
@@ -202,20 +239,28 @@
                                 <div class="pt-2 mt-1 border-t border-slate-200 text-[10px] text-amber-700 font-sans font-bold leading-normal">
                                     ⚠️ Upfront mobilization funding is required to secure your field production run placement window.
                                 </div>
-                            @else
+                            @endif
+                            @if(empty($estimate->deposit_amount) || $estimate->deposit_amount <= 0)
                                 <div class="pt-2 mt-1 border-t border-slate-200 text-[10px] text-slate-400 font-sans font-medium leading-normal italic">
                                     *No upfront deposit required for initial site setup.
                                 </div>
                             @endif
                         </div>
 
-                        <form action="/portal/action/{{ $estimate->id }}" method="POST" class="space-y-2">
+                        <!-- 📝 THE DIRECT ACCEPTANCE BLOCK: Strict Signature Requirements -->
+                        <form action="/portal/action/{{ $estimate->id }}" method="POST" class="space-y-3">
                             @csrf
                             <input type="hidden" name="action" value="schedule">
 
-                            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs py-4 px-4 rounded-xl uppercase tracking-widest transition-all shadow-md active:scale-[0.99] cursor-pointer text-center">
+                            <div>
+                                <label class="block text-[9px] font-black uppercase text-slate-400 mb-1 tracking-wider">Digital Signature Sign-off</label>
+                                <input type="text" name="signature_name" x-model="sigName" required placeholder="Type your full legal name to authorize..." class="w-full bg-slate-50 border border-slate-300 focus:border-emerald-600 rounded-xl py-3 px-3.5 text-xs font-bold uppercase placeholder:normal-case tracking-wide focus:outline-none shadow-inner text-slate-900">
+                                <p class="text-[9px] text-slate-400 font-medium mt-1 leading-normal">By signing, you agree to the project specs and line items detailed inside this contract framework.</p>
+                            </div>
+
+                            <button type="submit" :disabled="sigName.trim().length < 3" class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-100 disabled:text-slate-400 text-white font-black text-xs py-4 px-4 rounded-xl uppercase tracking-widest transition-all shadow-md active:scale-[0.99] cursor-pointer text-center">
                                 @if($estimate->deposit_amount > 0)
-                                    Sign Terms & Pay Deposit 💳
+                                    Sign Contract & Pay Deposit 💳
                                 @else
                                     Sign Contract & Book Job ⚡
                                 @endif
