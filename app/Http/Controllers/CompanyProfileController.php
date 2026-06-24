@@ -30,11 +30,8 @@ class CompanyProfileController extends Controller
 
         $company = DB::table($companyTable)->where('id', $user->company_id)->first();
 
-        // Decode the gallery array defensively for front-end loops
-        $galleryImages = [];
-        if (!empty($company->gallery_paths)) {
-            $galleryImages = json_decode($company->gallery_paths, true) ?? [];
-        }
+        // Unpack portfolio paths cleanly using our anti-collision decoding filter
+        $galleryImages = $this->safeJsonDecode($company->gallery_paths ?? null);
 
         return view('workspace.profile', compact('company', 'galleryImages'));
     }
@@ -68,7 +65,9 @@ class CompanyProfileController extends Controller
         $this->ensureSchemaIsHealed($companyTable);
 
         $company = DB::table($companyTable)->where('id', $user->company_id)->first();
-        $currentGallery = !empty($company->gallery_paths) ? json_decode($company->gallery_paths, true) : [];
+
+        // Defensive load of existing array items
+        $currentGallery = $this->safeJsonDecode($company->gallery_paths ?? null);
         $logoPath = $company->logo_path ?? null;
 
         // 1. Process Dedicated Corporate Logo Upload Stream
@@ -98,7 +97,6 @@ class CompanyProfileController extends Controller
                     }
                 }
             }
-            $currentGallery = array_values($currentGallery);
         }
 
         // 3. Process multi-file showcase image uploads (Max 6 limit check)
@@ -118,7 +116,10 @@ class CompanyProfileController extends Controller
             }
         }
 
-        // 4. Persist flat updates to database
+        // Re-index target array parameters clean to avoid associative index injection errors
+        $sanitizedGallery = array_values(array_filter($currentGallery));
+
+        // 4. Persist flat updates to database using pristine unescaped string metrics
         DB::table($companyTable)
             ->where('id', $user->company_id)
             ->update([
@@ -131,7 +132,7 @@ class CompanyProfileController extends Controller
                 'insurance_badge'       => $request->has('insurance_badge') ? 1 : 0,
                 'typical_response_time' => $validated['typical_response_time'],
                 'warranty_details'      => $validated['warranty_details'],
-                'gallery_paths'         => json_encode($currentGallery),
+                'gallery_paths'         => json_encode($sanitizedGallery, JSON_UNESCAPED_SLASHES),
                 'updated_at'            => now(),
             ]);
 
@@ -158,9 +159,35 @@ class CompanyProfileController extends Controller
             abort(404, 'Contractor profile workspace not found.');
         }
 
-        $galleryImages = !empty($company->gallery_paths) ? json_decode($company->gallery_paths, true) : [];
+        // Unpack portfolio paths cleanly using our anti-collision decoding filter
+        $galleryImages = $this->safeJsonDecode($company->gallery_paths ?? null);
 
         return view('brand.show', compact('company', 'galleryImages'));
+    }
+
+    /**
+     * Recursive, Multi-Pass Safe JSON Array Serialization Decoder.
+     */
+    private function safeJsonDecode($value): array
+    {
+        if (empty($value)) {
+            return [];
+        }
+
+        if (is_array($value)) {
+            return $value;
+        }
+
+        // Attempt standardized direct decode
+        $decoded = json_decode($value, true);
+
+        // If it returns as a text string or hits string character formatting locks, unwind it recursively
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
+            $cleaned = stripslashes(trim($value, '"'));
+            $decoded = json_decode($cleaned, true);
+        }
+
+        return is_array($decoded) ? array_values(array_filter($decoded)) : [];
     }
 
     /**
