@@ -37,7 +37,8 @@
             </div>
         @endif
 
-        <div x-data="{ currentTab: 'legitimacy', dynamicPreviews: [], logoPreview: '{{ !empty($company->logo_path) ? '/' . $company->logo_path : '' }}' }" class="grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
+        <!-- Root Workspace Component Wire Frame with Fixed Alpine Engine Initialization -->
+        <div x-data="{ currentTab: 'legitimacy', dynamicPreviews: [], logoPreview: '{{ !empty($company->logo_path) ? asset($company->logo_path) : '' }}' }" class="grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
 
             <nav class="space-y-1.5">
                 <button @click="currentTab = 'legitimacy'" :class="currentTab === 'legitimacy' ? 'bg-[#f58613] text-white shadow' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/60'" class="w-full text-left font-black text-xs uppercase tracking-wider py-4 px-4 rounded-xl transition-all flex items-center justify-between cursor-pointer outline-none border-0">
@@ -71,11 +72,11 @@
                             <p class="text-xs text-slate-400 font-medium mt-1">Verify core structural variables that homeowners check first.</p>
                         </div>
 
-                        <!-- 🖼️ DEDICATED CORPORATE BRAND LOGO UPLOAD COMPONENT -->
+                        <!-- 🖼️ CORPORATE BRAND LOGO UPLOAD COMPONENT -->
                         <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-center gap-5 shadow-inner">
-                            <div class="w-20 h-20 rounded-2xl bg-white border border-slate-300 shadow-sm flex items-center justify-center overflow-hidden shrink-0 relative group">
+                            <div class="w-20 h-20 rounded-2xl bg-white border border-slate-300 shadow-sm flex items-center justify-center overflow-hidden shrink-0 relative bg-slate-50">
                                 <template x-if="logoPreview">
-                                    <img :src="logoPreview" class="w-full h-full object-contain p-1">
+                                    <img :src="logoPreview" class="w-full h-full object-contain p-1" alt="Logo Preview">
                                 </template>
                                 <template x-if="!logoPreview">
                                     <span class="text-2xl select-none text-slate-300">🏢</span>
@@ -118,7 +119,7 @@
                         </div>
                     </div>
 
-                    <!-- TAB 2: BRAND BIO AND VALUE COPY WITH AI REMINDERS -->
+                    <!-- TAB 2: BRAND BIO AND VALUE COPY WITH AI ASSIST NODES -->
                     <div x-show="currentTab === 'reliability'" class="space-y-6" x-cloak>
                         <div>
                             <h3 class="text-base font-black text-slate-950 uppercase tracking-tight border-b border-slate-100 pb-2">Human Element Configuration</h3>
@@ -170,7 +171,7 @@
                                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                     @foreach($galleryImages as $image)
                                         <div class="relative rounded-xl border border-slate-200 overflow-hidden aspect-video group bg-slate-100 shadow-sm">
-                                            <img src="/{{ $image }}" class="w-full h-full object-cover" alt="Portfolio Image">
+                                            <img src="{{ asset($image) }}" class="w-full h-full object-cover" alt="Portfolio Image">
                                             <div class="absolute inset-0 bg-slate-950/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-center items-center p-3 text-center">
                                                 <label class="bg-red-600 hover:bg-red-700 text-white font-black text-[9px] uppercase tracking-widest py-2 px-3 rounded-xl cursor-pointer flex items-center gap-1.5 shadow active:scale-[0.98] transition-all">
                                                     <input type="checkbox" name="remove_images[]" value="{{ $image }}" class="rounded accent-red-900 w-3.5 h-3.5">
@@ -228,6 +229,7 @@
                         @endif
                     </div>
 
+                    <!-- LOCK COMMIT FOOTER BAR -->
                     <div class="pt-6 border-t border-slate-100 flex items-center justify-end">
                         <button type="submit" class="bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-3.5 px-8 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer border-0 outline-none">
                             Lock In Trust Changes &rarr;
