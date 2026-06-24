@@ -27,26 +27,41 @@
     <main class="flex-grow max-w-6xl w-full mx-auto px-4 py-8 space-y-6">
 
         @if(session('status'))
-            <div class="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl p-4 flex items-center gap-3 shadow-sm">
+            <div class="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl p-4 mb-4 flex items-center gap-3 shadow-sm">
                 <span class="text-lg">⚡</span>
                 <p class="text-xs font-black uppercase tracking-tight">{{ session('status') }}</p>
             </div>
         @endif
 
         @if(session('error'))
-            <div class="bg-red-50 border border-red-200 text-red-900 rounded-2xl p-4 flex items-center gap-3 shadow-sm">
+            <div class="bg-red-50 border border-red-200 text-red-900 rounded-2xl p-4 mb-4 flex items-center gap-3 shadow-sm">
                 <span class="text-lg">⚠️</span>
                 <p class="text-xs font-black uppercase tracking-tight">{{ session('error') }}</p>
             </div>
         @endif
 
         <div class="border-b border-slate-200 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-                <span class="text-[10px] bg-slate-900 text-slate-300 font-mono font-black px-2 py-0.5 rounded uppercase tracking-wider">
-                    Current Status: {{ $estimate->status }}
-                </span>
-                <h1 class="text-2xl font-black text-slate-950 uppercase tracking-tight mt-1">Estimate {{ $estimate->estimate_number }}</h1>
-                <p class="text-sm text-slate-500 font-medium">Customer: <strong class="text-slate-900">{{ $estimate->customer->last_name }}, {{ $estimate->customer->first_name }}</strong></p>
+
+            <!-- 🏢 DYNAMIC CONTRACTOR BRAND IDENTITY BLOCK -->
+            <div class="flex items-center gap-4">
+                @if(!empty($estimate->company?->logo_path))
+                    <div class="w-16 h-16 rounded-xl border border-slate-200 bg-white p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-inner bg-slate-50">
+                        <img src="/{{ $estimate->company->logo_path }}" class="w-full h-full object-contain" alt="Contractor Brand Mark">
+                    </div>
+                @endif
+                <div>
+                    <span class="text-[10px] bg-slate-900 text-slate-300 font-mono font-black px-2 py-0.5 rounded uppercase tracking-wider">
+                        Current Status: {{ $estimate->status }}
+                    </span>
+                    <h1 class="text-2xl font-black text-slate-950 uppercase tracking-tight mt-1">Estimate {{ $estimate->estimate_number }}</h1>
+                    <p class="text-sm text-slate-500 font-medium">Customer: <strong class="text-slate-900">{{ $estimate->customer->last_name }}, {{ $estimate->customer->first_name }}</strong></p>
+
+                    @if(!empty($estimate->company?->name))
+                        <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5">
+                            Issued By: <span class="text-slate-700 font-bold">{{ $estimate->company->name }}</span>
+                        </p>
+                    @endif
+                </div>
             </div>
 
             <div class="bg-white border border-slate-200 rounded-xl p-2.5 flex items-center gap-2 shadow-sm">
@@ -54,7 +69,7 @@
                 <form action="/estimates/{{ $estimate->id }}/status" method="POST" class="flex gap-1">
                     @csrf
                     <input type="hidden" name="status" value="sent">
-                    <button type="submit" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-[10px] px-2.5 py-1.5 rounded uppercase tracking-wide cursor-pointer transition-all">
+                    <button type="submit" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-[10px] px-2.5 py-1.5 rounded uppercase tracking-wide cursor-pointer transition-all border-0">
                         Mark Sent
                     </button>
                 </form>
@@ -132,9 +147,9 @@
                             @csrf
                             <div>
                                 <label for="response_notes" class="block text-[10px] font-black uppercase text-slate-500 mb-1">Update Scope Notes / Post Your Response</label>
-                                <textarea id="response_notes" name="notes" rows="3" placeholder="Type clarification or updated contract parameters here..." class="w-full bg-white border border-slate-300 rounded-xl p-3 text-xs font-medium focus:outline-none focus:border-[#f58613]"></textarea>
+                                <textarea id="response_notes" name="notes" rows="3" placeholder="Type clarification or updated contract parameters here..." class="w-full bg-white border border-slate-300 rounded-xl p-3 text-xs font-medium focus:outline-none focus:border-[#f58613] text-slate-900"></textarea>
                             </div>
-                            <button type="submit" class="bg-slate-950 hover:bg-black text-white font-black text-xs py-2.5 px-4 rounded-xl uppercase tracking-wider transition-all cursor-pointer">
+                            <button type="submit" class="bg-slate-950 hover:bg-black text-white font-black text-xs py-2.5 px-4 rounded-xl uppercase tracking-wider transition-all cursor-pointer border-0">
                                 Save Notes & Re-Send Link ⚡
                             </button>
                         </form>
@@ -182,7 +197,7 @@
                     <div class="space-y-2 pt-2">
                         <form action="/estimates/{{ $estimate->id }}/text-dispatch" method="POST">
                             @csrf
-                            <button type="submit" @empty($estimate->customer->phone) disabled @endempty class="w-full bg-[#f58613] hover:bg-orange-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-black text-xs py-3.5 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] flex justify-center items-center gap-2 cursor-pointer">
+                            <button type="submit" @empty($estimate->customer->phone) disabled @endempty class="w-full bg-[#f58613] hover:bg-orange-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-black text-xs py-3.5 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] flex justify-center items-center gap-2 cursor-pointer border-0">
                                 📱 Send Link via Text Message Run
                             </button>
                         </form>
@@ -209,9 +224,9 @@
                             <input type="file" id="studioFileInput" name="image" required accept="image/*" @change="loadPhotoToStudio($event)" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase file:bg-slate-950 file:text-white hover:file:bg-black file:cursor-pointer cursor-pointer border border-slate-200 rounded-xl p-1 bg-slate-50/50">
                         </div>
                         <div>
-                            <input type="text" name="caption" placeholder="Short description (e.g., Finished framing pass)" class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 px-2.5 text-xs font-medium focus:outline-none focus:border-[#f58613]">
+                            <input type="text" name="caption" placeholder="Short description (e.g., Finished framing pass)" class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 px-2.5 text-xs font-medium focus:outline-none focus:border-[#f58613] text-slate-900">
                         </div>
-                        <button type="submit" class="w-full bg-slate-950 hover:bg-black text-white font-black text-xs py-2.5 rounded-lg uppercase tracking-wider transition-all cursor-pointer">
+                        <button type="submit" class="w-full bg-slate-950 hover:bg-black text-white font-black text-xs py-2.5 rounded-lg uppercase tracking-wider transition-all cursor-pointer border-0">
                             Commit Progress Asset ⚡
                         </button>
                     </form>
@@ -237,21 +252,22 @@
         </div>
     </main>
 
+    <!-- PHOTO CANVAS STUDIO WORKSPACE DRAW CONTAINER -->
     <div x-show="showStudio" x-cloak class="fixed inset-0 z-[100] bg-slate-950 flex flex-col select-none" @window:resize.debounce.200="resizeCanvas()">
 
         <div class="bg-slate-900 border-b border-slate-800 px-4 h-16 shrink-0 flex items-center justify-between">
-            <button type="button" @click="closeStudio()" class="text-slate-400 hover:text-white font-black text-xs tracking-widest uppercase cursor-pointer">
-                ← Cancel
+            <button type="button" @click="closeStudio()" class="text-slate-400 hover:text-white font-black text-xs tracking-widest uppercase cursor-pointer bg-transparent border-0">
+                &larr; Cancel
             </button>
             <div class="flex items-center gap-3">
-                <button type="button" @click="undoLastShape()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all">
+                <button type="button" @click="undoLastShape()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all border-0">
                     ↩ Undo
                 </button>
-                <button type="button" @click="clearStudioCanvas()" class="bg-red-950/40 text-red-400 hover:bg-red-900/40 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all">
+                <button type="button" @click="clearStudioCanvas()" class="bg-red-950/40 text-red-400 hover:bg-red-900/40 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all border-0">
                     🗑️ Clear
                 </button>
             </div>
-            <button type="button" @click="commitStudioMarkup()" class="bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs px-5 py-2.5 rounded-xl uppercase tracking-widest shadow transition-all active:scale-95 cursor-pointer">
+            <button type="button" @click="commitStudioMarkup()" class="bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs px-5 py-2.5 rounded-xl uppercase tracking-widest shadow transition-all active:scale-95 cursor-pointer border-0">
                 Save Markup ✓
             </button>
         </div>
@@ -261,17 +277,17 @@
             <div class="absolute left-3 top-1/2 -translate-y-1/2 bg-slate-900/90 backdrop-blur-md border border-slate-800 p-2.5 rounded-2xl flex flex-col gap-4 z-10 shadow-xl">
                 <div class="space-y-2">
                     <span class="block text-[8px] font-black text-slate-500 uppercase tracking-wider text-center">Size</span>
-                    <button type="button" @click="thickness = 2; textSize = 14" :class="thickness === 2 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold cursor-pointer">F</button>
-                    <button type="button" @click="thickness = 6; textSize = 22" :class="thickness === 6 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold cursor-pointer">M</button>
-                    <button type="button" @click="thickness = 12; textSize = 32" :class="thickness === 12 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-base font-bold cursor-pointer">B</button>
+                    <button type="button" @click="thickness = 2; textSize = 14" :class="thickness === 2 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold cursor-pointer border-0">F</button>
+                    <button type="button" @click="thickness = 6; textSize = 22" :class="thickness === 6 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold cursor-pointer border-0">M</button>
+                    <button type="button" @click="thickness = 12; textSize = 32" :class="thickness === 12 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-base font-bold cursor-pointer border-0">B</button>
                 </div>
             </div>
 
             <div class="absolute right-3 top-1/2 -translate-y-1/2 bg-slate-900/90 backdrop-blur-md border border-slate-800 p-2.5 rounded-2xl flex flex-col gap-3 z-10 shadow-xl">
                 <span class="block text-[8px] font-black text-slate-500 uppercase tracking-wider text-center">Color</span>
-                <button type="button" @click="color = '#f58613'" :class="color === '#f58613' ? 'ring-2 ring-white scale-110' : '' = '#f58613'" class="w-6 h-6 rounded-full bg-[#f58613] cursor-pointer transition-transform"></button>
-                <button type="button" @click="color = '#eab308'" :class="color === '#eab308' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-yellow-500 cursor-pointer transition-transform"></button>
-                <button type="button" @click="color = '#dc2626'" :class="color === '#dc2626' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-red-600 cursor-pointer transition-transform"></button>
+                <button type="button" @click="color = '#f58613'" :class="color === '#f58613' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-[#f58613] cursor-pointer transition-transform border-0"></button>
+                <button type="button" @click="color = '#eab308'" :class="color === '#eab308' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-yellow-500 cursor-pointer transition-transform border-0"></button>
+                <button type="button" @click="color = '#dc2626'" :class="color === '#dc2626' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-red-600 cursor-pointer transition-transform border-0"></button>
                 <button type="button" @click="color = '#ffffff'" :class="color === '#ffffff' ? 'ring-2 ring-orange-500 scale-110' : ''" class="w-6 h-6 rounded-full bg-white border border-slate-300 cursor-pointer transition-transform"></button>
                 <button type="button" @click="color = '#0f172a'" :class="color === '#0f172a' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-slate-900 border border-slate-800 cursor-pointer transition-transform"></button>
             </div>
@@ -289,22 +305,22 @@
         </div>
 
         <div class="bg-slate-900 border-t border-slate-800 px-4 h-20 shrink-0 flex items-center justify-center gap-1.5 sm:gap-3 overflow-x-auto">
-            <button type="button" @click="tool = 'pen'" :class="tool === 'pen' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
+            <button type="button" @click="tool = 'pen'" :class="tool === 'pen' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0">
                 <span>✏️</span> Pen
             </button>
-            <button type="button" @click="tool = 'line'" :class="tool === 'line' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
+            <button type="button" @click="tool = 'line'" :class="tool === 'line' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0">
                 <span>📏</span> Line
             </button>
-            <button type="button" @click="tool = 'arrow'" :class="tool === 'arrow' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
+            <button type="button" @click="tool = 'arrow'" :class="tool === 'arrow' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0">
                 <span>↗️</span> Arrow
             </button>
-            <button type="button" @click="tool = 'box'" :class="tool === 'box' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
+            <button type="button" @click="tool = 'box'" :class="tool === 'box' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0">
                 <span>⬜</span> Box
             </button>
-            <button type="button" @click="tool = 'circle'" :class="tool === 'circle' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
+            <button type="button" @click="tool = 'circle'" :class="tool === 'circle' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0">
                 <span>⚪</span> Circle
             </button>
-            <button type="button" @click="tool = 'text'" :class="tool === 'text' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
+            <button type="button" @click="tool = 'text'" :class="tool === 'text' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0">
                 <span>🔤</span> Text
             </button>
         </div>
@@ -319,7 +335,6 @@
                 thickness: 6,
                 textSize: 22,
 
-                // Active drawing telemetry context parameters
                 canvas: null,
                 ctx: null,
                 bgImage: null,
@@ -327,7 +342,6 @@
                 startX: 0,
                 startY: 0,
 
-                // Object array action framework tracking records (allows pristine rendering & 1-step undo)
                 history: [],
                 currentPoints: [],
 
@@ -340,7 +354,7 @@
                         this.bgImage = new Image();
                         this.bgImage.onload = () => {
                             this.showStudio = true;
-                            this.history = []; // Reset workspace matrix parameters
+                            this.history = [];
                             this.$nextTick(() => {
                                 this.initCanvasElements();
                             });
@@ -359,7 +373,6 @@
                 resizeCanvas() {
                     if (!this.canvas || !this.bgImage) return;
 
-                    // Match drawing display space to native layout dimensions
                     const maxWidth = window.innerWidth * 0.90;
                     const maxHeight = window.innerHeight * 0.70;
 
@@ -376,11 +389,7 @@
 
                 redrawCanvasWorkspace() {
                     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-                    // Render image base back as base foundation layer
                     this.ctx.drawImage(this.bgImage, 0, 0, this.canvas.width, this.canvas.height);
-
-                    // Re-render sequential vector structures from object storage history stack
                     this.history.forEach(shape => {
                         this.drawShapePrimitive(shape);
                     });
@@ -437,7 +446,6 @@
 
                     this.redrawCanvasWorkspace();
 
-                    // Render interactive preview traces to assist job site accuracy
                     const tempShape = {
                         type: this.tool,
                         startX: this.startX,
@@ -520,7 +528,6 @@
                         this.ctx.fillText(shape.text, shape.x, shape.y);
                     }
                     else if (shape.type === 'arrow') {
-                        // Core structural math translations to construct clean vector arrow terminal blocks dynamically
                         const angle = Math.atan2(shape.endY - shape.startY, shape.endX - shape.startX);
                         const headLength = Math.max(shape.thickness * 3, 15);
 
@@ -551,25 +558,20 @@
 
                 closeStudio() {
                     this.showStudio = false;
-                    document.getElementById('studioFileInput').value = ''; // Reset structural parameters
+                    document.getElementById('studioFileInput').value = '';
                 },
 
                 commitStudioMarkup() {
-                    // Convert drawn canvas asset directly into high density compressed JPEG blob data streams
                     this.canvas.toBlob((blob) => {
                         if (!blob) return;
 
-                        // Recast base container layer back into browser state tracking engine
                         const editedFile = new File([blob], "field_markup_capture.jpg", { type: "image/jpeg" });
                         const containerExchange = new DataTransfer();
                         containerExchange.items.add(editedFile);
 
-                        // Force update target input element variables programmatically without triggering manual selection loops
                         document.getElementById('studioFileInput').files = containerExchange.files;
-
                         this.showStudio = false;
 
-                        // Flash message update indicating modification state parameters saved cleanly
                         alert("⚡ Photo marked up successfully! Click 'Commit Progress Asset' to save to your project file loop.");
                     }, 'image/jpeg', 0.90);
                 }
