@@ -37,24 +37,25 @@
             </div>
         @endif
 
-        <div x-data="{ currentTab: 'legitimacy' }" class="grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
+        <!-- Root Workspace Component Wire Frame -->
+        <div x-data="{ currentTab: 'legitimacy', dynamicPreviews: [] }" class="grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
 
             <nav class="space-y-1.5">
-                <button @click="currentTab = 'legitimacy'" :class="currentTab === 'legitimacy' ? 'bg-[#f58613] text-white shadow' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/60'" class="w-full text-left font-black text-xs uppercase tracking-wider py-4 px-4 rounded-xl transition-all flex items-center justify-between cursor-pointer outline-none">
+                <button @click="currentTab = 'legitimacy'" :class="currentTab === 'legitimacy' ? 'bg-[#f58613] text-white shadow' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/60'" class="w-full text-left font-black text-xs uppercase tracking-wider py-4 px-4 rounded-xl transition-all flex items-center justify-between cursor-pointer outline-none border-0">
                     <span>🛡️ Identity & Legitimacy</span>
                     <span class="text-xs opacity-60">&rarr;</span>
                 </button>
-                <button @click="currentTab = 'reliability'" :class="currentTab === 'reliability' ? 'bg-[#f58613] text-white shadow' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/60'" class="w-full text-left font-black text-xs uppercase tracking-wider py-4 px-4 rounded-xl transition-all flex items-center justify-between cursor-pointer outline-none">
+                <button @click="currentTab = 'reliability'" :class="currentTab === 'reliability' ? 'bg-[#f58613] text-white shadow' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/60'" class="w-full text-left font-black text-xs uppercase tracking-wider py-4 px-4 rounded-xl transition-all flex items-center justify-between cursor-pointer outline-none border-0">
                     <span>👤 Reliability & Philosophy</span>
                     <span class="text-xs opacity-60">&rarr;</span>
                 </button>
-                <button @click="currentTab = 'gallery'" :class="currentTab === 'gallery' ? 'bg-[#f58613] text-white shadow' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/60'" class="w-full text-left font-black text-xs uppercase tracking-wider py-4 px-4 rounded-xl transition-all flex items-center justify-between cursor-pointer outline-none">
+                <button @click="currentTab = 'gallery'" :class="currentTab === 'gallery' ? 'bg-[#f58613] text-white shadow' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/60'" class="w-full text-left font-black text-xs uppercase tracking-wider py-4 px-4 rounded-xl transition-all flex items-center justify-between cursor-pointer outline-none border-0">
                     <span>📸 Showcase Photo Reel</span>
                     <span class="text-xs opacity-60">&rarr;</span>
                 </button>
 
                 <div class="pt-4 border-t border-slate-200/80 mt-4">
-                    <a href="{{ route('brand.show', ['slug' => !empty($company->slug) ? $company->slug : 'staged-profile']) }}" target="_blank" class="w-full block text-center bg-slate-950 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest py-3.5 px-4 rounded-xl shadow cursor-pointer">
+                    <a href="{{ route('brand.show', ['slug' => !empty($company->slug) ? $company->slug : 'staged-profile']) }}" target="_blank" class="w-full block text-center bg-slate-950 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest py-3.5 px-4 rounded-xl shadow cursor-pointer transition-colors">
                         🌐 Preview Live Trust Page
                     </a>
                 </div>
@@ -64,6 +65,7 @@
                 <form action="{{ route('workspace.profile.update') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                     @csrf
 
+                    <!-- TAB 1: IDENTITY CORE DETAILS -->
                     <div x-show="currentTab === 'legitimacy'" class="space-y-6">
                         <div>
                             <h3 class="text-base font-black text-slate-950 uppercase tracking-tight border-b border-slate-100 pb-2">Business Identity Pillars</h3>
@@ -95,6 +97,7 @@
                         </div>
                     </div>
 
+                    <!-- TAB 2: BRAND BIO AND VALUE COPY -->
                     <div x-show="currentTab === 'reliability'" class="space-y-6" x-cloak>
                         <div>
                             <h3 class="text-base font-black text-slate-950 uppercase tracking-tight border-b border-slate-100 pb-2">Human Element Configuration</h3>
@@ -123,48 +126,85 @@
                         </div>
                     </div>
 
+                    <!-- TAB 3: VISUAL GALLERY ARCHIVE & INLINE THUMBNAILS PREVIEW -->
                     <div x-show="currentTab === 'gallery'" class="space-y-6" x-cloak>
                         <div>
                             <h3 class="text-base font-black text-slate-950 uppercase tracking-tight border-b border-slate-100 pb-2">Visual Production Gallery</h3>
-                            <p class="text-xs text-slate-400 font-medium mt-1">Upload high-resolution images showing proof of recent job site work (Max 6 photos).</p>
+                            <p class="text-xs text-slate-400 font-medium mt-1">Upload high-resolution images showing proof of recent job site work (Max 6 photos total).</p>
                         </div>
 
-                        @if(!empty($galleryImages) && count($galleryImages) > 0)
+                        <!-- SUB-CLUSTER A: LIVE DATABASE PRODUCTION ARTIFACTS ON FILE -->
+                        <div class="space-y-2">
+                            <span class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Currently Active Portfolio Assets</span>
+                            @if(!empty($galleryImages) && count($galleryImages) > 0)
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                    @foreach($galleryImages as $image)
+                                        <div class="relative rounded-xl border border-slate-200 overflow-hidden aspect-video group bg-slate-100 shadow-sm">
+                                            <img src="/{{ $image }}" class="w-full h-full object-cover" alt="Portfolio Image">
+
+                                            <!-- Modern Unlink Overlay Interceptor -->
+                                            <div class="absolute inset-0 bg-slate-950/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-center items-center p-3 text-center">
+                                                <label class="bg-red-600 hover:bg-red-700 text-white font-black text-[9px] uppercase tracking-widest py-2 px-3 rounded-xl cursor-pointer flex items-center gap-1.5 shadow active:scale-[0.98] transition-all">
+                                                    <input type="checkbox" name="remove_images[]" value="{{ $image }}" class="rounded accent-red-900 w-3.5 h-3.5">
+                                                    <span>Flag For Purge</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <div class="text-center py-6 text-xs text-slate-400 font-bold italic border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                                    No active assets cataloged inside this cloud pool registry yet.
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- SUB-CLUSTER B: HIGH-UTILITY LOCAL FILE REVIEW THUMBNAIL DECK -->
+                        <div x-show="dynamicPreviews.length > 0" class="space-y-2 pt-2 border-t border-slate-100" x-transition>
+                            <div class="flex items-center gap-2">
+                                <span class="block text-[10px] font-black uppercase tracking-wider text-amber-500">Selected for Upload (Review Deck)</span>
+                                <span class="text-[9px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-mono font-black" x-text="dynamicPreviews.length + ' Photo(s)'"></span>
+                            </div>
+
                             <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                @foreach($galleryImages as $image)
-                                    <div class="relative rounded-xl border border-slate-200 overflow-hidden aspect-video group bg-slate-100">
-                                        <img src="/{{ $image }}" class="w-full h-full object-cover">
-                                        <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2">
-                                            <label class="bg-red-600 text-white font-black text-[9px] uppercase tracking-wider py-1.5 px-2.5 rounded-lg cursor-pointer flex items-center gap-1 shadow">
-                                                <input type="checkbox" name="remove_images[]" value="{{ $image }}" class="rounded accent-red-700">
-                                                <span>Delete Photo</span>
-                                            </label>
+                                <template x-for="(blobUrl, index) in dynamicPreviews" :key="index">
+                                    <div class="relative rounded-xl border border-amber-200 overflow-hidden aspect-video bg-slate-100 shadow-inner group">
+                                        <img :src="blobUrl" class="w-full h-full object-cover" alt="Local File Thumbnail Preview">
+                                        <div class="absolute top-1.5 right-1.5 bg-amber-500 text-white font-mono font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center shadow">
+                                            <span x-text="index + 1"></span>
                                         </div>
                                     </div>
-                                @endforeach
+                                </template>
                             </div>
-                        @else
-                            <div class="text-center py-6 text-xs text-slate-400 font-bold italic border-2 border-dashed border-slate-200 rounded-xl">
-                                No active portfolio assets cataloged inside this media pool yet.
-                            </div>
-                        @endif
+                        </div>
 
+                        <!-- SUB-CLUSTER C: MULTI-FILE FILEPICKER INTERCEPTOR NODE -->
                         @if(empty($galleryImages) || count($galleryImages) < 6)
-                            <div>
-                                <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5">Add Field Images</label>
+                            <div class="space-y-2">
+                                <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Select Fresh Media Assets</label>
                                 <div class="border-2 border-dashed border-slate-300 hover:border-[#f58613] rounded-2xl p-6 bg-slate-50 text-center transition-colors relative">
-                                    <input type="file" name="new_gallery_images[]" multiple accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                                    <div class="text-xs font-bold text-slate-500">
-                                        📸 <span class="text-[#f58613]">Click to select showcase media assets</span> or drag files here
-                                        <p class="text-[10px] text-slate-400 font-mono mt-1">JPG, PNG, WEBP up to 4MB each</p>
+                                    <input type="file" name="new_gallery_images[]" multiple accept="image/*"
+                                           @change="
+                                               dynamicPreviews = [];
+                                               if ($event.target.files) {
+                                                   Array.from($event.target.files).forEach(file => {
+                                                       dynamicPreviews.push(URL.createObjectURL(file));
+                                                   });
+                                               }
+                                           "
+                                           class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
+                                    <div class="text-xs font-bold text-slate-500 relative z-10 pointer-events-none">
+                                        📸 <span class="text-[#f58613]">Click to queue local showcase photography</span> or drop media rows here
+                                        <p class="text-[10px] text-slate-400 font-mono mt-1">JPG, PNG, WEBP up to 4MB per slot</p>
                                     </div>
                                 </div>
                             </div>
                         @endif
                     </div>
 
+                    <!-- LOCK COMMIT FOOTER BAR -->
                     <div class="pt-6 border-t border-slate-100 flex items-center justify-end">
-                        <button type="submit" class="bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-3.5 px-8 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer">
+                        <button type="submit" class="bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-3.5 px-8 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer border-0 outline-none">
                             Lock In Trust Changes &rarr;
                         </button>
                     </div>
