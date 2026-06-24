@@ -30,10 +30,26 @@
 
     <main class="max-w-7xl w-full mx-auto px-4 py-10">
 
+        <!-- SUCCESS ALERTING CONTEXT -->
         @if(session('status'))
             <div class="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl p-4 mb-6 flex items-center gap-3 shadow-sm">
                 <span class="text-lg">⚡</span>
                 <p class="text-xs font-black uppercase tracking-tight">{{ session('status') }}</p>
+            </div>
+        @endif
+
+        <!-- 🚨 GLOBAL CRITICAL FRAMEWORK ERROR NOTIFICATION CARD -->
+        @if($errors->any())
+            <div class="bg-red-50 border border-red-200 text-red-900 rounded-2xl p-4 mb-6 flex flex-col gap-2 shadow-sm">
+                <div class="flex items-center gap-3">
+                    <span class="text-lg">⚠️</span>
+                    <p class="text-xs font-black uppercase tracking-tight text-red-950">Profile Modification Rejected</p>
+                </div>
+                <ul class="list-disc list-inside text-[11px] font-semibold text-red-800 pl-1 space-y-0.5">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
             </div>
         @endif
 
@@ -64,12 +80,14 @@
                 <form action="{{ route('workspace.profile.update') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                     @csrf
 
+                    <!-- TAB 1: IDENTITY CORE DETAILS WITH DEDICATED LOGO MATRIX -->
                     <div x-show="currentTab === 'legitimacy'" class="space-y-6">
                         <div>
                             <h3 class="text-base font-black text-slate-950 uppercase tracking-tight border-b border-slate-100 pb-2">Business Identity Pillars</h3>
                             <p class="text-xs text-slate-400 font-medium mt-1">Verify core structural variables that homeowners check first.</p>
                         </div>
 
+                        <!-- 🖼️ CORPORATE BRAND LOGO UPLOAD COMPONENT -->
                         <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-center gap-5 shadow-inner">
                             <div class="w-20 h-20 rounded-2xl bg-white border border-slate-300 shadow-sm flex items-center justify-center overflow-hidden shrink-0 relative bg-slate-50">
                                 <template x-if="logoPreview">
@@ -116,6 +134,7 @@
                         </div>
                     </div>
 
+                    <!-- TAB 2: BRAND BIO AND VALUE COPY WITH AI ASSIST NODES -->
                     <div x-show="currentTab === 'reliability'" class="space-y-6" x-cloak>
                         <div>
                             <h3 class="text-base font-black text-slate-950 uppercase tracking-tight border-b border-slate-100 pb-2">Human Element Configuration</h3>
@@ -154,6 +173,7 @@
                         </div>
                     </div>
 
+                    <!-- TAB 3: VISUAL GALLERY ARCHIVE & INLINE THUMBNAILS PREVIEW -->
                     <div x-show="currentTab === 'gallery'" class="space-y-6" x-cloak>
                         <div>
                             <h3 class="text-base font-black text-slate-950 uppercase tracking-tight border-b border-slate-100 pb-2">Visual Production Gallery</h3>
@@ -224,6 +244,7 @@
                         @endif
                     </div>
 
+                    <!-- LOCK COMMIT FOOTER BAR -->
                     <div class="pt-6 border-t border-slate-100 flex items-center justify-end">
                         <button type="submit" class="bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-3.5 px-8 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer border-0 outline-none">
                             Lock In Trust Changes &rarr;

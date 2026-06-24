@@ -107,7 +107,6 @@ class CompanyProfileController extends Controller
 
             foreach ($filePool as $file) {
                 if ($file) {
-                    // Reject loudly if PHP encountered an upload size error
                     if (!$file->isValid()) {
                         return back()->withInput()->withErrors([
                             'error' => '🛑 Server Upload Throttled: One or more selected images exceed your server\'s current PHP allocation limits. Please adjust your upload_max_filesize configuration.'
@@ -127,7 +126,7 @@ class CompanyProfileController extends Controller
 
         $sanitizedGallery = array_values(array_filter($currentGallery));
 
-        // 4. Persist flat updates to database
+        // 4. Persist flat updates to database using pristine unescaped string metrics
         DB::table($companyTable)
             ->where('id', $user->company_id)
             ->update([
@@ -207,10 +206,13 @@ class CompanyProfileController extends Controller
 
     /**
      * Runtime Plugin-Driven Database Self-Healing Structural Guard.
+     * Hardens and updates structural column limits natively.
      */
     private function ensureSchemaIsHealed(string $tableName): void
     {
         if (Schema::hasTable($tableName)) {
+
+            // Phase A: Structural Verification
             Schema::table($tableName, function (Blueprint $table) use ($tableName) {
                 if (!Schema::hasColumn($tableName, 'logo_path')) {
                     $table->string('logo_path', 255)->nullable()->after('name');
@@ -237,8 +239,15 @@ class CompanyProfileController extends Controller
                     $table->string('warranty_details', 255)->nullable();
                 }
                 if (!Schema::hasColumn($tableName, 'gallery_paths')) {
-                    $table->text('gallery_paths')->nullable();
+                    $table->longText('gallery_paths')->nullable();
                 }
+            });
+
+            // Phase B: Data Type Widening Guard (Forces existing tables out of VARCHAR(255) constraints)
+            Schema::table($tableName, function (Blueprint $table) {
+                $table->longText('gallery_paths')->nullable()->change();
+                $table->text('company_bio')->nullable()->change();
+                $table->text('work_philosophy')->nullable()->change();
             });
         }
     }
