@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Str;
 
 class CompanyProfileController extends Controller
@@ -21,8 +23,12 @@ class CompanyProfileController extends Controller
         // Resolve prefix mapping safely matching your database context
         $userTable = (new User())->getTable();
         $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+        $companyTable = $prefix . 'companies';
 
-        $company = DB::table($prefix . 'companies')->where('id', $user->company_id)->first();
+        // Run self-healing schema patcher recursively on execution loops
+        $this->ensureSchemaIsHealed($companyTable);
+
+        $company = DB::table($companyTable)->where('id', $user->company_id)->first();
 
         // Decode the gallery array defensively for front-end loops
         $galleryImages = [];
@@ -55,8 +61,12 @@ class CompanyProfileController extends Controller
 
         $userTable = (new User())->getTable();
         $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+        $companyTable = $prefix . 'companies';
 
-        $company = DB::table($prefix . 'companies')->where('id', $user->company_id)->first();
+        // Run self-healing schema patcher recursively on execution loops
+        $this->ensureSchemaIsHealed($companyTable);
+
+        $company = DB::table($companyTable)->where('id', $user->company_id)->first();
         $currentGallery = !empty($company->gallery_paths) ? json_decode($company->gallery_paths, true) : [];
 
         // 1. Process image removals if selected
@@ -91,7 +101,7 @@ class CompanyProfileController extends Controller
         }
 
         // 3. Persist flat updates to database
-        DB::table($prefix . 'companies')
+        DB::table($companyTable)
             ->where('id', $user->company_id)
             ->update([
                 'name'                  => $validated['name'],
@@ -118,8 +128,12 @@ class CompanyProfileController extends Controller
     {
         $userTable = (new User())->getTable();
         $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+        $companyTable = $prefix . 'companies';
 
-        $company = DB::table($prefix . 'companies')->where('slug', $slug)->first();
+        // Run self-healing schema patcher recursively on execution loops
+        $this->ensureSchemaIsHealed($companyTable);
+
+        $company = DB::table($companyTable)->where('slug', $slug)->first();
 
         if (!$company) {
             abort(404, 'Contractor profile workspace not found.');
@@ -128,5 +142,40 @@ class CompanyProfileController extends Controller
         $galleryImages = !empty($company->gallery_paths) ? json_decode($company->gallery_paths, true) : [];
 
         return view('brand.show', compact('company', 'galleryImages'));
+    }
+
+    /**
+     * Runtime Plugin-Driven Database Self-Healing Structural Guard.
+     */
+    private function ensureSchemaIsHealed(string $tableName): void
+    {
+        if (Schema::hasTable($tableName)) {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'company_bio')) {
+                    $table->text('company_bio')->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'work_philosophy')) {
+                    $table->text('work_philosophy')->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'years_in_business')) {
+                    $table->integer('years_in_business')->nullable()->default(0);
+                }
+                if (!Schema::hasColumn($tableName, 'license_number')) {
+                    $table->string('license_number', 100)->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'insurance_badge')) {
+                    $table->boolean('insurance_badge')->default(0);
+                }
+                if (!Schema::hasColumn($tableName, 'typical_response_time')) {
+                    $table->string('typical_response_time', 100)->default('within 24 hours');
+                }
+                if (!Schema::hasColumn($tableName, 'warranty_details')) {
+                    $table->string('warranty_details', 255)->nullable();
+                }
+                if (!Schema::hasColumn($tableName, 'gallery_paths')) {
+                    $table->text('gallery_paths')->nullable();
+                }
+            });
+        }
     }
 }
