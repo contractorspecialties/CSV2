@@ -107,7 +107,7 @@ class CompanyProfileController extends Controller
 
             foreach ($filePool as $file) {
                 if ($file) {
-                    // 🚨 REJECT LOUDLY IF PHP ENCOUNTERED AN UPLOAD SIZE ERROR
+                    // Reject loudly if PHP encountered an upload size error
                     if (!$file->isValid()) {
                         return back()->withInput()->withErrors([
                             'error' => '🛑 Server Upload Throttled: One or more selected images exceed your server\'s current PHP allocation limits. Please adjust your upload_max_filesize configuration.'
@@ -147,6 +147,30 @@ class CompanyProfileController extends Controller
         Log::info("👑 Trust Engine Profile updated dynamically for Company ID: {$user->company_id}");
 
         return redirect()->route('workspace.profile.edit')->with('status', '⚡ Brand reputation metrics and trust signals updated successfully.');
+    }
+
+    /**
+     * Display the high-conversion public homeowner profile preview page.
+     */
+    public function show($slug)
+    {
+        $userTable = (new User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+        $companyTable = $prefix . 'companies';
+
+        // Run self-healing schema patcher recursively on execution loops
+        $this->ensureSchemaIsHealed($companyTable);
+
+        $company = DB::table($companyTable)->where('slug', $slug)->first();
+
+        if (!$company) {
+            abort(404, 'Contractor profile workspace not found.');
+        }
+
+        // Unpack portfolio paths cleanly using our anti-collision decoding filter
+        $galleryImages = $this->safeJsonDecode($company->gallery_paths ?? null);
+
+        return view('brand.show', compact('company', 'galleryImages'));
     }
 
     /**
