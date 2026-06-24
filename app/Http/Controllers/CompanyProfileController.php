@@ -99,20 +99,26 @@ class CompanyProfileController extends Controller
             }
         }
 
-        // 3. Process multi-file showcase image uploads (Max 6 limit check)
-        if ($request->hasFile('new_gallery_images')) {
+        // 3. BULLETPROOF MULTI-FILE FILEPICKER ARRAY INTERCEPTOR DECK
+        $galleryUploads = $request->file('new_gallery_images');
+        if (!empty($galleryUploads)) {
+            // Force wrap into iterable matrix format if single index stream occurs
+            $filePool = is_array($galleryUploads) ? $galleryUploads : [$galleryUploads];
+
             if (!file_exists(public_path('uploads/gallery'))) {
                 mkdir(public_path('uploads/gallery'), 0755, true);
             }
 
-            foreach ($request->file('new_gallery_images') as $file) {
-                if (count($currentGallery) >= 6) {
-                    break;
-                }
+            foreach ($filePool as $file) {
+                if ($file && $file->isValid()) {
+                    if (count($currentGallery) >= 6) {
+                        break; // Hard cap boundary parameters safely
+                    }
 
-                $filename = 'work_' . $user->company_id . '_' . Str::random(8) . '_' . time() . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('uploads/gallery'), $filename);
-                $currentGallery[] = 'uploads/gallery/' . $filename;
+                    $filename = 'work_' . $user->company_id . '_' . Str::random(8) . '_' . time() . '.' . $file->getClientOriginalExtension();
+                    $file->move(public_path('uploads/gallery'), $filename);
+                    $currentGallery[] = 'uploads/gallery/' . $filename;
+                }
             }
         }
 
@@ -167,7 +173,6 @@ class CompanyProfileController extends Controller
 
     /**
      * Recursive, Multi-Pass Safe JSON Array Serialization Decoder.
-     * Continuously unrolls double/triple stringified stacking artifacts cleanly.
      */
     private function safeJsonDecode($value): array
     {
@@ -184,7 +189,6 @@ class CompanyProfileController extends Controller
             $decoded = json_decode($data, true);
 
             if (json_last_error() !== JSON_ERROR_NONE || $decoded === $data) {
-                // Final defense layer: fix backslash patterns if it looks like bad stringified JSON layout records
                 if (str_contains($data, '["') || str_contains($data, '[\"')) {
                     $data = stripslashes($data);
                     $attempt = json_decode($data, true);
