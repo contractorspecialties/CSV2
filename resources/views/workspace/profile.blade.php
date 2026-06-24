@@ -40,15 +40,15 @@
         <div x-data="{ currentTab: 'legitimacy', dynamicPreviews: [], logoPreview: '{{ !empty($company->logo_path) ? asset($company->logo_path) : '' }}' }" class="grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
 
             <nav class="space-y-1.5">
-                <button @click="currentTab = 'legitimacy'" :class="currentTab === 'legitimacy' ? 'bg-[#f58613] text-white shadow' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/60'" class="w-full text-left font-black text-xs uppercase tracking-wider py-4 px-4 rounded-xl transition-all flex items-center justify-between cursor-pointer outline-none border-0">
+                <button type="button" @click="currentTab = 'legitimacy'" :class="currentTab === 'legitimacy' ? 'bg-[#f58613] text-white shadow' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/60'" class="w-full text-left font-black text-xs uppercase tracking-wider py-4 px-4 rounded-xl transition-all flex items-center justify-between cursor-pointer outline-none border-0">
                     <span>🛡️ Identity & Legitimacy</span>
                     <span class="text-xs opacity-60">&rarr;</span>
                 </button>
-                <button @click="currentTab = 'reliability'" :class="currentTab === 'reliability' ? 'bg-[#f58613] text-white shadow' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/60'" class="w-full text-left font-black text-xs uppercase tracking-wider py-4 px-4 rounded-xl transition-all flex items-center justify-between cursor-pointer outline-none border-0">
+                <button type="button" @click="currentTab = 'reliability'" :class="currentTab === 'reliability' ? 'bg-[#f58613] text-white shadow' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/60'" class="w-full text-left font-black text-xs uppercase tracking-wider py-4 px-4 rounded-xl transition-all flex items-center justify-between cursor-pointer outline-none border-0">
                     <span>👤 Reliability & Philosophy</span>
                     <span class="text-xs opacity-60">&rarr;</span>
                 </button>
-                <button @click="currentTab = 'gallery'" :class="currentTab === 'gallery' ? 'bg-[#f58613] text-white shadow' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/60'" class="w-full text-left font-black text-xs uppercase tracking-wider py-4 px-4 rounded-xl transition-all flex items-center justify-between cursor-pointer outline-none border-0">
+                <button type="button" @click="currentTab = 'gallery'" :class="currentTab === 'gallery' ? 'bg-[#f58613] text-white shadow' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/60'" class="w-full text-left font-black text-xs uppercase tracking-wider py-4 px-4 rounded-xl transition-all flex items-center justify-between cursor-pointer outline-none border-0">
                     <span>📸 Showcase Photo Reel</span>
                     <span class="text-xs opacity-60">&rarr;</span>
                 </button>
