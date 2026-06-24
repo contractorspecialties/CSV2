@@ -20,21 +20,33 @@
         <!-- Header: Legitimacy & Identity Anchor Card -->
         <div class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
             <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
-                <!-- Brand Mark Logo container -->
-                <div class="w-24 h-24 rounded-2xl border border-slate-100 bg-slate-50 flex items-center justify-center p-2 shadow-inner shrink-0 overflow-hidden">
-                    <img src="/{{ $company->logo_path ?? 'images/placeholder-logo.webp' }}" class="w-full h-full object-contain">
+
+                <!-- Brand Mark Logo Container with Dynamic Fallback -->
+                <div class="w-24 h-24 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-center p-2 shadow-inner shrink-0 overflow-hidden">
+                    @if(!empty($company->logo_path))
+                        <img src="/{{ $company->logo_path }}" class="w-full h-full object-contain" alt="{{ $company->name }} Logo">
+                    @else
+                        <div class="text-center">
+                            <span class="text-3xl block select-none">🏢</span>
+                            <span class="text-[9px] font-mono uppercase font-black text-slate-400 tracking-tight">No Logo</span>
+                        </div>
+                    @endif
                 </div>
+
                 <div class="space-y-2">
                     <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                         <span class="bg-orange-50 text-[#f58613] text-[9px] font-black tracking-widest uppercase px-2.5 py-1 rounded-md border border-orange-100 shadow-sm">✓ Verified Contractor</span>
-                        @if($company->insurance_badge)
+                        @if(!empty($company->insurance_badge))
                             <span class="bg-emerald-50 text-emerald-700 text-[9px] font-black tracking-widest uppercase px-2.5 py-1 rounded-md border border-emerald-100 shadow-sm">🛡️ Licensed & Insured</span>
                         @endif
                     </div>
                     <h1 class="text-2xl sm:text-3xl font-black text-slate-950 uppercase tracking-tight leading-none">{{ $company->name }}</h1>
-                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                        📍 Primary Market Area: <span class="text-slate-900 font-black">{{ $company->city }}, {{ strtoupper($company->state) }}</span>
-                    </p>
+
+                    @if(!empty($company->city))
+                        <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                            📍 Primary Market Area: <span class="text-slate-900 font-black">{{ $company->city }}{{ !empty($company->state) ? ', ' . strtoupper($company->state) : '' }}</span>
+                        </p>
+                    @endif
                 </div>
             </div>
 
@@ -52,14 +64,14 @@
             <div class="md:col-span-2 space-y-6">
 
                 <!-- Personal Reliability Deck -->
-                @if($company->company_bio)
+                @if(!empty($company->company_bio))
                     <div class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-3">
                         <h3 class="text-xs font-black uppercase text-slate-400 tracking-wider">About Our Operation</h3>
                         <p class="text-sm font-medium text-slate-700 leading-relaxed">{{ $company->company_bio }}</p>
                     </div>
                 @endif
 
-                @if($company->work_philosophy)
+                @if(!empty($company->work_philosophy))
                     <div class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-3">
                         <h3 class="text-xs font-black uppercase text-slate-400 tracking-wider">Our Commitment To You</h3>
                         <p class="text-sm font-medium text-slate-700 leading-relaxed italic border-l-4 border-[#f58613] pl-4 font-serif">
@@ -69,13 +81,13 @@
                 @endif
 
                 <!-- Visual Proof Photo Grid -->
-                @if(count($galleryImages) > 0)
+                @if(!empty($galleryImages) && count($galleryImages) > 0)
                     <div class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
                         <h3 class="text-xs font-black uppercase text-slate-400 tracking-wider">Showcase Proof of Recent Work</h3>
                         <div class="grid grid-cols-2 gap-3">
                             @foreach($galleryImages as $img)
                                 <div class="rounded-2xl border border-slate-100 overflow-hidden aspect-video bg-slate-50 shadow-sm">
-                                    <img src="/{{ $img }}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
+                                    <img src="/{{ $img }}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" alt="Job site showcase photography">
                                 </div>
                             @endforeach
                         </div>
@@ -91,7 +103,7 @@
                     <h3 class="text-xs font-black uppercase text-slate-400 tracking-wider border-b border-slate-100 pb-2">Compliance & Safety</h3>
 
                     <div class="space-y-3.5 text-xs font-medium">
-                        @if($company->license_number)
+                        @if(!empty($company->license_number))
                             <div class="flex items-start gap-3">
                                 <span class="text-base">📋</span>
                                 <div>
@@ -101,7 +113,7 @@
                             </div>
                         @endif
 
-                        @if($company->years_in_business)
+                        @if(!empty($company->years_in_business))
                             <div class="flex items-start gap-3">
                                 <span class="text-base">⏱️</span>
                                 <div>
@@ -119,12 +131,12 @@
                             </div>
                         </div>
 
-                        @if($company->warranty_details)
+                        @if(!empty($company->warranty_details))
                             <div class="flex items-start gap-3 border-t border-slate-100 pt-3.5">
                                 <span class="text-base">🛡️</span>
                                 <div>
                                     <div class="font-black text-slate-950 uppercase text-[10px]">Warranty Protection Block</div>
-                                    <div class="text-[#f58613] font-black uppercase tracking-tight text-[11px] mt-0.5">{{ $company->warranty_details }}</div>
+                                    <div class="text-orange-500 font-black uppercase tracking-tight text-[11px] mt-0.5">{{ $company->warranty_details }}</div>
                                 </div>
                             </div>
                         @endif
@@ -137,7 +149,7 @@
                         <h4 class="font-black text-xs text-[#f58613] uppercase tracking-widest">Need Immediate Attention?</h4>
                         <p class="text-[11px] text-slate-400 font-medium max-w-[200px] mx-auto leading-normal">Our system pipes text messages instantly straight to the foreman on duty.</p>
                     </div>
-                    <a href="tel:{{ $company->sms_phone_number }}" class="block w-full bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-3.5 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer">
+                    <a href="tel:{{ $company->sms_phone_number ?? '' }}" class="block w-full bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-3.5 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer">
                         📞 Call Dispatch Line
                     </a>
                 </div>

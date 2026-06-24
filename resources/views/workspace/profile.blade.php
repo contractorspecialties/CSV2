@@ -37,8 +37,7 @@
             </div>
         @endif
 
-        <!-- Root Workspace Component Wire Frame -->
-        <div x-data={{ currentTab: 'legitimacy', dynamicPreviews: [] }} class="grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
+        <div x-data="{ currentTab: 'legitimacy', dynamicPreviews: [], logoPreview: '{{ !empty($company->logo_path) ? '/' . $company->logo_path : '' }}' }" class="grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
 
             <nav class="space-y-1.5">
                 <button @click="currentTab = 'legitimacy'" :class="currentTab === 'legitimacy' ? 'bg-[#f58613] text-white shadow' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/60'" class="w-full text-left font-black text-xs uppercase tracking-wider py-4 px-4 rounded-xl transition-all flex items-center justify-between cursor-pointer outline-none border-0">
@@ -65,26 +64,48 @@
                 <form action="{{ route('workspace.profile.update') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                     @csrf
 
-                    <!-- TAB 1: IDENTITY CORE DETAILS -->
+                    <!-- TAB 1: IDENTITY CORE DETAILS WITH DEDICATED LOGO MATRIX -->
                     <div x-show="currentTab === 'legitimacy'" class="space-y-6">
                         <div>
                             <h3 class="text-base font-black text-slate-950 uppercase tracking-tight border-b border-slate-100 pb-2">Business Identity Pillars</h3>
                             <p class="text-xs text-slate-400 font-medium mt-1">Verify core structural variables that homeowners check first.</p>
                         </div>
 
+                        <!-- 🖼️ DEDICATED CORPORATE BRAND LOGO UPLOAD COMPONENT -->
+                        <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-center gap-5 shadow-inner">
+                            <div class="w-20 h-20 rounded-2xl bg-white border border-slate-300 shadow-sm flex items-center justify-center overflow-hidden shrink-0 relative group">
+                                <template x-if="logoPreview">
+                                    <img :src="logoPreview" class="w-full h-full object-contain p-1">
+                                </template>
+                                <template x-if="!logoPreview">
+                                    <span class="text-2xl select-none text-slate-300">🏢</span>
+                                </template>
+                            </div>
+                            <div class="space-y-1.5 w-full">
+                                <label class="block text-[10px] font-black uppercase text-slate-500 tracking-wider">Company Brand Mark Logo</label>
+                                <div class="relative bg-white border border-slate-300 hover:border-[#f58613] rounded-xl py-2.5 px-4 text-center cursor-pointer transition-colors shadow-sm max-w-xs">
+                                    <input type="file" name="logo" accept="image/*"
+                                           @change="if($event.target.files[0]) { logoPreview = URL.createObjectURL($event.target.files[0]); }"
+                                           class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                                    <span class="text-xs font-black text-slate-700">📸 Choose Logo File</span>
+                                </div>
+                                <p class="text-[10px] text-slate-400 font-medium font-mono">Square or transparent widescreen PNG/JPG up to 2MB</p>
+                            </div>
+                        </div>
+
                         <div>
                             <label class="block text-[10px] font-black uppercase text-slate-500 tracking-wider mb-1.5">Business Name</label>
-                            <input type="text" name="name" value="{{ old('name', $company->name ?? '') }}" required class="w-full bg-slate-50 border border-slate-300 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold focus:outline-none shadow-inner">
+                            <input type="text" name="name" value="{{ old('name', $company->name ?? '') }}" required class="w-full bg-slate-50 border border-slate-300 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold focus:outline-none shadow-inner text-slate-900">
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-[10px] font-black uppercase text-slate-500 tracking-wider mb-1.5">Years Active In Field</label>
-                                <input type="number" name="years_in_business" value="{{ old('years_in_business', $company->years_in_business ?? '') }}" placeholder="e.g., 8" class="w-full bg-slate-50 border border-slate-300 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold focus:outline-none shadow-inner">
+                                <input type="number" name="years_in_business" value="{{ old('years_in_business', $company->years_in_business ?? '') }}" placeholder="e.g., 8" class="w-full bg-slate-50 border border-slate-300 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold focus:outline-none shadow-inner text-slate-900">
                             </div>
                             <div>
                                 <label class="block text-[10px] font-black uppercase text-slate-500 tracking-wider mb-1.5">State License Identification Number</label>
-                                <input type="text" name="license_number" value="{{ old('license_number', $company->license_number ?? '') }}" placeholder="e.g., ROC #382910" class="w-full bg-slate-50 border border-slate-300 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold focus:outline-none shadow-inner">
+                                <input type="text" name="license_number" value="{{ old('license_number', $company->license_number ?? '') }}" placeholder="e.g., ROC #382910" class="w-full bg-slate-50 border border-slate-300 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold focus:outline-none shadow-inner text-slate-900">
                             </div>
                         </div>
 
@@ -97,7 +118,7 @@
                         </div>
                     </div>
 
-                    <!-- TAB 2: BRAND BIO AND VALUE COPY -->
+                    <!-- TAB 2: BRAND BIO AND VALUE COPY WITH AI REMINDERS -->
                     <div x-show="currentTab === 'reliability'" class="space-y-6" x-cloak>
                         <div>
                             <h3 class="text-base font-black text-slate-950 uppercase tracking-tight border-b border-slate-100 pb-2">Human Element Configuration</h3>
@@ -107,33 +128,31 @@
                         <div>
                             <div class="flex items-center justify-between mb-1.5">
                                 <label class="block text-[10px] font-black uppercase text-slate-500 tracking-wider">Company Bio / Founder's Pitch</label>
-                                <!-- ✨ DUMMY AI ASSIST ANCHOR ONE -->
-                                <button type="button" @click="alert('🤖 AI Assist Engine: Integration pending localized contractor prompt setup matrices.')" class="bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-black text-[9px] uppercase tracking-wider py-1 px-2 rounded-lg flex items-center gap-1 cursor-pointer transition-all active:scale-95">
+                                <button type="button" @click="alert('🤖 AI Assist Engine: Integration pending localized contractor prompt setup matrices.')" class="bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-black text-[9px] uppercase tracking-wider py-1 px-2 rounded-lg flex items-center gap-1 cursor-pointer transition-all active:scale-95 border-0">
                                     ✨ AI Assist
                                 </button>
                             </div>
-                            <textarea name="company_bio" rows="4" placeholder="Describe who you are, how you serve locally, and why your specialization matters..." class="w-full bg-slate-50 border border-slate-300 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-medium focus:outline-none shadow-inner leading-relaxed">{{ old('company_bio', $company->company_bio ?? '') }}</textarea>
+                            <textarea name="company_bio" rows="4" placeholder="Describe who you are, how you serve locally, and why your specialization matters..." class="w-full bg-slate-50 border border-slate-300 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-medium focus:outline-none shadow-inner leading-relaxed text-slate-900">{{ old('company_bio', $company->company_bio ?? '') }}</textarea>
                         </div>
 
                         <div>
                             <div class="flex items-center justify-between mb-1.5">
                                 <label class="block text-[10px] font-black uppercase text-slate-500 tracking-wider">Work Philosophy / Customer Promise</label>
-                                <!-- ✨ DUMMY AI ASSIST ANCHOR TWO -->
-                                <button type="button" @click="alert('🤖 AI Assist Engine: Integration pending localized contractor prompt setup matrices.')" class="bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-black text-[9px] uppercase tracking-wider py-1 px-2 rounded-lg flex items-center gap-1 cursor-pointer transition-all active:scale-95">
+                                <button type="button" @click="alert('🤖 AI Assist Engine: Integration pending localized contractor prompt setup matrices.')" class="bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-black text-[9px] uppercase tracking-wider py-1 px-2 rounded-lg flex items-center gap-1 cursor-pointer transition-all active:scale-95 border-0">
                                     ✨ AI Assist
                                 </button>
                             </div>
-                            <textarea name="work_philosophy" rows="3" placeholder="e.g., We treat your home exactly like ours. We clean up completely and don't exit the footprint until you sign off on our craftsmanship." class="w-full bg-slate-50 border border-slate-300 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-medium focus:outline-none shadow-inner leading-relaxed">{{ old('work_philosophy', $company->work_philosophy ?? '') }}</textarea>
+                            <textarea name="work_philosophy" rows="3" placeholder="e.g., We treat your home exactly like ours. We clean up completely and don't exit the footprint until you sign off on our craftsmanship." class="w-full bg-slate-50 border border-slate-300 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-medium focus:outline-none shadow-inner leading-relaxed text-slate-900">{{ old('work_philosophy', $company->work_philosophy ?? '') }}</textarea>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-[10px] font-black uppercase text-slate-500 tracking-wider mb-1.5">Communication Response Metric</label>
-                                <input type="text" name="typical_response_time" value="{{ old('typical_response_time', $company->typical_response_time ?? 'within 1 hour') }}" required class="w-full bg-slate-50 border border-slate-300 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold focus:outline-none shadow-inner">
+                                <input type="text" name="typical_response_time" value="{{ old('typical_response_time', $company->typical_response_time ?? 'within 1 hour') }}" required class="w-full bg-slate-50 border border-slate-300 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold focus:outline-none shadow-inner text-slate-900">
                             </div>
                             <div>
                                 <label class="block text-[10px] font-black uppercase text-slate-500 tracking-wider mb-1.5">Workmanship Warranty Terms</label>
-                                <input type="text" name="warranty_details" value="{{ old('warranty_details', $company->warranty_details ?? '') }}" placeholder="e.g., 2-Year Workmanship Warranty" class="w-full bg-slate-50 border border-slate-300 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold focus:outline-none shadow-inner">
+                                <input type="text" name="warranty_details" value="{{ old('warranty_details', $company->warranty_details ?? '') }}" placeholder="e.g., 2-Year Workmanship Warranty" class="w-full bg-slate-50 border border-slate-300 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold focus:outline-none shadow-inner text-slate-900">
                             </div>
                         </div>
                     </div>
@@ -145,7 +164,6 @@
                             <p class="text-xs text-slate-400 font-medium mt-1">Upload high-resolution images showing proof of recent job site work (Max 6 photos total).</p>
                         </div>
 
-                        <!-- SUB-CLUSTER A: LIVE DATABASE PRODUCTION ARTIFACTS ON FILE -->
                         <div class="space-y-2">
                             <span class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Currently Active Portfolio Assets</span>
                             @if(!empty($galleryImages) && count($galleryImages) > 0)
@@ -153,8 +171,6 @@
                                     @foreach($galleryImages as $image)
                                         <div class="relative rounded-xl border border-slate-200 overflow-hidden aspect-video group bg-slate-100 shadow-sm">
                                             <img src="/{{ $image }}" class="w-full h-full object-cover" alt="Portfolio Image">
-
-                                            <!-- Modern Unlink Overlay Interceptor -->
                                             <div class="absolute inset-0 bg-slate-950/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-center items-center p-3 text-center">
                                                 <label class="bg-red-600 hover:bg-red-700 text-white font-black text-[9px] uppercase tracking-widest py-2 px-3 rounded-xl cursor-pointer flex items-center gap-1.5 shadow active:scale-[0.98] transition-all">
                                                     <input type="checkbox" name="remove_images[]" value="{{ $image }}" class="rounded accent-red-900 w-3.5 h-3.5">
@@ -171,7 +187,6 @@
                             @endif
                         </div>
 
-                        <!-- SUB-CLUSTER B: HIGH-UTILITY LOCAL FILE REVIEW THUMBNAIL DECK -->
                         <div x-show="dynamicPreviews.length > 0" class="space-y-2 pt-2 border-t border-slate-100" x-transition>
                             <div class="flex items-center gap-2">
                                 <span class="block text-[10px] font-black uppercase tracking-wider text-amber-500">Selected for Upload (Review Deck)</span>
@@ -190,7 +205,6 @@
                             </div>
                         </div>
 
-                        <!-- SUB-CLUSTER C: MULTI-FILE FILEPICKER INTERCEPTOR NODE -->
                         @if(empty($galleryImages) || count($galleryImages) < 6)
                             <div class="space-y-2">
                                 <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Select Fresh Media Assets</label>
@@ -214,7 +228,6 @@
                         @endif
                     </div>
 
-                    <!-- LOCK COMMIT FOOTER BAR -->
                     <div class="pt-6 border-t border-slate-100 flex items-center justify-end">
                         <button type="submit" class="bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-3.5 px-8 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer border-0 outline-none">
                             Lock In Trust Changes &rarr;

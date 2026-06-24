@@ -48,6 +48,7 @@ class CompanyProfileController extends Controller
 
         $validated = $request->validate([
             'name'                  => 'required|string|max:255',
+            'logo'                  => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'company_bio'           => 'nullable|string|max:1000',
             'work_philosophy'       => 'nullable|string|max:1000',
             'years_in_business'     => 'nullable|integer|min:0|max:100',
@@ -68,22 +69,39 @@ class CompanyProfileController extends Controller
 
         $company = DB::table($companyTable)->where('id', $user->company_id)->first();
         $currentGallery = !empty($company->gallery_paths) ? json_decode($company->gallery_paths, true) : [];
+        $logoPath = $company->logo_path ?? null;
 
-        // 1. Process image removals if selected
+        // 1. Process Dedicated Corporate Logo Upload Stream
+        if ($request->hasFile('logo')) {
+            if (!file_exists(public_path('uploads/logos'))) {
+                mkdir(public_path('uploads/logos'), 0755, true);
+            }
+
+            // Purge old logo file physically if a current one exists
+            if (!empty($logoPath) && file_exists(public_path($logoPath))) {
+                @unlink(public_path($logoPath));
+            }
+
+            $logoFile = $request->file('logo');
+            $logoName = 'logo_' . $user->company_id . '_' . time() . '.' . $logoFile->getClientOriginalExtension();
+            $logoFile->move(public_path('uploads/logos'), $logoName);
+            $logoPath = 'uploads/logos/' . $logoName;
+        }
+
+        // 2. Process image removals if selected
         if (!empty($validated['remove_images'])) {
             foreach ($validated['remove_images'] as $imageToRemove) {
                 if (($key = array_search($imageToRemove, $currentGallery)) !== false) {
                     unset($currentGallery[$key]);
-                    // Delete file physically if it exists
                     if (file_exists(public_path($imageToRemove))) {
                         @unlink(public_path($imageToRemove));
                     }
                 }
             }
-            $currentGallery = array_values($currentGallery); // Re-index arrays
+            $currentGallery = array_values($currentGallery);
         }
 
-        // 2. Process multi-file showcase image uploads (Max 6 limit check)
+        // 3. Process multi-file showcase image uploads (Max 6 limit check)
         if ($request->hasFile('new_gallery_images')) {
             if (!file_exists(public_path('uploads/gallery'))) {
                 mkdir(public_path('uploads/gallery'), 0755, true);
@@ -91,7 +109,7 @@ class CompanyProfileController extends Controller
 
             foreach ($request->file('new_gallery_images') as $file) {
                 if (count($currentGallery) >= 6) {
-                    break; // Cap photo reel size natively
+                    break;
                 }
 
                 $filename = 'work_' . $user->company_id . '_' . Str::random(8) . '_' . time() . '.' . $file->getClientOriginalExtension();
@@ -100,11 +118,12 @@ class CompanyProfileController extends Controller
             }
         }
 
-        // 3. Persist flat updates to database
+        // 4. Persist flat updates to database
         DB::table($companyTable)
             ->where('id', $user->company_id)
             ->update([
                 'name'                  => $validated['name'],
+                'logo_path'             => $logoPath,
                 'company_bio'           => $validated['company_bio'],
                 'work_philosophy'       => $validated['work_philosophy'],
                 'years_in_business'     => $validated['years_in_business'],
@@ -151,6 +170,9 @@ class CompanyProfileController extends Controller
     {
         if (Schema::hasTable($tableName)) {
             Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'logo_path')) {
+                    $table->string('logo_path', 255)->nullable()->after('name');
+                }
                 if (!Schema::hasColumn($tableName, 'company_bio')) {
                     $table->text('company_bio')->nullable();
                 }
