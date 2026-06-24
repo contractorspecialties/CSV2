@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class AdminDashboardController extends Controller
 {
@@ -13,29 +14,78 @@ class AdminDashboardController extends Controller
      */
     public function index()
     {
-        // Pull all users from the active configuration table
-        $users = User::latest()->get();
-
-        // Dynamically detect any customized database prefix rules (like 'sc_') from the active User model table name
+        // 1. Sniff table structures and customized database prefix layouts cleanly
         $userTable = (new User())->getTable();
         $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
         $companyTable = $prefix . 'companies';
+        $estimatesTable = $prefix . 'estimates';
 
-        // Extract all valid company ID anchors to execute a single-pass hydration map
+        // 2. Compute Global Platform Telemetry Cross-Tenant Arrays
+        $totalWorkspaces = Schema::hasTable($companyTable) ? DB::table($companyTable)->count() : 0;
+        $totalEstimates = Schema::hasTable($estimatesTable) ? DB::table($estimatesTable)->count() : 0;
+        $globalBookedRevenue = Schema::hasTable($estimatesTable) ? DB::table($estimatesTable)->where('status', 'approved')->sum('grand_total') : 0.00;
+        $globalSentBids = Schema::hasTable($estimatesTable) ? DB::table($estimatesTable)->where('status', 'sent')->count() : 0;
+
+        $globalTelemetry = [
+            'total_workspaces' => $totalWorkspaces,
+            'total_estimates'  => $totalEstimates,
+            'booked_revenue'   => $globalBookedRevenue,
+            'sent_bids'        => $globalSentBids,
+        ];
+
+        // 3. Gather Contractor Workspace Rows
+        $users = User::latest()->get();
         $companyIds = $users->pluck('company_id')->filter()->unique();
 
-        // Fetch company data directly from the table to sidestep missing Eloquent relationships entirely
-        $companies = DB::table($companyTable)
-            ->whereIn('id', $companyIds)
-            ->get()
-            ->keyBy('id');
+        $companies = Schema::hasTable($companyTable)
+            ? DB::table($companyTable)->whereIn('id', $companyIds)->get()->keyBy('id')
+            : collect();
 
-        // Map the company database row assets back to the user instances in memory for view structure compatibility
-        foreach ($users as $user) {
-            $user->company = $companies->get($user->company_id);
+        // 4. Gather Financial Pipeline Totals Breakdown Per Tenant Node
+        $pipelineMetrics = collect();
+        if (Schema::hasTable($estimatesTable)) {
+            $pipelineMetrics = DB::table($estimatesTable)
+                ->select('company_id',
+                    DB::raw('count(*) as estimates_count'),
+                    DB::raw('sum(case when status = "approved" then grand_total else 0 end) as booked_revenue')
+                )
+                ->whereIn('company_id', $companyIds)
+                ->groupBy('company_id')
+                ->get()
+                ->keyBy('company_id');
         }
 
-        return view('admin.index', compact('users'));
+        // 5. Hydrate Memory Matrix and Calculate Trust Profile Progress Scores
+        foreach ($users as $user) {
+            $company = $companies->get($user->company_id);
+            $user->company = $company;
+
+            // Initialize default baseline tracking metrics
+            $user->estimates_count = 0;
+            $user->booked_revenue = 0.00;
+            $user->profile_completion = 0;
+
+            if ($company) {
+                // Attach individual tenant financial logs
+                $metrics = $pipelineMetrics->get($company->id);
+                $user->estimates_count = $metrics->estimates_count ?? 0;
+                $user->booked_revenue = $metrics->booked_revenue ?? 0.00;
+
+                // Programmatically parse our 8 Trust Signal fields to measure registration quality
+                $points = 0;
+                if (!empty($company->name)) $points += 20;
+                if (!empty($company->logo_path)) $points += 15;
+                if (!empty($company->company_bio)) $points += 15;
+                if (!empty($company->work_philosophy)) $points += 15;
+                if (!empty($company->license_number)) $points += 15;
+                if (!empty($company->insurance_badge) && $company->insurance_badge == 1) $points += 10;
+                if (!empty($company->gallery_paths) && count(json_decode($company->gallery_paths, true) ?? []) > 0) $points += 10;
+
+                $user->profile_completion = $points;
+            }
+        }
+
+        return view('admin.index', compact('users', 'globalTelemetry'));
     }
 
     /**
