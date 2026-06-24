@@ -61,12 +61,10 @@ class CompanyProfileController extends Controller
         $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
         $companyTable = $prefix . 'companies';
 
-        // Run self-healing schema patcher recursively on execution loops
         $this->ensureSchemaIsHealed($companyTable);
 
         $company = DB::table($companyTable)->where('id', $user->company_id)->first();
 
-        // Defensive load of existing array items via our unrolling engine
         $currentGallery = $this->safeJsonDecode($company->gallery_paths ?? null);
         $logoPath = $company->logo_path ?? null;
 
@@ -76,7 +74,6 @@ class CompanyProfileController extends Controller
                 mkdir(public_path('uploads/logos'), 0755, true);
             }
 
-            // Purge old logo file physically if a current one exists
             if (!empty($logoPath) && file_exists(public_path($logoPath))) {
                 @unlink(public_path($logoPath));
             }
@@ -99,10 +96,9 @@ class CompanyProfileController extends Controller
             }
         }
 
-        // 3. BULLETPROOF MULTI-FILE FILEPICKER ARRAY INTERCEPTOR DECK
+        // 3. EXPLOSIVE MULTI-FILE ARRAY INTERCEPTOR DECK
         $galleryUploads = $request->file('new_gallery_images');
         if (!empty($galleryUploads)) {
-            // Force wrap into iterable matrix format if single index stream occurs
             $filePool = is_array($galleryUploads) ? $galleryUploads : [$galleryUploads];
 
             if (!file_exists(public_path('uploads/gallery'))) {
@@ -110,9 +106,16 @@ class CompanyProfileController extends Controller
             }
 
             foreach ($filePool as $file) {
-                if ($file && $file->isValid()) {
+                if ($file) {
+                    // 🚨 REJECT LOUDLY IF PHP ENCOUNTERED AN UPLOAD SIZE ERROR
+                    if (!$file->isValid()) {
+                        return back()->withInput()->withErrors([
+                            'error' => '🛑 Server Upload Throttled: One or more selected images exceed your server\'s current PHP allocation limits. Please adjust your upload_max_filesize configuration.'
+                        ]);
+                    }
+
                     if (count($currentGallery) >= 6) {
-                        break; // Hard cap boundary parameters safely
+                        break;
                     }
 
                     $filename = 'work_' . $user->company_id . '_' . Str::random(8) . '_' . time() . '.' . $file->getClientOriginalExtension();
@@ -122,10 +125,9 @@ class CompanyProfileController extends Controller
             }
         }
 
-        // Re-index target array parameters clean to avoid associative index injection errors
         $sanitizedGallery = array_values(array_filter($currentGallery));
 
-        // 4. Persist flat updates to database using pristine unescaped string metrics
+        // 4. Persist flat updates to database
         DB::table($companyTable)
             ->where('id', $user->company_id)
             ->update([
@@ -148,30 +150,6 @@ class CompanyProfileController extends Controller
     }
 
     /**
-     * Display the high-conversion public homeowner profile preview page.
-     */
-    public function show($slug)
-    {
-        $userTable = (new User())->getTable();
-        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
-        $companyTable = $prefix . 'companies';
-
-        // Run self-healing schema patcher recursively on execution loops
-        $this->ensureSchemaIsHealed($companyTable);
-
-        $company = DB::table($companyTable)->where('slug', $slug)->first();
-
-        if (!$company) {
-            abort(404, 'Contractor profile workspace not found.');
-        }
-
-        // Unpack portfolio paths cleanly using our anti-collision decoding filter
-        $galleryImages = $this->safeJsonDecode($company->gallery_paths ?? null);
-
-        return view('brand.show', compact('company', 'galleryImages'));
-    }
-
-    /**
      * Recursive, Multi-Pass Safe JSON Array Serialization Decoder.
      */
     private function safeJsonDecode($value): array
@@ -187,7 +165,6 @@ class CompanyProfileController extends Controller
         $data = $value;
         while (is_string($data)) {
             $decoded = json_decode($data, true);
-
             if (json_last_error() !== JSON_ERROR_NONE || $decoded === $data) {
                 if (str_contains($data, '["') || str_contains($data, '[\"')) {
                     $data = stripslashes($data);
@@ -198,7 +175,6 @@ class CompanyProfileController extends Controller
                 }
                 break;
             }
-
             $data = $decoded;
         }
 
