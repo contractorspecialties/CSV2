@@ -289,7 +289,7 @@ class EstimateController extends Controller
     }
 
     /**
-     * Intercept and handle progress attachment photo uploads from the field.
+     * Intercept and process unauthenticated inbound messaging webhooks from Telnyx.
      */
     public function uploadAttachment(Request $request, $id)
     {
@@ -322,7 +322,7 @@ class EstimateController extends Controller
      */
     public function checkout($token)
     {
-        $estimate = Estimate::with(['customer', 'items'])
+        $estimate = Estimate::with(['customer', 'items', 'company'])
             ->where('id', $token)
             ->orWhere('estimate_number', $token)
             ->firstOrFail();
@@ -340,25 +340,55 @@ class EstimateController extends Controller
         $estimate = Estimate::findOrFail($id);
         $action = $request->input('action');
 
-        // Homeowner clicks "Approve & Schedule"
+        // Plugin-Driven Database Update (Safely initializes columns natively without breaking custom prefixes)
+        $estimateTable = $estimate->getTable();
+        if (!Schema::hasColumn($estimateTable, 'signature_name')) {
+            Schema::table($estimateTable, function (Blueprint $table) {
+                $table->string('signature_name')->nullable()->after('status');
+            });
+        }
+        if (!Schema::hasColumn($estimateTable, 'signed_at')) {
+            Schema::table($estimateTable, function (Blueprint $table) {
+                $table->timestamp('signed_at')->nullable()->after('signature_name');
+            });
+        }
+
+        // Homeowner clicks "Approve & Authorize" signature validation path
         if ($action === 'schedule') {
+            $request->validate([
+                'signature_name' => 'required|string|min:3|max:255',
+            ]);
+
+            $signature = strtoupper(trim($request->input('signature_name')));
+
+            // Persist signature identity data layers immediately
+            $estimate->signature_name = $signature;
+            $estimate->signed_at = now();
+
+            // Evaluate if mobilization pricing limits require upfront escrow routing
             if ($estimate->deposit_amount > 0 && $estimate->status !== 'approved') {
-                $estimate->update(['status' => 'pending_deposit']);
+                $estimate->status = 'pending_deposit';
+                $estimate->save();
+
+                Log::info("✍️ Contract signed for {$estimate->estimate_number} by {$signature}. Routing to pending deposit gateway lane.");
                 return back()->with('status', '✍️ Project terms signed! To finalize mobilization scheduling, please hit the secure deposit button below.');
             }
 
-            $estimate->update(['status' => 'approved']);
+            $estimate->status = 'approved';
+            $estimate->save();
 
+            // Provision live production slot on the master crew scheduling board
             \App\Models\Appointment::create([
                 'company_id'   => $estimate->company_id,
                 'customer_id'  => $estimate->customer_id,
                 'estimate_id'  => $estimate->id,
                 'title'        => "Production: " . $estimate->estimate_number,
-                'scheduled_at' => now()->addDays(2),
+                'scheduled_at' => now()->addDays(2), // Allocate standard 48hr turnaround window
                 'status'       => 'scheduled',
-                'notes'        => 'Client portal scheduled auto-activation confirmation.'
+                'notes'        => "Authorized via client terminal. Signed by: {$signature}"
             ]);
 
+            Log::info("🚀 Contract complete for {$estimate->estimate_number}. Signed by: {$signature}. Field mobilization slot scheduled.");
             return back()->with('status', '✍️ Project approved! Your job site mobilization window has been added straight to our master production dispatch board.');
         }
 
