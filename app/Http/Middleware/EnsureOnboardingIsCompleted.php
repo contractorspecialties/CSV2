@@ -10,9 +10,17 @@ class EnsureOnboardingIsCompleted
 {
     /**
      * Confirm profile configuration details are populated before exposing core modules.
+     * Incorporates a global master key circuit breaker for platform administration layers.
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // 👑 ADMINISTRATIVE MASTER KEY CIRCUIT BREAKER
+        // If the authenticated profile holds global system authority rights,
+        // waive all operational tenant constraints and advance the pipeline seamlessly.
+        if (auth()->check() && auth()->user()->is_admin) {
+            return $next($request);
+        }
+
         $user = auth()->user();
 
         // If the authenticated contractor has not finished their profile configuration steps
