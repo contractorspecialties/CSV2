@@ -38,7 +38,7 @@
         @endif
 
         <!-- Root Workspace Component Wire Frame -->
-        <div x-data="{ currentTab: 'legitimacy', dynamicPreviews: [] }" class="grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
+        <div x-data={{ currentTab: 'legitimacy', dynamicPreviews: [] }} class="grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
 
             <nav class="space-y-1.5">
                 <button @click="currentTab = 'legitimacy'" :class="currentTab === 'legitimacy' ? 'bg-[#f58613] text-white shadow' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/60'" class="w-full text-left font-black text-xs uppercase tracking-wider py-4 px-4 rounded-xl transition-all flex items-center justify-between cursor-pointer outline-none border-0">
@@ -105,12 +105,24 @@
                         </div>
 
                         <div>
-                            <label class="block text-[10px] font-black uppercase text-slate-500 tracking-wider mb-1.5">Company Bio / Founder's Pitch</label>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="block text-[10px] font-black uppercase text-slate-500 tracking-wider">Company Bio / Founder's Pitch</label>
+                                <!-- ✨ DUMMY AI ASSIST ANCHOR ONE -->
+                                <button type="button" @click="alert('🤖 AI Assist Engine: Integration pending localized contractor prompt setup matrices.')" class="bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-black text-[9px] uppercase tracking-wider py-1 px-2 rounded-lg flex items-center gap-1 cursor-pointer transition-all active:scale-95">
+                                    ✨ AI Assist
+                                </button>
+                            </div>
                             <textarea name="company_bio" rows="4" placeholder="Describe who you are, how you serve locally, and why your specialization matters..." class="w-full bg-slate-50 border border-slate-300 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-medium focus:outline-none shadow-inner leading-relaxed">{{ old('company_bio', $company->company_bio ?? '') }}</textarea>
                         </div>
 
                         <div>
-                            <label class="block text-[10px] font-black uppercase text-slate-500 tracking-wider mb-1.5">Work Philosophy / Customer Promise</label>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="block text-[10px] font-black uppercase text-slate-500 tracking-wider">Work Philosophy / Customer Promise</label>
+                                <!-- ✨ DUMMY AI ASSIST ANCHOR TWO -->
+                                <button type="button" @click="alert('🤖 AI Assist Engine: Integration pending localized contractor prompt setup matrices.')" class="bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-black text-[9px] uppercase tracking-wider py-1 px-2 rounded-lg flex items-center gap-1 cursor-pointer transition-all active:scale-95">
+                                    ✨ AI Assist
+                                </button>
+                            </div>
                             <textarea name="work_philosophy" rows="3" placeholder="e.g., We treat your home exactly like ours. We clean up completely and don't exit the footprint until you sign off on our craftsmanship." class="w-full bg-slate-50 border border-slate-300 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-medium focus:outline-none shadow-inner leading-relaxed">{{ old('work_philosophy', $company->work_philosophy ?? '') }}</textarea>
                         </div>
 
