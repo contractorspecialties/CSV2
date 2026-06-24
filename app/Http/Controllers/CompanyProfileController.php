@@ -66,7 +66,7 @@ class CompanyProfileController extends Controller
 
         $company = DB::table($companyTable)->where('id', $user->company_id)->first();
 
-        // Defensive load of existing array items
+        // Defensive load of existing array items via our unrolling engine
         $currentGallery = $this->safeJsonDecode($company->gallery_paths ?? null);
         $logoPath = $company->logo_path ?? null;
 
@@ -167,6 +167,7 @@ class CompanyProfileController extends Controller
 
     /**
      * Recursive, Multi-Pass Safe JSON Array Serialization Decoder.
+     * Continuously unrolls double/triple stringified stacking artifacts cleanly.
      */
     private function safeJsonDecode($value): array
     {
@@ -175,19 +176,29 @@ class CompanyProfileController extends Controller
         }
 
         if (is_array($value)) {
-            return $value;
+            return array_values(array_filter($value));
         }
 
-        // Attempt standardized direct decode
-        $decoded = json_decode($value, true);
+        $data = $value;
+        while (is_string($data)) {
+            $decoded = json_decode($data, true);
 
-        // If it returns as a text string or hits string character formatting locks, unwind it recursively
-        if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
-            $cleaned = stripslashes(trim($value, '"'));
-            $decoded = json_decode($cleaned, true);
+            if (json_last_error() !== JSON_ERROR_NONE || $decoded === $data) {
+                // Final defense layer: fix backslash patterns if it looks like bad stringified JSON layout records
+                if (str_contains($data, '["') || str_contains($data, '[\"')) {
+                    $data = stripslashes($data);
+                    $attempt = json_decode($data, true);
+                    if (is_array($attempt)) {
+                        return array_values(array_filter($attempt));
+                    }
+                }
+                break;
+            }
+
+            $data = $decoded;
         }
 
-        return is_array($decoded) ? array_values(array_filter($decoded)) : [];
+        return is_array($data) ? array_values(array_filter($data)) : [];
     }
 
     /**
