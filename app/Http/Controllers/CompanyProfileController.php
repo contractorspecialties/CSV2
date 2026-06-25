@@ -158,7 +158,7 @@ class CompanyProfileController extends Controller
     }
 
     /**
-     * 🧠 SECURE ENDPOINT: Few-Shot Production GA Tier Gemini Assist Engine Handshaker
+     * 🧠 SECURE ENDPOINT: High-Volume Volume-Triggered Gemini Assist Handshaker
      */
     public function generateAiAssist(Request $request)
     {
@@ -172,8 +172,6 @@ class CompanyProfileController extends Controller
             'name'                  => 'required|string|max:255',
             'years_in_business'     => 'nullable|string|max:10',
             'license_number'        => 'nullable|string|max:100',
-
-            // Wizard data validation checkpoints
             'signature_specialty'   => 'nullable|string|max:255',
             'target_service_cities' => 'nullable|string|max:255',
             'competitive_advantage' => 'nullable|string|max:100',
@@ -182,13 +180,13 @@ class CompanyProfileController extends Controller
 
         $name = $validated['name'];
         $years = !empty($validated['years_in_business']) ? $validated['years_in_business'] . ' years' : 'multiple years';
-        $license = !empty($validated['license_number']) ? 'holding active credential number ' . $validated['license_number'] : 'fully legal and credentialed';
+        $license = !empty($validated['license_number']) ? 'license identifier ' . $validated['license_number'] : 'fully legal, credentialed status';
 
         $specialty = !empty($validated['signature_specialty']) ? $validated['signature_specialty'] : 'premium general trade crafts';
-        $regions = !empty($validated['target_service_cities']) ? 'proudly dispatching across ' . $validated['target_service_cities'] : 'serving local properties';
+        $regions = !empty($validated['target_service_cities']) ? 'dispatching crews across ' . $validated['target_service_cities'] : 'serving our local neighborhoods';
 
         $advantages = [
-            'owner_onsite' => 'maintaining an owner on-site policy to personally oversee every framing and structural construction pass',
+            'owner_onsite' => 'maintaining a strict owner on-site policy to personally oversee every single framing and structural pass',
             'rapid_response' => 'enforcing a rigid 15-minute communication guarantee to ensure no property owner is left waiting for updates',
             'clean_site' => 'adhering to an immaculate zero-mess site policy, guaranteeing your residential footprint is left cleaner than we found it',
             'transparent_pricing' => 'delivering absolute upfront line-item pricing visibility to completely eliminate hidden fees and unexpected budget creep'
@@ -202,23 +200,30 @@ class CompanyProfileController extends Controller
         ];
         $vibeText = data_get($vibes, $validated['ideal_client_vibe'], 'providing top-tier trade services');
 
-        // 📝 EXPLICIT NARRATIVE BLUEPRINTS: Forcing structural volume via structural training parameters
+        // ✨ POSITIVE VOLUME TRIGGERS: Shift focus from restrictions to descriptive expansion
         if ($validated['type'] === 'bio') {
-            $systemInstruction = "You are an expert consumer psychology marketer for elite local home service companies featured on high-traffic regional directory maps. Your goal is to draft a comprehensive, authoritative company biography paragraph. CRITICAL RULE: You must output a rich paragraph between 130 and 170 words long. Avoid generic filler. Follow the exact formatting structure shown in the structural example below.";
+            $systemInstruction = "You are an expert consumer psychology copywriter for high-traffic local contractor directories. Your goal is to write a detailed, substantial company biography. You must generate a long, thick, comprehensive paragraph of at least 150 words. Focus heavily on building localized trade authority and trust.";
 
-            $userPrompt = "STRUCTURAL EXPECTED EXAMPLE STYLE:\n"
-                . "\"Apex Framing specializes in premium outdoor decking solutions across Raleigh and Wake County. Backed by twelve years of dedicated field operations, our specialized service teams manage everything from foundational engineering passes to custom architectural modifications with complete reliability. We operate as a fully licensed and credentialed trade authority holding license reference ROC-293810, ensuring absolute property safety and general liability insulation on every footprint. By maintaining a strict owner on-site policy to personally oversee every single framing pass, we eliminate customer stress and guarantee seamless daily communication updates from start to finish.\"\n\n"
-                . "Now, write an equivalent 130-to-170 word company bio paragraph for '{$name}'. They specialize in '{$specialty}', service the region of '{$regions}', have been active for {$years}, hold license reference '{$license}', maintain a distinct operational advantage of '{$edgeText}', and focus heavily on '{$vibeText}'. Provide only the final plain-text paragraph text matching the length of the sample.";
+            $userPrompt = "Write a long, highly detailed company biography paragraph for '{$name}'. You must thoroughly weave all the following details into a fluid, multi-sentence narrative asset:\n"
+                . "- Core Specialty Focus: They excel at {$specialty}\n"
+                . "- Service Area Boundaries: Proudly {$regions}\n"
+                . "- Field History Profile: Operating field crews for over {$years}\n"
+                . "- Trade Credentials: Fully legal, verified as {$license}\n"
+                . "- Execution Distinction: Their main advantage relies on {$edgeText}\n"
+                . "- Project Scope Tier: They are widely recognized for {$vibeText}\n\n"
+                . "Make the paragraph comprehensive, descriptive, welcoming, and thorough. Ensure it is a full, thick block of text containing multiple sentences that explain these values clearly to a property owner looking to hire them.";
         } else {
-            $systemInstruction = "You are a master brand reputation engineer for elite trade construction groups. Your job is to draft a detailed customer craftsmanship promise paragraph. CRITICAL RULE: You must write a complete, heavy commitment paragraph between 100 and 140 words long. Follow the exact style and length shown in the structural example below.";
+            $systemInstruction = "You are a master brand reputation engineer for premium trade construction operations. Your goal is to write a detailed, substantive customer commitment promise. You must generate a thick, comprehensive paragraph of at least 130 words focusing on craftsmanship values and project execution safety.";
 
-            $userPrompt = "STRUCTURAL EXPECTED EXAMPLE STYLE:\n"
-                . "\"When our crews enter a homeowner's property footprint, our foundational commitment is the absolute protection of your boundaries and living layout. We enforce a rigid zero-mess site standard, meaning our crews clean up completely at every milestone shift and leave your home cleaner than we found it. Backed by multiple years of regional delivery history, we guarantee the structural integrity of our craftsmanship and take immense pride in precise execution values. You will always receive absolute upfront line-item pricing visibility to guarantee complete transparency and eliminate hidden project fees completely.\"\n\n"
-                . "Now, write an equivalent 100-to-140 word customer promise paragraph for '{$name}', drawing leverage from their track record built over {$years} of service. Integrate their operational stance of '{$edgeText}' and their approach of '{$vibeText}'. Provide only the final plain-text paragraph text matching the length of the sample.";
+            $userPrompt = "Write a long, complete customer promise and work philosophy paragraph from the perspective of '{$name}'. Thoroughly build out a multi-sentence narrative block incorporating these specific parameter values:\n"
+                . "- Service Track Record: Built across {$years} of reliable service\n"
+                . "- Project Execution Stance: They commit to {$edgeText}\n"
+                . "- Project Customization Tier: They excel at {$vibeText}\n\n"
+                . "Ensure the response is a substantial, comprehensive paragraph with multiple thorough sentences that outline an ironclad commitment to the client's home layout, site cleanliness, financial transparency, and project success.";
         }
 
         try {
-            // 🛡️ Utilizing standard headers alongside the canonical camelCase systemInstruction config
+            // 🛡️ Utilizing native, structured root-level systemInstruction arrays
             $response = Http::withHeaders([
                 'x-goog-api-key' => $apiKey,
                 'Content-Type'   => 'application/json',
@@ -236,7 +241,7 @@ class CompanyProfileController extends Controller
                     ]
                 ],
                 'generationConfig' => [
-                    'temperature' => 0.72,
+                    'temperature' => 0.75,
                     'maxOutputTokens' => 600,
                 ]
             ]);
@@ -254,6 +259,7 @@ class CompanyProfileController extends Controller
                 return response()->json(['error' => 'Model engine output an unparsable content body layout.'], 502);
             }
 
+            // Strips trailing symbols but keeps all punctuation and whitespace blocks intact
             $cleanSuggestion = trim(str_replace(['`', '""'], '', $suggestion));
 
             return response()->json(['suggestion' => $cleanSuggestion]);
