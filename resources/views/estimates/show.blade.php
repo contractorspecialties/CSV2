@@ -42,11 +42,10 @@
 
         <div class="border-b border-slate-200 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
-            <!-- 🏢 DYNAMIC CONTRACTOR BRAND IDENTITY BLOCK -->
             <div class="flex items-center gap-4">
                 @if(!empty($estimate->company?->logo_path))
                     <div class="w-16 h-16 rounded-xl border border-slate-200 bg-white p-1 flex items-center justify-center shrink-0 overflow-hidden shadow-inner bg-slate-50">
-                        <img src="/{{ $estimate->company->logo_path }}" class="w-full h-full object-contain" alt="Contractor Brand Mark">
+                        <img src="{{ asset($estimate->company->logo_path) }}" class="w-full h-full object-contain" alt="Contractor Brand Mark">
                     </div>
                 @endif
                 <div>
@@ -56,11 +55,19 @@
                     <h1 class="text-2xl font-black text-slate-950 uppercase tracking-tight mt-1">Estimate {{ $estimate->estimate_number }}</h1>
                     <p class="text-sm text-slate-500 font-medium">Customer: <strong class="text-slate-900">{{ $estimate->customer->last_name }}, {{ $estimate->customer->first_name }}</strong></p>
 
-                    @if(!empty($estimate->company?->name))
-                        <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-0.5">
-                            Issued By: <span class="text-slate-700 font-bold">{{ $estimate->company->name }}</span>
-                        </p>
-                    @endif
+                    <div class="flex flex-wrap items-center gap-3 mt-1.5">
+                        @if(!empty($estimate->company?->name))
+                            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">
+                                Issued By: <span class="text-slate-700 font-bold">{{ $estimate->company->name }}</span>
+                            </p>
+                        @endif
+
+                        @if(!empty($estimate->company?->slug))
+                            <a href="{{ route('brand.show', ['slug' => $estimate->company->slug]) }}" target="_blank" class="inline-flex items-center gap-1 bg-orange-50 hover:bg-orange-100 border border-orange-200 text-[#f58613] text-[9px] font-black tracking-widest uppercase px-2 py-0.5 rounded shadow-sm transition-all select-none cursor-pointer">
+                                ✨ Verified Trust Profile &rarr;
+                            </a>
+                        @endif
+                    </div>
                 </div>
             </div>
 
@@ -252,8 +259,7 @@
         </div>
     </main>
 
-    <!-- PHOTO CANVAS STUDIO WORKSPACE DRAW CONTAINER -->
-    <div x-show="showStudio" x-cloak class="fixed inset-0 z-[100] bg-slate-950 flex flex-col select-none" @window:resize.debounce.200="resizeCanvas()">
+    <div x-show="showStudio" x-cloak class="fixed inset-0 z-100 bg-slate-950 flex flex-col select-none" @window:resize.debounce.200="resizeCanvas()">
 
         <div class="bg-slate-900 border-b border-slate-800 px-4 h-16 shrink-0 flex items-center justify-between">
             <button type="button" @click="closeStudio()" class="text-slate-400 hover:text-white font-black text-xs tracking-widest uppercase cursor-pointer bg-transparent border-0">
