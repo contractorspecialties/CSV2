@@ -148,7 +148,6 @@ class CompanyProfileController extends Controller
      */
     public function generateAiAssist(Request $request)
     {
-        // 🛡️ Bypassed the unstable env() trap by reading directly from cached services mapping blocks
         $apiKey = config('services.gemini.key');
         if (empty($apiKey)) {
             return response()->json(['error' => 'Gemini API operational token is missing inside cached configurations.'], 500);
@@ -174,11 +173,12 @@ class CompanyProfileController extends Controller
         }
 
         try {
+            // 🛡️ Aligned to the stable gemini-2.5-flash routing path with canonical camelCase parameter configurations
             $response = Http::withHeaders([
                 'x-goog-api-key' => $apiKey,
                 'Content-Type'   => 'application/json',
-            ])->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent", [
-                'system_instruction' => [
+            ])->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", [
+                'systemInstruction' => [
                     'parts' => [
                         ['text' => $systemInstruction]
                     ]
