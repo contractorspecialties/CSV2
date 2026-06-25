@@ -158,7 +158,7 @@ class CompanyProfileController extends Controller
     }
 
     /**
-     * 🧠 SECURE ENDPOINT: Root-Level System Instruction API Matrix Handshaker
+     * 🧠 SECURE ENDPOINT: Narrative Creative Gemini Pro Tier Assist Handshaker
      */
     public function generateAiAssist(Request $request)
     {
@@ -180,13 +180,13 @@ class CompanyProfileController extends Controller
 
         $name = $validated['name'];
         $years = !empty($validated['years_in_business']) ? $validated['years_in_business'] . ' years' : 'multiple years';
-        $license = !empty($validated['license_number']) ? 'license tracking reference ' . $validated['license_number'] : 'fully legal, credentialed status';
+        $license = !empty($validated['license_number']) ? 'license reference tracking marker ' . $validated['license_number'] : 'fully legal, credentialed status';
 
         $specialty = !empty($validated['signature_specialty']) ? $validated['signature_specialty'] : 'premium general trade crafts';
-        $regions = !empty($validated['target_service_cities']) ? 'proudly dispatching service crews across ' . $validated['target_service_cities'] : 'serving local properties';
+        $regions = !empty($validated['target_service_cities']) ? 'dispatching active service crews across ' . $validated['target_service_cities'] : 'serving local properties';
 
         $advantages = [
-            'owner_onsite' => 'maintaining a strict owner on-site policy to personally oversee every single framing and structural pass',
+            'owner_onsite' => 'maintaining a strict owner on-site policy to personally oversee every single framing and structural construction pass',
             'rapid_response' => 'enforcing a rigid 15-minute communication guarantee to ensure no property owner is left waiting for updates',
             'clean_site' => 'adhering to an immaculate zero-mess site policy, guaranteeing your residential footprint is left cleaner than we found it',
             'transparent_pricing' => 'delivering absolute upfront line-item pricing visibility to completely eliminate hidden fees and unexpected budget creep'
@@ -201,32 +201,31 @@ class CompanyProfileController extends Controller
         $vibeText = data_get($vibes, $validated['ideal_client_vibe'], 'providing top-tier trade services');
 
         if ($validated['type'] === 'bio') {
-            $systemInstruction = "You are an elite conversion copywriter for local contractor directories. Your job is to draft a comprehensive, trust-building company profile biography. You must generate a substantive narrative block containing 4 to 5 highly descriptive sentences. Avoid generic corporate buzzwords. Do not wrap the text in quotes.";
+            $systemInstruction = "You are a master brand copywriter for premium residential home service contractor directories. Your job is to draft an elegant, high-converting company biography paragraph. You must extrapolate and weave the context variables into a rich narrative paragraph that is at least 4 to 5 thorough, beautifully written sentences long. Use active, premium vocabulary. Do not wrap the output text in quotes.";
 
-            $userPrompt = "Write a comprehensive contractor company biography for the business named '{$name}'. You must expand the text to thoroughly weave in every one of these details across multiple distinct sentences:\n"
-                . "1. Specialty: They specialize in {$specialty}.\n"
-                . "2. Location: They serve homeowners across {$regions}.\n"
-                . "3. Experience: They bring over {$years} of hands-on field expertise.\n"
-                . "4. Legitimacy: They are fully legal, {$license}.\n"
-                . "5. Advantage: Their competitive signature edge relies on {$edgeText}.\n"
-                . "6. Project Focus: They are widely recognized for {$vibeText}.\n\n"
-                . "Elaborate on each point to create a professional paragraph that demonstrates expertise.";
+            $userPrompt = "Write a comprehensive, professional company biography paragraph for '{$name}'. You are granted full creative license to extrapolate, connect ideas elegantly, and write a deep, detailed narrative using these parameters:\n"
+                . "- Signature Specialty: They are experts at {$specialty}.\n"
+                . "- Regional Footprint: They serve homeowners across {$regions}.\n"
+                . "- Field Legacy: They bring over {$years} of active field presence.\n"
+                . "- Credentials: Verified as {$license}.\n"
+                . "- Operational Distinction: They operate by {$edgeText}.\n"
+                . "- Market Core Focus: They are widely recognized for {$vibeText}.\n\n"
+                . "Combine these elements into a fluid marketing paragraph that captures consumer trust immediately.";
         } else {
-            $systemInstruction = "You are a premium brand reputation engineer for elite construction specialties. Your job is to draft a thorough customer value commitment pledge. You must generate a substantial paragraph containing 3 to 4 thorough sentences detailing field protection rules and craftsmanship pride. Do not wrap the text in quotes.";
+            $systemInstruction = "You are an elite consumer psychologist and copywriter for top-tier trade groups. Your job is to draft a comprehensive, meaningful customer service promise paragraph. You must generate a substantial, heavy paragraph containing 4 detailed sentences focusing on workmanship pride and asset protection. Do not wrap the response in quotes.";
 
-            $userPrompt = "Write a substantial customer promise statement paragraph from the perspective of '{$name}'. Weave these specific parameters into a fluid multi-sentence narrative block:\n"
-                . "1. Experience: Backed by over {$years} of reliable local field presence.\n"
-                . "2. Competitive Edge: They strictly follow their promise of {$edgeText}.\n"
-                . "3. Service Standard: They ensure high-end results by {$vibeText}.\n\n"
-                . "Elaborate thoroughly on their dedication to structural site protection, cleanliness, communication updates, and craftsmanship warranties.";
+            $userPrompt = "Write an exhaustive customer commitment and workmanship philosophy paragraph written from the perspective of '{$name}'. Leverage their field record built across {$years} of service stability to expand on these core principles:\n"
+                . "- The Promise: They guarantee to execute their edge of {$edgeText}.\n"
+                . "- The Focus: They deliver elite results by {$vibeText}.\n\n"
+                . "Extrapolate heavily on how they protect the home's boundaries, maintain impeccable site conditions, and deliver full financial visibility from project discovery to final milestone sign-off.";
         }
 
         try {
-            // 🛡️ Restructured payload isolating the ambient systemInstruction from content matrices
+            // 🛡️ Upgraded route targets the flagship creative gemini-2.5-pro model endpoint
             $response = Http::withHeaders([
                 'x-goog-api-key' => $apiKey,
                 'Content-Type'   => 'application/json',
-            ])->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", [
+            ])->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent", [
                 'systemInstruction' => [
                     'parts' => [
                         ['text' => $systemInstruction]
@@ -240,13 +239,13 @@ class CompanyProfileController extends Controller
                     ]
                 ],
                 'generationConfig' => [
-                    'temperature' => 1.0, // Restored to full canonical generation specs to prevent compression behavior
-                    'maxOutputTokens' => 600,
+                    'temperature' => 1.0,
+                    'maxOutputTokens' => 700,
                 ]
             ]);
 
             if ($response->failed()) {
-                Log::error('Gemini API production-tier gateway rejection: ' . $response->body());
+                Log::error('Gemini Pro API framework gateway rejection: ' . $response->body());
                 return response()->json(['error' => 'API gateway rejected content streams. Response Status Code: ' . $response->status()], 502);
             }
 
@@ -254,7 +253,7 @@ class CompanyProfileController extends Controller
             $suggestion = data_get($responseJson, 'candidates.0.content.parts.0.text');
 
             if (empty($suggestion)) {
-                Log::error('Gemini API production pass returned an unparsable body layout: ' . json_encode($responseJson));
+                Log::error('Gemini Pro pass returned an unparsable body layout: ' . json_encode($responseJson));
                 return response()->json(['error' => 'Model engine output an unparsable content body layout.'], 502);
             }
 
@@ -263,7 +262,7 @@ class CompanyProfileController extends Controller
             return response()->json(['suggestion' => $cleanSuggestion]);
 
         } catch (\Exception $exception) {
-            Log::error('Gemini GA Gateway Connection Exception: ' . $exception->getMessage());
+            Log::error('Gemini GA Pro Gateway Connection Exception: ' . $exception->getMessage());
             return response()->json(['error' => 'Network framework failed to complete communication streams.'], 500);
         }
     }
