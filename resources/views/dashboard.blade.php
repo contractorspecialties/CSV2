@@ -79,17 +79,17 @@
             @endif
 
             <section class="grid grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4">
-                <a href="/estimates/create" class="relative flex flex-col items-center justify-center aspect-square bg-gradient-to-b from-[#f58613] to-orange-600 rounded-2xl shadow-sm hover:shadow-md active:scale-95 transition-all group overflow-hidden cursor-pointer">
+                <a href="/estimates/create" class="relative flex flex-col items-center justify-center aspect-square bg-gradient-to-b from-[#f58613] to-orange-600 rounded-2xl shadow-sm hover:shadow-md active:scale-95 transition-all group overflow-hidden cursor-pointer text-decoration-none">
                     <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">📝</span>
                     <span class="text-xs font-black text-white uppercase tracking-wider text-center px-1">New Estimate</span>
                 </a>
 
-                <a href="/customers/create" class="relative flex flex-col items-center justify-center aspect-square bg-white border border-slate-200 rounded-2xl shadow-sm hover:border-[#f58613] active:scale-95 transition-all group overflow-hidden cursor-pointer">
-                    <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">👥</span>
-                    <span class="text-xs font-black text-slate-800 uppercase tracking-wider text-center px-1">Add Customer</span>
+                <a href="/workspace/crm" class="relative flex flex-col items-center justify-center aspect-square bg-white border-2 border-slate-900 rounded-2xl shadow-sm hover:border-[#f58613] active:scale-95 transition-all group overflow-hidden cursor-pointer text-decoration-none ring-4 ring-[#f58613]/10">
+                    <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">🗂️</span>
+                    <span class="text-xs font-black text-slate-950 uppercase tracking-wider text-center px-1">Field CRM</span>
                 </a>
 
-                <a href="/pricebook" class="relative flex flex-col items-center justify-center aspect-square bg-white border border-slate-200 rounded-2xl shadow-sm hover:border-slate-800 active:scale-95 transition-all group overflow-hidden cursor-pointer">
+                <a href="/pricebook" class="relative flex flex-col items-center justify-center aspect-square bg-white border border-slate-200 rounded-2xl shadow-sm hover:border-slate-800 active:scale-95 transition-all group overflow-hidden cursor-pointer text-decoration-none">
                     <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">📖</span>
                     <span class="text-xs font-black text-slate-800 uppercase tracking-wider text-center px-1">Pricebook Matrix</span>
                 </a>
@@ -104,7 +104,7 @@
                     <span class="text-xs font-black uppercase tracking-wider text-center px-1 text-slate-200">App Shortcut</span>
                 </button>
 
-                <a href="{{ route('workspace.profile.edit') }}" class="relative flex flex-col items-center justify-center aspect-square bg-slate-900 border border-slate-950 hover:border-[#f58613] rounded-2xl shadow-sm text-[#f58613] active:scale-95 transition-all group overflow-hidden cursor-pointer">
+                <a href="{{ route('workspace.profile.edit') }}" class="relative flex flex-col items-center justify-center aspect-square bg-slate-900 border border-slate-950 hover:border-[#f58613] rounded-2xl shadow-sm text-[#f58613] active:scale-95 transition-all group overflow-hidden cursor-pointer text-decoration-none">
                     <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">🌐</span>
                     <span class="text-xs font-black uppercase tracking-wider text-center px-1 text-slate-200">Brand Profile</span>
                 </a>
@@ -186,7 +186,7 @@
                         <div class="space-y-2.5 max-h-[600px] overflow-y-auto pr-0.5">
                             @forelse($kanbanBids['draft'] as $bid)
                                 <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm space-y-3 hover:border-slate-400 transition-all relative group">
-                                    <a href="/estimates/{{ $bid->id }}" class="block space-y-2 group/link cursor-pointer">
+                                    <a href="/estimates/{{ $bid->id }}" class="block space-y-2 group/link cursor-pointer text-decoration-none">
                                         <div class="flex justify-between items-start">
                                             <span class="text-[10px] font-mono font-black text-slate-400 block tracking-tight group-hover/link:text-[#f58613] transition-colors">{{ $bid->estimate_number }} 🔗</span>
                                             <span class="text-sm font-mono font-black text-slate-900">${{ number_format($bid->grand_total, 2) }}</span>
@@ -206,7 +206,7 @@
                                         </form>
                                         <form action="/estimates/{{ $bid->id }}" method="POST" class="inline-block" onsubmit="return confirm('🛑 Delete this draft record completely?')">
                                             @csrf
-                                            @method('DELETE')
+                                            @body('DELETE')
                                             <button type="submit" class="bg-red-50 hover:bg-red-600 border border-red-200 text-red-600 hover:text-white font-black text-[11px] p-1.5 rounded-lg transition-colors cursor-pointer" title="Delete Quote">
                                                 🗑️
                                             </button>
@@ -227,7 +227,7 @@
                         <div class="space-y-2.5 max-h-[600px] overflow-y-auto pr-0.5">
                             @forelse($kanbanBids['sent'] as $bid)
                                 <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm space-y-3 hover:border-[#f58613] transition-all group">
-                                    <a href="/estimates/{{ $bid->id }}" class="block space-y-2 group/link cursor-pointer">
+                                    <a href="/estimates/{{ $bid->id }}" class="block space-y-2 group/link cursor-pointer text-decoration-none">
                                         <div class="flex justify-between items-start">
                                             <span class="text-[10px] font-mono font-black text-slate-400 block tracking-tight group-hover/link:text-[#f58613] transition-colors">{{ $bid->estimate_number }} 🔗</span>
                                             <span class="text-sm font-mono font-black text-slate-900">${{ number_format($bid->grand_total, 2) }}</span>
@@ -268,7 +268,7 @@
                         <div class="space-y-2.5 max-h-[600px] overflow-y-auto pr-0.5">
                             @forelse($kanbanBids['approved'] as $bid)
                                 <div class="bg-white border border-emerald-200 rounded-xl p-3.5 shadow-sm space-y-3 hover:border-emerald-500 transition-all group">
-                                    <a href="/estimates/{{ $bid->id }}" class="block space-y-2 group/link cursor-pointer">
+                                    <a href="/estimates/{{ $bid->id }}" class="block space-y-2 group/link cursor-pointer text-decoration-none">
                                         <div class="flex justify-between items-start">
                                             <span class="text-[10px] font-mono font-black text-slate-400 block tracking-tight group-hover/link:text-emerald-600 transition-colors">{{ $bid->estimate_number }} 🔗</span>
                                             <span class="text-sm font-mono font-black text-emerald-600">${{ number_format($bid->grand_total, 2) }}</span>
@@ -302,7 +302,7 @@
                         <div class="space-y-2.5 max-h-[600px] overflow-y-auto pr-0.5">
                             @forelse($kanbanBids['closed'] as $bid)
                                 <div class="bg-white/70 border border-slate-200 opacity-75 rounded-xl p-3.5 shadow-sm space-y-3 hover:opacity-100 transition-all group">
-                                    <a href="/estimates/{{ $bid->id }}" class="block space-y-2 group/link cursor-pointer">
+                                    <a href="/estimates/{{ $bid->id }}" class="block space-y-2 group/link cursor-pointer text-decoration-none">
                                         <div class="flex justify-between items-start">
                                             <span class="text-[10px] font-mono font-black text-slate-400 block tracking-tight group-hover/link:text-slate-950 transition-colors">{{ $bid->estimate_number }} 🔗</span>
                                             <span class="text-sm font-mono font-bold text-slate-500">${{ number_format($bid->grand_total, 2) }}</span>
@@ -334,9 +334,9 @@
                 <div class="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                         <h3 class="font-black text-sm tracking-tight text-slate-900 uppercase flex items-center gap-2">
-                            👥 Recent Customers Added
+                            👥 Recent Clients Connected
                         </h3>
-                        <a href="/customers" class="text-xs font-bold text-[#f58613] hover:underline uppercase tracking-wider">Full Directory →</a>
+                        <a href="/workspace/crm" class="text-xs font-bold text-[#f58613] hover:underline uppercase tracking-wider">Open CRM Desk →</a>
                     </div>
 
                     <div class="overflow-x-auto">
@@ -365,7 +365,7 @@
                                 @empty
                                     <tr>
                                         <td colspan="3" class="py-8 text-center text-slate-400 font-bold">
-                                            No customers added yet. Tap "Add Customer" to launch directory routes.
+                                            No recent client profiles registered yet. Open the CRM desk to log data.
                                         </td>
                                     </tr>
                                 @endforelse
@@ -501,7 +501,7 @@
                                         <div class="flex justify-between items-center pt-2 border-t border-slate-100 text-xs">
                                             <span class="inline-block px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wide border bg-emerald-50 text-emerald-700 border-emerald-200" x-text="job.status"></span>
                                             <template x-if="job.estimate_id">
-                                                <a :href="'/estimates/' + job.estimate_id" class="text-[#f58613] hover:text-orange-600 font-black uppercase text-[10px] tracking-widest flex items-center gap-1">
+                                                <a :href="'/estimates/' + job.estimate_id" class="text-[#f58613] hover:text-orange-600 font-black uppercase text-[10px] tracking-widest flex items-center gap-1 text-decoration-none">
                                                     Open Estimate &rarr;
                                                 </a>
                                             </template>
@@ -535,26 +535,26 @@
                 <div class="md:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-6 text-xs font-bold uppercase tracking-wider md:pt-4">
                     <div class="flex flex-col gap-2.5">
                         <span class="text-[10px] text-slate-600 tracking-widest font-black">Tools & System</span>
-                        <a href="/estimates" class="text-slate-400 hover:text-[#f58613] transition-colors">Estimate Creator</a>
-                        <a href="/pricebook" class="text-slate-400 hover:text-[#f58613] transition-colors">Pricebook Matrix</a>
-                        <a href="/billing" class="text-slate-400 hover:text-[#f58613] transition-colors">Text-to-Pay Rails</a>
+                        <a href="/estimates" class="text-slate-400 hover:text-[#f58613] transition-colors text-decoration-none">Estimate Creator</a>
+                        <a href="/pricebook" class="text-slate-400 hover:text-[#f58613] transition-colors text-decoration-none">Pricebook Matrix</a>
+                        <a href="/billing" class="text-slate-400 hover:text-[#f58613] transition-colors text-decoration-none">Text-to-Pay Rails</a>
                     </div>
                     <div class="flex flex-col gap-2.5">
                         <span class="text-[10px] text-slate-600 tracking-widest font-black">Directories</span>
-                        <a href="/advertise" class="text-slate-400 hover:text-[#f58613] transition-colors">Advertise With Us</a>
-                        <a href="/contractor-directory" class="text-slate-400 hover:text-[#f58613] transition-colors">Public Directory</a>
-                        <a href="/leads" class="text-slate-400 hover:text-[#f58613] transition-colors">Resource Funnels</a>
+                        <a href="/advertise" class="text-slate-400 hover:text-[#f58613] transition-colors text-decoration-none">Advertise With Us</a>
+                        <a href="/contractor-directory" class="text-slate-400 hover:text-[#f58613] transition-colors text-decoration-none">Public Directory</a>
+                        <a href="/leads" class="text-slate-400 hover:text-[#f58613] transition-colors text-decoration-none">Resource Funnels</a>
                     </div>
                     <div class="flex flex-col gap-2.5">
                         <span class="text-[10px] text-slate-600 tracking-widest font-black">Legal & Policy</span>
-                        <a href="/privacy" class="text-slate-400 hover:text-[#f58613] transition-colors normal-case">Privacy Policy</a>
-                        <a href="/terms" class="text-slate-400 hover:text-[#f58613] transition-colors normal-case">Terms of Use</a>
+                        <a href="/privacy" class="text-slate-400 hover:text-[#f58613] transition-colors normal-case text-decoration-none">Privacy Policy</a>
+                        <a href="/terms" class="text-slate-400 hover:text-[#f58613] transition-colors normal-case text-decoration-none">Terms of Use</a>
                     </div>
                     <div class="flex flex-col gap-2.5">
                         <span class="text-[10px] text-slate-600 tracking-widest font-black">Secure Entry</span>
-                        <a href="/login/partner" class="text-slate-500 hover:text-white transition-colors bg-slate-900 border border-slate-800 px-3 py-2 rounded-lg text-center truncate">General Contractor</a>
-                        <a href="/login/subcontractor" class="text-slate-500 hover:text-white transition-colors bg-slate-900 border border-slate-800 px-3 py-2 rounded-lg text-center truncate mt-1">Sub-Portal</a>
-                        <a href="/tutorial" class="text-[#f58613] hover:text-orange-500 transition-colors normal-case mt-1.5 font-black tracking-wide italic">How-To Manual 📺</a>
+                        <a href="/login/partner" class="text-slate-500 hover:text-white transition-colors bg-slate-900 border border-slate-800 px-3 py-2 rounded-lg text-center truncate text-decoration-none">General Contractor</a>
+                        <a href="/login/subcontractor" class="text-slate-500 hover:text-white transition-colors bg-slate-900 border border-slate-800 px-3 py-2 rounded-lg text-center truncate mt-1 text-decoration-none">Sub-Portal</a>
+                        <a href="/tutorial" class="text-[#f58613] hover:text-orange-500 transition-colors normal-case mt-1.5 font-black tracking-wide italic text-decoration-none">How-To Manual 📺</a>
                     </div>
                 </div>
             </div>
