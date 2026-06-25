@@ -162,18 +162,18 @@ class CompanyProfileController extends Controller
 
         $name = $validated['name'];
         $years = !empty($validated['years_in_business']) ? $validated['years_in_business'] . ' years' : 'multiple years';
-        $license = !empty($validated['license_number']) ? 'holding license reference ' . $validated['license_number'] : 'fully legal and credentialed';
+        $license = !empty($validated['license_number']) ? 'holding active trade license ' . $validated['license_number'] : 'fully legal and credentialed';
 
+        // 📝 RE-ENGINEERED PROMPT MATRIX: Demanding multi-sentence structured substance
         if ($validated['type'] === 'bio') {
-            $systemInstruction = "You are an expert residential consumer psychology marketer for top-tier general contractors. Your job is to draft a punchy, highly professional, trust-building corporate bio paragraph. Avoid generic buzzwords like 'cutting-edge', 'synergy', or 'passionate'. Focus entirely on trade reliability, verified legitimacy, local specialization, and immediate owner reassurance. Keep the response compact and under 130 words total.";
-            $userPrompt = "Generate a professional contractor company biography for the business named '{$name}'. They have been operating active field service crews for {$years} and are {$license}. Output only the raw bio paragraph text, with no preamble, formatting tags, markdown, or chat text.";
+            $systemInstruction = "You are an expert consumer psychology copywriter specializing in local home service contractor branding. Your goal is to draft a comprehensive, trust-building professional biography paragraph. Do not use generic filler words or introductory chat text. Write a robust, unified paragraph containing exactly 3 to 5 complete, detailed sentences outlining localized service stability, trade competence, and consumer protection focus.";
+            $userPrompt = "Write a comprehensive 3-to-5 sentence company bio paragraph for '{$name}'. They have been operating in this market for {$years} and are verified as {$license}. Start directly with the company identity and focus on specialized field excellence. Provide only the clean text paragraph.";
         } else {
-            $systemInstruction = "You are a master brand reputation engineer for elite construction specialties. Draft a premium consumer philosophy guarantee promise. The message must convey extreme field care, strict cleanliness standards, respect for the client's home layout lines, and an ironclad pride in workmanship execution values. Keep it sharp and under 90 words total.";
-            $userPrompt = "Generate a punchy, high-converting customer commitment pledge statement written from the perspective of '{$name}'. They have {$years} of service reliability. Output only the raw statement text inside standard plain quotes, with no preamble, markdown, or introductory notes.";
+            $systemInstruction = "You are a premium brand reputation manager for elite construction and property improvement trades. Your goal is to draft a robust consumer philosophy commitment pledge paragraph. The output must be exactly 3 to 4 well-structured sentences long, detailing clear property protection rules, clean working site standards, absolute craftsmanship pride, and direct client transparency values. Avoid single-sentence slogans.";
+            $userPrompt = "Write a complete 3-to-4 sentence customer promise statement paragraph from the perspective of '{$name}'. Highlight their track record built across {$years} of field excellence. Start directly with the promise text. Do not wrap in markdown or add introduction notes.";
         }
 
         try {
-            // 🛡️ Aligned to the stable gemini-2.5-flash routing path with canonical camelCase parameter configurations
             $response = Http::withHeaders([
                 'x-goog-api-key' => $apiKey,
                 'Content-Type'   => 'application/json',
@@ -191,8 +191,8 @@ class CompanyProfileController extends Controller
                     ]
                 ],
                 'generationConfig' => [
-                    'temperature' => 0.65,
-                    'maxOutputTokens' => 400,
+                    'temperature' => 0.7,
+                    'maxOutputTokens' => 500,
                 ]
             ]);
 
