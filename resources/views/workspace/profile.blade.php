@@ -77,8 +77,12 @@
                     },
                     body: JSON.stringify(payload)
                 })
-                .then(res => {
-                    if (!res.ok) throw new Error('AI Content generation failure.');
+                .then(async res => {
+                    if (!res.ok) {
+                        // Attempt to extract specific JSON exceptions passed by the controller array
+                        const failurePayload = await res.json().catch(() => ({}));
+                        throw new Error(failurePayload.error || 'Server HTTP Rejection Code: ' + res.status);
+                    }
                     return res.json();
                 })
                 .then(data => {
@@ -91,7 +95,8 @@
                     }
                 })
                 .catch(err => {
-                    alert('🛑 AI Assist Error: Failed to secure communication lines with the text model matrix.');
+                    // Pipe the dynamic backend readout directly into the alert layout box
+                    alert('🛑 AI Assist Error: ' + err.message);
                     console.error(err);
                 })
                 .finally(() => {
