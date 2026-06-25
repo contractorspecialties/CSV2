@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
@@ -143,6 +144,70 @@ class CompanyProfileController extends Controller
     }
 
     /**
+     * 🧠 SECURE ENDPOINT: Gemini 3.5 Flash Copywriting Assist Engine Handshaker
+     */
+    public function generateAiAssist(Request $request)
+    {
+        $apiKey = env('GEMINI_API_KEY');
+        if (empty($apiKey)) {
+            return response()->json(['error' => 'Gemini API operational token is missing inside framework environments.'], 500);
+        }
+
+        $validated = $request->validate([
+            'type'              => 'required|in:bio,philosophy',
+            'name'              => 'required|string|max:255',
+            'years_in_business' => 'nullable|string|max:10',
+            'license_number'    => 'nullable|string|max:100',
+        ]);
+
+        $name = $validated['name'];
+        $years = !empty($validated['years_in_business']) ? $validated['years_in_business'] . ' years' : 'multiple years';
+        $license = !empty($validated['license_number']) ? 'holding license reference ' . $validated['license_number'] : 'fully legal and credentialed';
+
+        // High-conversion marketing prompt layout matching architectural specifications
+        if ($validated['type'] === 'bio') {
+            $systemInstruction = "You are an expert residential consumer psychology marketer for top-tier general contractors. Your job is to draft a punchy, highly professional, trust-building corporate bio paragraph. Avoid generic buzzwords like 'cutting-edge', 'synergy', or 'passionate'. Focus entirely on trade reliability, verified legitimacy, local specialization, and immediate owner reassurance. Keep the response compact and under 130 words total.";
+            $userPrompt = "Generate a professional contractor company biography for the business named '{$name}'. They have been operating active field service crews for {$years} and are {$license}. Output only the raw bio paragraph text, with no preamble, formatting tags, markdown, or chat text.";
+        } else {
+            $systemInstruction = "You are a master brand reputation engineer for elite construction specialties. Draft a premium consumer philosophy guarantee promise. The message must convey extreme field care, strict cleanliness standards, respect for the client's home layout lines, and an ironclad pride in workmanship execution values. Keep it sharp and under 90 words total.";
+            $userPrompt = "Generate a punchy, high-converting customer commitment pledge statement written from the perspective of '{$name}'. They have {$years} of service reliability. Output only the raw statement text inside standard plain quotes, with no preamble, markdown, or introductory notes.";
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+            ])->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={$apiKey}", [
+                'contents' => [
+                    [
+                        'parts' => [
+                            ['text' => "System Context Directives:\n" . $systemInstruction . "\n\nUser Input Parameter Request:\n" . $userPrompt]
+                        ]
+                    ]
+                ],
+                'generationConfig' => [
+                    'temperature' => 0.65,
+                    'maxOutputTokens' => 300,
+                ]
+            ]);
+
+            if ($response->failed()) {
+                Log::error('Gemini API endpoint rejected handshake payload: ' . $response->body());
+                return response()->json(['error' => 'API routing gateways rejected the text processing payload.'], 502);
+            }
+
+            // Extract the generated text block natively from Google structural objects
+            $suggestion = $response->json('candidates.0.content.parts.0.text');
+            $cleanSuggestion = trim(str_replace(['`', '""'], '', $suggestion));
+
+            return response()->json(['suggestion' => $cleanSuggestion]);
+
+        } catch (\Exception $exception) {
+            Log::error('Gemini Client Connection Exception: ' . $exception->getMessage());
+            return response()->json(['error' => 'Network framework dropped communications with model arrays.'], 500);
+        }
+    }
+
+    /**
      * Display the high-conversion public homeowner profile preview page.
      */
     public function show($slug)
@@ -199,11 +264,9 @@ class CompanyProfileController extends Controller
 
     /**
      * Safe Plugin-Driven Database Self-Healing Structural Guard.
-     * Only builds missing columns, completely avoiding destructive request runtime alterations.
      */
     private function ensureSchemaIsHealed(string $tableName): void
     {
-        // Notice: We pass the explicit table name raw because your system bypasses the global prefix setting.
         if (Schema::hasTable($tableName)) {
             Schema::table($tableName, function (Blueprint $table) use ($tableName) {
                 if (!Schema::hasColumn($tableName, 'logo_path')) {
@@ -231,7 +294,6 @@ class CompanyProfileController extends Controller
                     $table->string('warranty_details', 255)->nullable();
                 }
                 if (!Schema::hasColumn($tableName, 'gallery_paths')) {
-                    // Start as unconstrained text natively to prevent text string truncation issues
                     $table->longText('gallery_paths')->nullable();
                 }
             });

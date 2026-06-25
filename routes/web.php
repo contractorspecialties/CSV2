@@ -38,7 +38,7 @@ Route::post('/login/two-factor-verify', [MagicAuthController::class, 'verifyTwoF
 
 Route::match(['get', 'post'], '/logout', [MagicAuthController::class, 'logout'])->name('logout');
 
-// Authenticated Contractor Workspace Framework
+// Authenticated Contractor Workspace Workspace Framework
 Route::middleware(['auth'])->group(function () {
 
     /*
@@ -47,6 +47,7 @@ Route::middleware(['auth'])->group(function () {
     |--------------------------------------------------------------------------
     | These routes remain exempt from the onboarding intercept gate middleware
     | to eliminate cascading infinite loop execution sequences.
+    |
     */
     Route::get('/workspace/setup', [OnboardingController::class, 'showWizard'])->name('onboarding.view');
     Route::post('/workspace/setup', [OnboardingController::class, 'processWizard'])->name('onboarding.submit');
@@ -58,6 +59,7 @@ Route::middleware(['auth'])->group(function () {
     | The user must possess a valid 'onboarding_completed_at' timestamp token
     | inside database memory to pierce this boundary layer. If incomplete,
     | they are gracefully rerouted back to the workspace configurator.
+    |
     */
     Route::middleware([EnsureOnboardingIsCompleted::class])->group(function () {
 
@@ -66,6 +68,9 @@ Route::middleware(['auth'])->group(function () {
         // Dedicated Company Identity Trust Signal Control Panel (Decoupled Hub)
         Route::get('/workspace/profile', [CompanyProfileController::class, 'edit'])->name('workspace.profile.edit');
         Route::post('/workspace/profile', [CompanyProfileController::class, 'update'])->name('workspace.profile.update');
+
+        // ✨ DYNAMIC REPUTATION ENGINE: Gemini 3.5 Flash Automated Copywriting Port
+        Route::post('/workspace/profile/ai-assist', [CompanyProfileController::class, 'generateAiAssist'])->name('workspace.profile.ai-assist');
 
         // Secure Login Line Configuration (With Smart String Normalization)
         Route::post('/user/security-phone', function (Illuminate\Http\Request $request) {
