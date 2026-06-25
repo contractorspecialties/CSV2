@@ -48,8 +48,8 @@ class CompanyProfileController extends Controller
         $validated = $request->validate([
             'name'                        => 'required|string|max:255',
             'logo'                        => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'company_bio'                 => 'nullable|string|max:1000',
-            'work_philosophy'             => 'nullable|string|max:1000',
+            'company_bio'                 => 'nullable|string|max:3000', // Expanded to accept deep copy assets
+            'work_philosophy'             => 'nullable|string|max:3000', // Expanded to accept deep copy assets
             'years_in_business'           => 'nullable|integer|min:0|max:100',
             'license_number'              => 'nullable|string|max:100',
             'insurance_badge'             => 'nullable|boolean',
@@ -222,7 +222,6 @@ class CompanyProfileController extends Controller
         }
 
         try {
-            // 🛡️ Directed straight to the high-availability flagship gemini-3.5-flash framework engine
             $response = Http::withHeaders([
                 'x-goog-api-key' => $apiKey,
                 'Content-Type'   => 'application/json',
@@ -241,7 +240,7 @@ class CompanyProfileController extends Controller
                 ],
                 'generationConfig' => [
                     'temperature' => 1.0,
-                    'maxOutputTokens' => 2500, // Augmented token ceiling to absorb internal logic tokens easily
+                    'maxOutputTokens' => 2500,
                 ]
             ]);
 
@@ -255,7 +254,7 @@ class CompanyProfileController extends Controller
             $suggestion = data_get($responseJson, 'candidates.0.content.parts.0.text');
 
             if (empty($suggestion)) {
-                Log::error('Gemini structural extraction failure: ' . json_encode($responseJson));
+                Log::error('Gemini structural extraction failure: ' + json_encode($responseJson));
 
                 $finishReason = data_get($responseJson, 'candidates.0.finishReason');
                 $blockReason = data_get($responseJson, 'promptFeedback.blockReason');
