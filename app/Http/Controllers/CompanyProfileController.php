@@ -144,7 +144,7 @@ class CompanyProfileController extends Controller
     }
 
     /**
-     * 🧠 SECURE ENDPOINT: Gemini Production Content Copywriting Assist Engine Handshaker
+     * 🧠 SECURE ENDPOINT: Flat-Payload Stable Gemini Assist Engine Handshaker
      */
     public function generateAiAssist(Request $request)
     {
@@ -164,29 +164,24 @@ class CompanyProfileController extends Controller
         $years = !empty($validated['years_in_business']) ? $validated['years_in_business'] . ' years' : 'multiple years';
         $license = !empty($validated['license_number']) ? 'holding active trade license ' . $validated['license_number'] : 'fully legal and credentialed';
 
-        // 📝 RE-ENGINEERED PROMPT MATRIX: Demanding multi-sentence structured substance
         if ($validated['type'] === 'bio') {
-            $systemInstruction = "You are an expert consumer psychology copywriter specializing in local home service contractor branding. Your goal is to draft a comprehensive, trust-building professional biography paragraph. Do not use generic filler words or introductory chat text. Write a robust, unified paragraph containing exactly 3 to 5 complete, detailed sentences outlining localized service stability, trade competence, and consumer protection focus.";
-            $userPrompt = "Write a comprehensive 3-to-5 sentence company bio paragraph for '{$name}'. They have been operating in this market for {$years} and are verified as {$license}. Start directly with the company identity and focus on specialized field excellence. Provide only the clean text paragraph.";
+            $systemInstruction = "CORE ROLE: Expert consumer psychology copywriter for high-end local home service contractors. TASK: Draft a robust, trust-building contractor bio paragraph. ADJECTIVE BAN: Avoid low-value buzzwords like 'cutting-edge', 'synergy', or 'passionate'. STRUCTURE CONSTRAINT: Write exactly 3 to 5 clear, highly detailed sentences outlining localized project execution stability, trade competence, and owner protection focus.";
+            $userPrompt = "Write a comprehensive 3-to-5 sentence contractor profile bio paragraph for the company '{$name}'. They have been operating active field service crews in this region for {$years} and are {$license}. Start directly with the business context description payload. Output only the clean plain-text paragraph with no extra conversational filler.";
         } else {
-            $systemInstruction = "You are a premium brand reputation manager for elite construction and property improvement trades. Your goal is to draft a robust consumer philosophy commitment pledge paragraph. The output must be exactly 3 to 4 well-structured sentences long, detailing clear property protection rules, clean working site standards, absolute craftsmanship pride, and direct client transparency values. Avoid single-sentence slogans.";
-            $userPrompt = "Write a complete 3-to-4 sentence customer promise statement paragraph from the perspective of '{$name}'. Highlight their track record built across {$years} of field excellence. Start directly with the promise text. Do not wrap in markdown or add introduction notes.";
+            $systemInstruction = "CORE ROLE: Premium brand reputation manager for elite construction and property improvement specialities. TASK: Draft a robust customer value philosophy guarantee promise paragraph. STRUCTURE CONSTRAINT: Write exactly 3 to 4 substantial, authoritative sentences detailing specific property protection standards, clean job site rules, absolute workmanship pride, and total invoicing transparency. Avoid single-line slogans.";
+            $userPrompt = "Write a comprehensive 3-to-4 sentence customer pledge statement paragraph from the perspective of '{$name}'. Highlight their clear workmanship values backed by {$years} of field care stability. Start directly with the promise narrative block. Provide only the clean text raw paragraph.";
         }
 
         try {
+            // 🛡️ Flat payload configuration mapped to the ultra-reliable gemini-2.0-flash core framework
             $response = Http::withHeaders([
                 'x-goog-api-key' => $apiKey,
                 'Content-Type'   => 'application/json',
-            ])->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", [
-                'systemInstruction' => [
-                    'parts' => [
-                        ['text' => $systemInstruction]
-                    ]
-                ],
+            ])->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent", [
                 'contents' => [
                     [
                         'parts' => [
-                            ['text' => $userPrompt]
+                            ['text' => "System Directives & Rules:\n" . $systemInstruction . "\n\nContext Execution Request:\n" . $userPrompt]
                         ]
                     ]
                 ],
@@ -197,7 +192,7 @@ class CompanyProfileController extends Controller
             ]);
 
             if ($response->failed()) {
-                Log::error('Gemini API framework routing failure: ' . $response->body());
+                Log::error('Gemini API flat-payload gateway rejection: ' . $response->body());
                 return response()->json(['error' => 'API gateway rejected content streams. Response Status Code: ' . $response->status()], 502);
             }
 
@@ -205,7 +200,7 @@ class CompanyProfileController extends Controller
             $suggestion = data_get($responseJson, 'candidates.0.content.parts.0.text');
 
             if (empty($suggestion)) {
-                Log::error('Gemini API payload structure returned an unparsable body layout: ' . json_encode($responseJson));
+                Log::error('Gemini API flat structural pass returned an unparsable body layout: ' . json_encode($responseJson));
                 return response()->json(['error' => 'Model engine output an unparsable content body layout.'], 502);
             }
 
@@ -214,7 +209,7 @@ class CompanyProfileController extends Controller
             return response()->json(['suggestion' => $cleanSuggestion]);
 
         } catch (\Exception $exception) {
-            Log::error('Gemini REST Gateway Connection Exception: ' . $exception->getMessage());
+            Log::error('Gemini Flat Gateway Connection Exception: ' . $exception->getMessage());
             return response()->json(['error' => 'Network framework failed to complete communication streams.'], 500);
         }
     }
