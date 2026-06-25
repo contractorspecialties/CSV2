@@ -30,7 +30,6 @@
 
     <main class="max-w-7xl w-full mx-auto px-4 py-10">
 
-        <!-- SUCCESS ALERTING CONTEXT -->
         @if(session('status'))
             <div class="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl p-4 mb-6 flex items-center gap-3 shadow-sm">
                 <span class="text-lg">⚡</span>
@@ -38,7 +37,6 @@
             </div>
         @endif
 
-        <!-- 🚨 GLOBAL CRITICAL FRAMEWORK ERROR NOTIFICATION CARD -->
         @if($errors->any())
             <div class="bg-red-50 border border-red-200 text-red-900 rounded-2xl p-4 mb-6 flex flex-col gap-2 shadow-sm">
                 <div class="flex items-center gap-3">
@@ -53,7 +51,55 @@
             </div>
         @endif
 
-        <div x-data="{ currentTab: 'legitimacy', dynamicPreviews: [], logoPreview: '{{ !empty($company->logo_path) ? asset($company->logo_path) : '' }}' }" class="grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
+        <div x-data="{
+            currentTab: 'legitimacy',
+            dynamicPreviews: [],
+            logoPreview: '{{ !empty($company->logo_path) ? asset($company->logo_path) : '' }}',
+            bioLoading: false,
+            philosophyLoading: false,
+            generateAiCopy(type) {
+                if (type === 'bio') this.bioLoading = true;
+                if (type === 'philosophy') this.philosophyLoading = true;
+
+                // Pack realtime variables directly from named form controls
+                const payload = {
+                    type: type,
+                    name: document.querySelector('input[name=\'name\']').value,
+                    years_in_business: document.querySelector('input[name=\'years_in_business\']').value,
+                    license_number: document.querySelector('input[name=\'license_number\']').value
+                };
+
+                fetch('/workspace/profile/ai-assist', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('input[name=\'_token\']').value
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(res => {
+                    if (!res.ok) throw new Error('AI Content generation failure.');
+                    return res.json();
+                })
+                .then(data => {
+                    if (data.suggestion) {
+                        if (type === 'bio') {
+                            document.querySelector('textarea[name=\'company_bio\']').value = data.suggestion;
+                        } else if (type === 'philosophy') {
+                            document.querySelector('textarea[name=\'work_philosophy\']').value = data.suggestion;
+                        }
+                    }
+                })
+                .catch(err => {
+                    alert('🛑 AI Assist Error: Failed to secure communication lines with the text model matrix.');
+                    console.error(err);
+                })
+                .finally(() => {
+                    if (type === 'bio') this.bioLoading = false;
+                    if (type === 'philosophy') this.philosophyLoading = false;
+                });
+            }
+        }" class="grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
 
             <nav class="space-y-1.5">
                 <button type="button" @click="currentTab = 'legitimacy'" :class="currentTab === 'legitimacy' ? 'bg-[#f58613] text-white shadow' : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200/60'" class="w-full text-left font-black text-xs uppercase tracking-wider py-4 px-4 rounded-xl transition-all flex items-center justify-between cursor-pointer outline-none border-0">
@@ -80,14 +126,12 @@
                 <form action="{{ route('workspace.profile.update') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                     @csrf
 
-                    <!-- TAB 1: IDENTITY CORE DETAILS WITH DEDICATED LOGO MATRIX -->
                     <div x-show="currentTab === 'legitimacy'" class="space-y-6">
                         <div>
                             <h3 class="text-base font-black text-slate-950 uppercase tracking-tight border-b border-slate-100 pb-2">Business Identity Pillars</h3>
                             <p class="text-xs text-slate-400 font-medium mt-1">Verify core structural variables that homeowners check first.</p>
                         </div>
 
-                        <!-- 🖼️ CORPORATE BRAND LOGO UPLOAD COMPONENT -->
                         <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-center gap-5 shadow-inner">
                             <div class="w-20 h-20 rounded-2xl bg-white border border-slate-300 shadow-sm flex items-center justify-center overflow-hidden shrink-0 relative bg-slate-50">
                                 <template x-if="logoPreview">
@@ -134,7 +178,6 @@
                         </div>
                     </div>
 
-                    <!-- TAB 2: BRAND BIO AND VALUE COPY WITH AI ASSIST NODES -->
                     <div x-show="currentTab === 'reliability'" class="space-y-6" x-cloak>
                         <div>
                             <h3 class="text-base font-black text-slate-950 uppercase tracking-tight border-b border-slate-100 pb-2">Human Element Configuration</h3>
@@ -144,8 +187,12 @@
                         <div>
                             <div class="flex items-center justify-between mb-1.5">
                                 <label class="block text-[10px] font-black uppercase text-slate-500 tracking-wider">Company Bio / Founder's Pitch</label>
-                                <button type="button" @click="alert('🤖 AI Assist Engine: Integration pending localized contractor prompt setup matrices.')" class="bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-black text-[9px] uppercase tracking-wider py-1 px-2 rounded-lg flex items-center gap-1 cursor-pointer transition-all active:scale-95 border-0">
-                                    ✨ AI Assist
+                                <button type="button"
+                                        @click="generateAiCopy('bio')"
+                                        :disabled="bioLoading"
+                                        class="bg-indigo-50 hover:bg-indigo-100 disabled:bg-slate-100 disabled:text-slate-400 text-indigo-700 font-black text-[9px] uppercase tracking-wider py-1 px-2.5 rounded-lg flex items-center gap-1 cursor-pointer transition-all active:scale-95 border-0 shadow-sm">
+                                    <span x-show="!bioLoading">✨ AI Assist</span>
+                                    <span x-show="bioLoading" x-cloak class="flex items-center gap-1 font-bold animate-pulse text-indigo-500">🔄 Drafting Bio...</span>
                                 </button>
                             </div>
                             <textarea name="company_bio" rows="4" placeholder="Describe who you are, how you serve locally, and why your specialization matters..." class="w-full bg-slate-50 border border-slate-300 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-medium focus:outline-none shadow-inner leading-relaxed text-slate-900">{{ old('company_bio', $company->company_bio ?? '') }}</textarea>
@@ -154,8 +201,12 @@
                         <div>
                             <div class="flex items-center justify-between mb-1.5">
                                 <label class="block text-[10px] font-black uppercase text-slate-500 tracking-wider">Work Philosophy / Customer Promise</label>
-                                <button type="button" @click="alert('🤖 AI Assist Engine: Integration pending localized contractor prompt setup matrices.')" class="bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-black text-[9px] uppercase tracking-wider py-1 px-2 rounded-lg flex items-center gap-1 cursor-pointer transition-all active:scale-95 border-0">
-                                    ✨ AI Assist
+                                <button type="button"
+                                        @click="generateAiCopy('philosophy')"
+                                        :disabled="philosophyLoading"
+                                        class="bg-indigo-50 hover:bg-indigo-100 disabled:bg-slate-100 disabled:text-slate-400 text-indigo-700 font-black text-[9px] uppercase tracking-wider py-1 px-2.5 rounded-lg flex items-center gap-1 cursor-pointer transition-all active:scale-95 border-0 shadow-sm">
+                                    <span x-show="!philosophyLoading">✨ AI Assist</span>
+                                    <span x-show="philosophyLoading" x-cloak class="flex items-center gap-1 font-bold animate-pulse text-indigo-500">🔄 Crafting Promise...</span>
                                 </button>
                             </div>
                             <textarea name="work_philosophy" rows="3" placeholder="e.g., We treat your home exactly like ours. We clean up completely and don't exit the footprint until you sign off on our craftsmanship." class="w-full bg-slate-50 border border-slate-300 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-medium focus:outline-none shadow-inner leading-relaxed text-slate-900">{{ old('work_philosophy', $company->work_philosophy ?? '') }}</textarea>
@@ -173,7 +224,6 @@
                         </div>
                     </div>
 
-                    <!-- TAB 3: VISUAL GALLERY ARCHIVE & INLINE THUMBNAILS PREVIEW -->
                     <div x-show="currentTab === 'gallery'" class="space-y-6" x-cloak>
                         <div>
                             <h3 class="text-base font-black text-slate-950 uppercase tracking-tight border-b border-slate-100 pb-2">Visual Production Gallery</h3>
@@ -244,7 +294,6 @@
                         @endif
                     </div>
 
-                    <!-- LOCK COMMIT FOOTER BAR -->
                     <div class="pt-6 border-t border-slate-100 flex items-center justify-end">
                         <button type="submit" class="bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-3.5 px-8 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer border-0 outline-none">
                             Lock In Trust Changes &rarr;
