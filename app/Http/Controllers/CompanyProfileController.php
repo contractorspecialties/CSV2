@@ -158,7 +158,7 @@ class CompanyProfileController extends Controller
     }
 
     /**
-     * 🧠 SECURE ENDPOINT: Narrative Creative Gemini Pro Tier Assist Handshaker
+     * 🧠 SECURE DIAGNOSTIC ENDPOINT: Flagship Creative Pro Tier Assist Handshaker
      */
     public function generateAiAssist(Request $request)
     {
@@ -180,7 +180,7 @@ class CompanyProfileController extends Controller
 
         $name = $validated['name'];
         $years = !empty($validated['years_in_business']) ? $validated['years_in_business'] . ' years' : 'multiple years';
-        $license = !empty($validated['license_number']) ? 'license reference tracking marker ' . $validated['license_number'] : 'fully legal, credentialed status';
+        $license = !empty($validated['license_number']) ? 'license credential ' . $validated['license_number'] : 'fully legal, credentialed status';
 
         $specialty = !empty($validated['signature_specialty']) ? $validated['signature_specialty'] : 'premium general trade crafts';
         $regions = !empty($validated['target_service_cities']) ? 'dispatching active service crews across ' . $validated['target_service_cities'] : 'serving local properties';
@@ -201,27 +201,25 @@ class CompanyProfileController extends Controller
         $vibeText = data_get($vibes, $validated['ideal_client_vibe'], 'providing top-tier trade services');
 
         if ($validated['type'] === 'bio') {
-            $systemInstruction = "You are a master brand copywriter for premium residential home service contractor directories. Your job is to draft an elegant, high-converting company biography paragraph. You must extrapolate and weave the context variables into a rich narrative paragraph that is at least 4 to 5 thorough, beautifully written sentences long. Use active, premium vocabulary. Do not wrap the output text in quotes.";
+            $systemInstruction = "You are an elite brand marketer for premium residential home service contractor directories. Your job is to draft an elegant, high-converting biography paragraph. You must extrapolate and weave the context variables into a detailed narrative paragraph that is exactly 4 to 5 thorough sentences long. Avoid short summaries.";
 
-            $userPrompt = "Write a comprehensive, professional company biography paragraph for '{$name}'. You are granted full creative license to extrapolate, connect ideas elegantly, and write a deep, detailed narrative using these parameters:\n"
+            $userPrompt = "Write a comprehensive, professional biography paragraph for the company '{$name}'. You must elaborate on each of these fields to build a cohesive text block:\n"
                 . "- Signature Specialty: They are experts at {$specialty}.\n"
                 . "- Regional Footprint: They serve homeowners across {$regions}.\n"
                 . "- Field Legacy: They bring over {$years} of active field presence.\n"
                 . "- Credentials: Verified as {$license}.\n"
                 . "- Operational Distinction: They operate by {$edgeText}.\n"
                 . "- Market Core Focus: They are widely recognized for {$vibeText}.\n\n"
-                . "Combine these elements into a fluid marketing paragraph that captures consumer trust immediately.";
+                . "Combine these parameters into a fluid marketing paragraph.";
         } else {
-            $systemInstruction = "You are an elite consumer psychologist and copywriter for top-tier trade groups. Your job is to draft a comprehensive, meaningful customer service promise paragraph. You must generate a substantial, heavy paragraph containing 4 detailed sentences focusing on workmanship pride and asset protection. Do not wrap the response in quotes.";
+            $systemInstruction = "You are an elite trade psychologist and copywriter for top-tier home repair groups. Your job is to draft a comprehensive customer service promise paragraph. You must generate a thorough text block that is exactly 4 sentences long focusing on workmanship pride, site cleanliness, and absolute financial visibility.";
 
-            $userPrompt = "Write an exhaustive customer commitment and workmanship philosophy paragraph written from the perspective of '{$name}'. Leverage their field record built across {$years} of service stability to expand on these core principles:\n"
+            $userPrompt = "Write a thorough customer commitment and workmanship philosophy paragraph from the perspective of '{$name}'. Draw leverage from their track record built across {$years} of service stability to expand dynamically on these core principles:\n"
                 . "- The Promise: They guarantee to execute their edge of {$edgeText}.\n"
-                . "- The Focus: They deliver elite results by {$vibeText}.\n\n"
-                . "Extrapolate heavily on how they protect the home's boundaries, maintain impeccable site conditions, and deliver full financial visibility from project discovery to final milestone sign-off.";
+                . "- The Focus: They deliver elite results by {$vibeText}.";
         }
 
         try {
-            // 🛡️ Upgraded route targets the flagship creative gemini-2.5-pro model endpoint
             $response = Http::withHeaders([
                 'x-goog-api-key' => $apiKey,
                 'Content-Type'   => 'application/json',
@@ -240,21 +238,34 @@ class CompanyProfileController extends Controller
                 ],
                 'generationConfig' => [
                     'temperature' => 1.0,
-                    'maxOutputTokens' => 700,
+                    'maxOutputTokens' => 800,
                 ]
             ]);
+
+            $responseJson = $response->json();
 
             if ($response->failed()) {
                 Log::error('Gemini Pro API framework gateway rejection: ' . $response->body());
                 return response()->json(['error' => 'API gateway rejected content streams. Response Status Code: ' . $response->status()], 502);
             }
 
-            $responseJson = $response->json();
             $suggestion = data_get($responseJson, 'candidates.0.content.parts.0.text');
 
+            // 🔍 EXTRACTION TELEMETRY: Inspect structural anomalies and output the precise reason
             if (empty($suggestion)) {
-                Log::error('Gemini Pro pass returned an unparsable body layout: ' . json_encode($responseJson));
-                return response()->json(['error' => 'Model engine output an unparsable content body layout.'], 502);
+                Log::error('Gemini Pro structural extraction failure: ' . json_encode($responseJson));
+
+                $finishReason = data_get($responseJson, 'candidates.0.finishReason');
+                $blockReason = data_get($responseJson, 'promptFeedback.blockReason');
+
+                if ($finishReason) {
+                    return response()->json(['error' => "Google blocked generation pass. Finish Code: {$finishReason}. (Likely flagged by strict PII or safety filters)."], 422);
+                }
+                if ($blockReason) {
+                    return response()->json(['error' => "Prompt payload blocked by Google gateway. Reason: {$blockReason}."], 422);
+                }
+
+                return response()->json(['error' => 'Model endpoint returned an empty response object structure.'], 502);
             }
 
             $cleanSuggestion = trim(str_replace(['`', '""'], '', $suggestion));
