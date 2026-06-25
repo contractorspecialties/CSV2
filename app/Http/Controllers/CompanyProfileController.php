@@ -21,10 +21,15 @@ class CompanyProfileController extends Controller
     {
         $user = Auth::user();
 
-        // Let Laravel handle the table prefix matching automatically from the connection engine config
-        $this->ensureSchemaIsHealed('companies');
+        // Restore dynamic prefix resolution matching your custom user layout
+        $userTable = (new User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+        $companyTable = $prefix . 'companies';
 
-        $company = DB::table('companies')->where('id', $user->company_id)->first();
+        // Run self-healing schema patcher safely without dangerous structural modifications
+        $this->ensureSchemaIsHealed($companyTable);
+
+        $company = DB::table($companyTable)->where('id', $user->company_id)->first();
 
         // Unpack portfolio paths cleanly using our anti-collision decoding filter
         $galleryImages = $this->safeJsonDecode($company->gallery_paths ?? null);
@@ -53,9 +58,13 @@ class CompanyProfileController extends Controller
             'remove_images'         => 'nullable|array',
         ]);
 
-        $this->ensureSchemaIsHealed('companies');
+        $userTable = (new User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+        $companyTable = $prefix . 'companies';
 
-        $company = DB::table('companies')->where('id', $user->company_id)->first();
+        $this->ensureSchemaIsHealed($companyTable);
+
+        $company = DB::table($companyTable)->where('id', $user->company_id)->first();
 
         // Load the existing active paths securely using the unrolling filter
         $currentGallery = $this->safeJsonDecode($company->gallery_paths ?? null);
@@ -112,7 +121,7 @@ class CompanyProfileController extends Controller
         $sanitizedGallery = array_values(array_filter($currentGallery));
 
         // 4. Persist flat updates using explicit unescaped slashing filters
-        DB::table('companies')
+        DB::table($companyTable)
             ->where('id', $user->company_id)
             ->update([
                 'name'                  => $validated['name'],
@@ -138,9 +147,13 @@ class CompanyProfileController extends Controller
      */
     public function show($slug)
     {
-        $this->ensureSchemaIsHealed('companies');
+        $userTable = (new User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+        $companyTable = $prefix . 'companies';
 
-        $company = DB::table('companies')->where('slug', $slug)->first();
+        $this->ensureSchemaIsHealed($companyTable);
+
+        $company = DB::table($companyTable)->where('slug', $slug)->first();
 
         if (!$company) {
             abort(404, 'Contractor profile workspace not found.');
@@ -185,13 +198,13 @@ class CompanyProfileController extends Controller
     }
 
     /**
-     * Runtime Plugin-Driven Database Self-Healing Structural Guard.
+     * Safe Plugin-Driven Database Self-Healing Structural Guard.
+     * Only builds missing columns, completely avoiding destructive request runtime alterations.
      */
     private function ensureSchemaIsHealed(string $tableName): void
     {
+        // Notice: We pass the explicit table name raw because your system bypasses the global prefix setting.
         if (Schema::hasTable($tableName)) {
-
-            // Phase A: Structural Verification
             Schema::table($tableName, function (Blueprint $table) use ($tableName) {
                 if (!Schema::hasColumn($tableName, 'logo_path')) {
                     $table->string('logo_path', 255)->nullable()->after('name');
@@ -218,15 +231,9 @@ class CompanyProfileController extends Controller
                     $table->string('warranty_details', 255)->nullable();
                 }
                 if (!Schema::hasColumn($tableName, 'gallery_paths')) {
+                    // Start as unconstrained text natively to prevent text string truncation issues
                     $table->longText('gallery_paths')->nullable();
                 }
-            });
-
-            // Phase B: Data Type Widening Guard (Upgrades column limits natively using clean migrations)
-            Schema::table($tableName, function (Blueprint $table) {
-                $table->longText('gallery_paths')->nullable()->change();
-                $table->text('company_bio')->nullable()->change();
-                $table->text('work_philosophy')->nullable()->change();
             });
         }
     }
