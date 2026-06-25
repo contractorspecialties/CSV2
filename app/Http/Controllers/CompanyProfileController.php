@@ -164,7 +164,6 @@ class CompanyProfileController extends Controller
         $years = !empty($validated['years_in_business']) ? $validated['years_in_business'] . ' years' : 'multiple years';
         $license = !empty($validated['license_number']) ? 'holding license reference ' . $validated['license_number'] : 'fully legal and credentialed';
 
-        // High-conversion marketing prompt layout matching architectural specifications
         if ($validated['type'] === 'bio') {
             $systemInstruction = "You are an expert residential consumer psychology marketer for top-tier general contractors. Your job is to draft a punchy, highly professional, trust-building corporate bio paragraph. Avoid generic buzzwords like 'cutting-edge', 'synergy', or 'passionate'. Focus entirely on trade reliability, verified legitimacy, local specialization, and immediate owner reassurance. Keep the response compact and under 130 words total.";
             $userPrompt = "Generate a professional contractor company biography for the business named '{$name}'. They have been operating active field service crews for {$years} and are {$license}. Output only the raw bio paragraph text, with no preamble, formatting tags, markdown, or chat text.";
@@ -174,29 +173,42 @@ class CompanyProfileController extends Controller
         }
 
         try {
+            // 🛡️ Upgraded request layout utilizing standard header authentication and system instruction blocks
             $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-            ])->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={$apiKey}", [
+                'x-goog-api-key' => $apiKey,
+                'Content-Type'   => 'application/json',
+            ])->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent", [
+                'system_instruction' => [
+                    'parts' => [
+                        ['text' => $systemInstruction]
+                    ]
+                ],
                 'contents' => [
                     [
                         'parts' => [
-                            ['text' => "System Context Directives:\n" . $systemInstruction . "\n\nUser Input Parameter Request:\n" . $userPrompt]
+                            ['text' => $userPrompt]
                         ]
                     ]
                 ],
                 'generationConfig' => [
                     'temperature' => 0.65,
-                    'maxOutputTokens' => 300,
+                    'maxOutputTokens' => 400,
                 ]
             ]);
 
             if ($response->failed()) {
                 Log::error('Gemini API endpoint rejected handshake payload: ' . $response->body());
-                return response()->json(['error' => 'API routing gateways rejected the text processing payload.'], 502);
+                return response()->json(['error' => 'API routing gateways rejected the text processing payload. Response Status: ' . $response->status()], 502);
             }
 
-            // Extract the generated text block natively from Google structural objects
-            $suggestion = $response->json('candidates.0.content.parts.0.text');
+            $responseJson = $response->json();
+            $suggestion = data_get($responseJson, 'candidates.0.content.parts.0.text');
+
+            if (empty($suggestion)) {
+                Log::error('Gemini API returned an unparsable structural format: ' . json_encode($responseJson));
+                return response()->json(['error' => 'Model endpoint returned an unparsable structural format.'], 502);
+            }
+
             $cleanSuggestion = trim(str_replace(['`', '""'], '', $suggestion));
 
             return response()->json(['suggestion' => $cleanSuggestion]);
