@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -20,15 +21,10 @@ class CompanyProfileController extends Controller
     {
         $user = Auth::user();
 
-        // Resolve prefix mapping safely matching your database context
-        $userTable = (new User())->getTable();
-        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
-        $companyTable = $prefix . 'companies';
+        // Let Laravel handle the table prefix matching automatically from the connection engine config
+        $this->ensureSchemaIsHealed('companies');
 
-        // Run self-healing schema patcher recursively on execution loops
-        $this->ensureSchemaIsHealed($companyTable);
-
-        $company = DB::table($companyTable)->where('id', $user->company_id)->first();
+        $company = DB::table('companies')->where('id', $user->company_id)->first();
 
         // Unpack portfolio paths cleanly using our anti-collision decoding filter
         $galleryImages = $this->safeJsonDecode($company->gallery_paths ?? null);
@@ -57,14 +53,11 @@ class CompanyProfileController extends Controller
             'remove_images'         => 'nullable|array',
         ]);
 
-        $userTable = (new User())->getTable();
-        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
-        $companyTable = $prefix . 'companies';
+        $this->ensureSchemaIsHealed('companies');
 
-        $this->ensureSchemaIsHealed($companyTable);
+        $company = DB::table('companies')->where('id', $user->company_id)->first();
 
-        $company = DB::table($companyTable)->where('id', $user->company_id)->first();
-
+        // Load the existing active paths securely using the unrolling filter
         $currentGallery = $this->safeJsonDecode($company->gallery_paths ?? null);
         $logoPath = $company->logo_path ?? null;
 
@@ -84,7 +77,7 @@ class CompanyProfileController extends Controller
             $logoPath = 'uploads/logos/' . $logoName;
         }
 
-        // 2. Process image removals if selected
+        // 2. Process image removals if flagged by checkbox purge hooks
         if (!empty($validated['remove_images'])) {
             foreach ($validated['remove_images'] as $imageToRemove) {
                 if (($key = array_search($imageToRemove, $currentGallery)) !== false) {
@@ -96,23 +89,14 @@ class CompanyProfileController extends Controller
             }
         }
 
-        // 3. EXPLOSIVE MULTI-FILE ARRAY INTERCEPTOR DECK
-        $galleryUploads = $request->file('new_gallery_images');
-        if (!empty($galleryUploads)) {
-            $filePool = is_array($galleryUploads) ? $galleryUploads : [$galleryUploads];
-
+        // 3. NATIVE MULTI-FILE FILEPICKER VALIDATION MATRIX
+        if ($request->hasFile('new_gallery_images')) {
             if (!file_exists(public_path('uploads/gallery'))) {
                 mkdir(public_path('uploads/gallery'), 0755, true);
             }
 
-            foreach ($filePool as $file) {
-                if ($file) {
-                    if (!$file->isValid()) {
-                        return back()->withInput()->withErrors([
-                            'error' => '🛑 Server Upload Throttled: One or more selected images exceed your server\'s current PHP allocation limits. Please adjust your upload_max_filesize configuration.'
-                        ]);
-                    }
-
+            foreach ($request->file('new_gallery_images') as $file) {
+                if ($file instanceof UploadedFile && $file->isValid()) {
                     if (count($currentGallery) >= 6) {
                         break;
                     }
@@ -124,10 +108,11 @@ class CompanyProfileController extends Controller
             }
         }
 
+        // Re-index target array parameters clean to avoid associative index formatting errors
         $sanitizedGallery = array_values(array_filter($currentGallery));
 
-        // 4. Persist flat updates to database using pristine unescaped string metrics
-        DB::table($companyTable)
+        // 4. Persist flat updates using explicit unescaped slashing filters
+        DB::table('companies')
             ->where('id', $user->company_id)
             ->update([
                 'name'                  => $validated['name'],
@@ -153,14 +138,9 @@ class CompanyProfileController extends Controller
      */
     public function show($slug)
     {
-        $userTable = (new User())->getTable();
-        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
-        $companyTable = $prefix . 'companies';
+        $this->ensureSchemaIsHealed('companies');
 
-        // Run self-healing schema patcher recursively on execution loops
-        $this->ensureSchemaIsHealed($companyTable);
-
-        $company = DB::table($companyTable)->where('slug', $slug)->first();
+        $company = DB::table('companies')->where('slug', $slug)->first();
 
         if (!$company) {
             abort(404, 'Contractor profile workspace not found.');
@@ -206,7 +186,6 @@ class CompanyProfileController extends Controller
 
     /**
      * Runtime Plugin-Driven Database Self-Healing Structural Guard.
-     * Hardens and updates structural column limits natively.
      */
     private function ensureSchemaIsHealed(string $tableName): void
     {
@@ -243,7 +222,7 @@ class CompanyProfileController extends Controller
                 }
             });
 
-            // Phase B: Data Type Widening Guard (Forces existing tables out of VARCHAR(255) constraints)
+            // Phase B: Data Type Widening Guard (Upgrades column limits natively using clean migrations)
             Schema::table($tableName, function (Blueprint $table) {
                 $table->longText('gallery_paths')->nullable()->change();
                 $table->text('company_bio')->nullable()->change();
