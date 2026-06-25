@@ -46,17 +46,24 @@ class CompanyProfileController extends Controller
         $user = Auth::user();
 
         $validated = $request->validate([
-            'name'                  => 'required|string|max:255',
-            'logo'                  => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'company_bio'           => 'nullable|string|max:1000',
-            'work_philosophy'       => 'nullable|string|max:1000',
-            'years_in_business'     => 'nullable|integer|min:0|max:100',
-            'license_number'        => 'nullable|string|max:100',
-            'insurance_badge'       => 'nullable|boolean',
-            'typical_response_time' => 'required|string|max:100',
-            'warranty_details'      => 'nullable|string|max:255',
-            'new_gallery_images.*'  => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
-            'remove_images'         => 'nullable|array',
+            'name'                        => 'required|string|max:255',
+            'logo'                        => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'company_bio'                 => 'nullable|string|max:1000',
+            'work_philosophy'             => 'nullable|string|max:1000',
+            'years_in_business'           => 'nullable|integer|min:0|max:100',
+            'license_number'              => 'nullable|string|max:100',
+            'insurance_badge'             => 'nullable|boolean',
+            'typical_response_time'       => 'required|string|max:100',
+            'warranty_details'            => 'nullable|string|max:255',
+            'new_gallery_images.*'        => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
+            'remove_images'               => 'nullable|array',
+
+            // Directory Positioning Parameters
+            'signature_specialty'         => 'nullable|string|max:255',
+            'target_service_cities'       => 'nullable|string|max:255',
+            'competitive_advantage'       => 'nullable|string|max:100',
+            'ideal_client_vibe'           => 'nullable|string|max:100',
+            'monetization_routing_phone'  => 'nullable|string|max:50',
         ]);
 
         $userTable = (new User())->getTable();
@@ -125,17 +132,24 @@ class CompanyProfileController extends Controller
         DB::table($companyTable)
             ->where('id', $user->company_id)
             ->update([
-                'name'                  => $validated['name'],
-                'logo_path'             => $logoPath,
-                'company_bio'           => $validated['company_bio'],
-                'work_philosophy'       => $validated['work_philosophy'],
-                'years_in_business'     => $validated['years_in_business'],
-                'license_number'        => $validated['license_number'],
-                'insurance_badge'       => $request->has('insurance_badge') ? 1 : 0,
-                'typical_response_time' => $validated['typical_response_time'],
-                'warranty_details'      => $validated['warranty_details'],
-                'gallery_paths'         => json_encode($sanitizedGallery, JSON_UNESCAPED_SLASHES),
-                'updated_at'            => now(),
+                'name'                        => $validated['name'],
+                'logo_path'                   => $logoPath,
+                'company_bio'                 => $validated['company_bio'],
+                'work_philosophy'             => $validated['work_philosophy'],
+                'years_in_business'           => $validated['years_in_business'],
+                'license_number'              => $validated['license_number'],
+                'insurance_badge'             => $request->has('insurance_badge') ? 1 : 0,
+                'typical_response_time'       => $validated['typical_response_time'],
+                'warranty_details'            => $validated['warranty_details'],
+                'gallery_paths'               => json_encode($sanitizedGallery, JSON_UNESCAPED_SLASHES),
+
+                // Save Directory Layout Positioning Fields Permanently
+                'signature_specialty'         => $validated['signature_specialty'] ?? null,
+                'target_service_cities'       => $validated['target_service_cities'] ?? null,
+                'competitive_advantage'       => $validated['competitive_advantage'] ?? null,
+                'ideal_client_vibe'           => $validated['ideal_client_vibe'] ?? null,
+                'monetization_routing_phone'  => $validated['monetization_routing_phone'] ?? null,
+                'updated_at'                  => now(),
             ]);
 
         Log::info("👑 Trust Engine Profile updated dynamically for Company ID: {$user->company_id}");
@@ -154,23 +168,48 @@ class CompanyProfileController extends Controller
         }
 
         $validated = $request->validate([
-            'type'              => 'required|in:bio,philosophy',
-            'name'              => 'required|string|max:255',
-            'years_in_business' => 'nullable|string|max:10',
-            'license_number'    => 'nullable|string|max:100',
+            'type'                  => 'required|in:bio,philosophy',
+            'name'                  => 'required|string|max:255',
+            'years_in_business'     => 'nullable|string|max:10',
+            'license_number'        => 'nullable|string|max:100',
+
+            // Wizard context indicators ingested safely into payload building passes
+            'signature_specialty'   => 'nullable|string|max:255',
+            'target_service_cities' => 'nullable|string|max:255',
+            'competitive_advantage' => 'nullable|string|max:100',
+            'ideal_client_vibe'     => 'nullable|string|max:100'
         ]);
 
         $name = $validated['name'];
         $years = !empty($validated['years_in_business']) ? $validated['years_in_business'] . ' years' : 'multiple years';
         $license = !empty($validated['license_number']) ? 'holding active credential number ' . $validated['license_number'] : 'fully legal and credentialed';
 
-        // 🛡️ RE-PROMPTING PASSPORT: Forcing structural variety to prevent single-sentence collapse
+        $specialty = !empty($validated['signature_specialty']) ? $validated['signature_specialty'] : 'premium general trade crafts';
+        $regions = !empty($validated['target_service_cities']) ? 'proudly dispatching across ' . $validated['target_service_cities'] : 'serving local properties';
+
+        // Translate the wizard choice keys into rich marketing parameters
+        $advantages = [
+            'owner_onsite' => 'maintaining an owner on-site policy to personally oversee every framing and structural construction pass',
+            'rapid_response' => 'enforcing a rigid 15-minute communication guarantee to ensure no property owner is left waiting for updates',
+            'clean_site' => 'adhering to an immaculate zero-mess site policy, guaranteeing your residential footprint is left cleaner than we found it',
+            'transparent_pricing' => 'delivering absolute upfront line-item pricing visibility to completely eliminate hidden fees and unexpected budget creep'
+        ];
+        $edgeText = data_get($advantages, $validated['competitive_advantage'], 'delivering premium structural craftsmanship guarantees');
+
+        $vibes = [
+            'premium_custom' => 'specializing heavily in custom architectural transformations and premium property masterworks',
+            'dependable_remodel' => 'delivering dependable residential remodels, structural additions, and modern renovations',
+            'fast_track_repairs' => 'executing rapid-turnaround home restorations and immediate structural specialty field repairs'
+        ];
+        $vibeText = data_get($vibes, $validated['ideal_client_vibe'], 'providing top-tier trade services');
+
+        // 🛡️ PROMPT RE-WEIGHTING PASSPORT: Injecting the detailed positioning template rules
         if ($validated['type'] === 'bio') {
-            $systemInstruction = "You are a professional conversion copywriter for elite general contractors. Your job is to draft a rich, trust-building professional bio paragraph. You must provide a complete, deep paragraph containing exactly 4 descriptive sentences following this template layout sequence:\nSentence 1: State the company's regional specialization and long-standing presence.\nSentence 2: Highlight how their {$years} of hands-on experience translates to absolute operational reliability.\nSentence 3: Explicitly mention their verified trade credentials and dedication to home safety.\nSentence 4: Conclude with a strong statement on their commitment to seamless homeowner communication.";
-            $userPrompt = "Compose a detailed 4-sentence contractor profile biography paragraph for the company '{$name}', who has been active for {$years} and is {$license}. Follow the system template strictly. Output only the clean plain-text paragraph.";
+            $systemInstruction = "CORE ROLE: Elite consumer psychology marketer specializing in home service contractor branding. TASK: Draft a robust, high-converting company biography paragraph. CRITICAL RULE: You must write a complete, substantive paragraph containing exactly 4 detailed, well-rounded sentences following this structure template:\nSentence 1: State the business name, their absolute core specialty, and their exact regional dispatch footprint.\nSentence 2: Highlight how their {$years} of hands-on experience allows them to masterfully execute high-value projects.\nSentence 3: Build trust by mentioning their active licensing status and their competitive service execution edge.\nSentence 4: Wrap up by summarizing their specific focus area and dedication to clear homeowner communication pathways.";
+            $userPrompt = "Write a comprehensive 4-sentence profile biography for the contractor company '{$name}'. They specialize in '{$specialty}', {$regions}, have been active for {$years}, are verified as {$license}, operate with an advantage of '{$edgeText}', and focus on '{$vibeText}'. Follow the sentence-by-sentence structure rules exactly. Provide only the raw plain-text paragraph with no markdown or formatting headers.";
         } else {
-            $systemInstruction = "You are a master brand reputation engineer for premium trade contractors. Your job is to write a detailed customer commitment pledge paragraph. You must provide a complete, deep paragraph containing exactly 3 to 4 substantial sentences following this structural sequence:\nSentence 1: Express their foundational focus on protecting the homeowner's property and layout boundaries.\nSentence 2: Detail their strict clean job-site rules and zero-mess site policy.\nSentence 3: Solidify their ironclad craftsmanship guarantees and pride in execution values.\nSentence 4: Guarantee clear, upfront pricing and total milestone transparency.";
-            $userPrompt = "Compose a substantial 4-sentence customer promise paragraph written from the perspective of '{$name}', backed by {$years} of market experience. Follow the structural template sequence exactly. Output only the raw plain-text paragraph.";
+            $systemInstruction = "CORE ROLE: Premium brand reputation manager for construction specialties. TASK: Draft a substantial customer commitment pledge paragraph. CRITICAL RULE: You must write a full, cohesive paragraph containing exactly 4 thorough sentences following this explicit template structure:\nSentence 1: Express their client-first approach when stepping into a property layout boundary.\nSentence 2: Detail their execution values regarding job site safety and their clean workspace rules.\nSentence 3: Detail their workmanship warranty rules and why their operational advantage sets them apart.\nSentence 4: Guarantee straightforward project milestone transparency and budget tracking parameters.";
+            $userPrompt = "Write a complete 4-sentence customer promise paragraph for '{$name}', drawing leverage from their track record built over {$years} of active service. Weave in their competitive stance of '{$edgeText}' and their approach of '{$vibeText}'. Start directly with the pledge. Provide only the plain text paragraph.";
         }
 
         try {
@@ -302,6 +341,23 @@ class CompanyProfileController extends Controller
                 }
                 if (!Schema::hasColumn($tableName, 'gallery_paths')) {
                     $table->longText('gallery_paths')->nullable();
+                }
+
+                // Self-Healing Core Positioning Schema Updates
+                if (!Schema::hasColumn($tableName, 'signature_specialty')) {
+                    $table->string('signature_specialty', 255)->nullable()->after('license_number');
+                }
+                if (!Schema::hasColumn($tableName, 'target_service_cities')) {
+                    $table->string('target_service_cities', 255)->nullable()->after('signature_specialty');
+                }
+                if (!Schema::hasColumn($tableName, 'competitive_advantage')) {
+                    $table->string('competitive_advantage', 100)->nullable()->after('target_service_cities');
+                }
+                if (!Schema::hasColumn($tableName, 'ideal_client_vibe')) {
+                    $table->string('ideal_client_vibe', 100)->nullable()->after('competitive_advantage');
+                }
+                if (!Schema::hasColumn($tableName, 'monetization_routing_phone')) {
+                    $table->string('monetization_routing_phone', 50)->nullable()->after('ideal_client_vibe');
                 }
             });
         }
