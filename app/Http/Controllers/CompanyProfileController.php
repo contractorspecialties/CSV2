@@ -144,7 +144,7 @@ class CompanyProfileController extends Controller
     }
 
     /**
-     * 🧠 SECURE ENDPOINT: Production GA Tier Gemini Assist Engine Handshaker
+     * 🧠 SECURE ENDPOINT: Template-Driven Gemini Assist Engine Handshaker
      */
     public function generateAiAssist(Request $request)
     {
@@ -162,18 +162,18 @@ class CompanyProfileController extends Controller
 
         $name = $validated['name'];
         $years = !empty($validated['years_in_business']) ? $validated['years_in_business'] . ' years' : 'multiple years';
-        $license = !empty($validated['license_number']) ? 'holding active trade license ' . $validated['license_number'] : 'fully legal and credentialed';
+        $license = !empty($validated['license_number']) ? 'holding active credential number ' . $validated['license_number'] : 'fully legal and credentialed';
 
+        // 🛡️ RE-PROMPTING PASSPORT: Forcing structural variety to prevent single-sentence collapse
         if ($validated['type'] === 'bio') {
-            $systemInstruction = "CORE ROLE: Expert consumer psychology copywriter for high-end local home service contractors. TASK: Draft a robust, trust-building contractor bio paragraph. ADJECTIVE BAN: Avoid low-value buzzwords like 'cutting-edge', 'synergy', or 'passionate'. STRUCTURE CONSTRAINT: Write exactly 3 to 5 clear, highly detailed sentences outlining localized project execution stability, trade competence, and owner protection focus.";
-            $userPrompt = "Write a comprehensive 3-to-5 sentence contractor profile bio paragraph for the company '{$name}'. They have been operating active field service crews in this region for {$years} and are {$license}. Start directly with the business context description payload. Output only the clean plain-text paragraph with no extra conversational filler.";
+            $systemInstruction = "You are a professional conversion copywriter for elite general contractors. Your job is to draft a rich, trust-building professional bio paragraph. You must provide a complete, deep paragraph containing exactly 4 descriptive sentences following this template layout sequence:\nSentence 1: State the company's regional specialization and long-standing presence.\nSentence 2: Highlight how their {$years} of hands-on experience translates to absolute operational reliability.\nSentence 3: Explicitly mention their verified trade credentials and dedication to home safety.\nSentence 4: Conclude with a strong statement on their commitment to seamless homeowner communication.";
+            $userPrompt = "Compose a detailed 4-sentence contractor profile biography paragraph for the company '{$name}', who has been active for {$years} and is {$license}. Follow the system template strictly. Output only the clean plain-text paragraph.";
         } else {
-            $systemInstruction = "CORE ROLE: Premium brand reputation manager for elite construction and property improvement specialities. TASK: Draft a robust customer value philosophy guarantee promise paragraph. STRUCTURE CONSTRAINT: Write exactly 3 to 4 substantial, authoritative sentences detailing specific property protection standards, clean job site rules, absolute workmanship pride, and total invoicing transparency. Avoid single-line slogans.";
-            $userPrompt = "Write a comprehensive 3-to-4 sentence customer pledge statement paragraph from the perspective of '{$name}'. Highlight their clear workmanship values backed by {$years} of field care stability. Start directly with the promise narrative block. Provide only the clean text raw paragraph.";
+            $systemInstruction = "You are a master brand reputation engineer for premium trade contractors. Your job is to write a detailed customer commitment pledge paragraph. You must provide a complete, deep paragraph containing exactly 3 to 4 substantial sentences following this structural sequence:\nSentence 1: Express their foundational focus on protecting the homeowner's property and layout boundaries.\nSentence 2: Detail their strict clean job-site rules and zero-mess site policy.\nSentence 3: Solidify their ironclad craftsmanship guarantees and pride in execution values.\nSentence 4: Guarantee clear, upfront pricing and total milestone transparency.";
+            $userPrompt = "Compose a substantial 4-sentence customer promise paragraph written from the perspective of '{$name}', backed by {$years} of market experience. Follow the structural template sequence exactly. Output only the raw plain-text paragraph.";
         }
 
         try {
-            // 🛡️ Upgraded destination parameter routing maps explicitly to production-grade gemini-2.5-flash engines
             $response = Http::withHeaders([
                 'x-goog-api-key' => $apiKey,
                 'Content-Type'   => 'application/json',
@@ -181,12 +181,12 @@ class CompanyProfileController extends Controller
                 'contents' => [
                     [
                         'parts' => [
-                            ['text' => "System Directives & Rules:\n" . $systemInstruction . "\n\nContext Execution Request:\n" . $userPrompt]
+                            ['text' => "Role Requirements & Output Template Rules:\n" . $systemInstruction . "\n\nDynamic Context Parameters:\n" . $userPrompt]
                         ]
                     ]
                 ],
                 'generationConfig' => [
-                    'temperature' => 0.7,
+                    'temperature' => 0.75,
                     'maxOutputTokens' => 500,
                 ]
             ]);
