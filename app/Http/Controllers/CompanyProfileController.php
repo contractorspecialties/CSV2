@@ -158,7 +158,7 @@ class CompanyProfileController extends Controller
     }
 
     /**
-     * 🧠 SECURE ENDPOINT: High-Volume Volume-Triggered Gemini Assist Handshaker
+     * 🧠 SECURE ENDPOINT: Root-Level System Instruction API Matrix Handshaker
      */
     public function generateAiAssist(Request $request)
     {
@@ -180,10 +180,10 @@ class CompanyProfileController extends Controller
 
         $name = $validated['name'];
         $years = !empty($validated['years_in_business']) ? $validated['years_in_business'] . ' years' : 'multiple years';
-        $license = !empty($validated['license_number']) ? 'license identifier ' . $validated['license_number'] : 'fully legal, credentialed status';
+        $license = !empty($validated['license_number']) ? 'license tracking reference ' . $validated['license_number'] : 'fully legal, credentialed status';
 
         $specialty = !empty($validated['signature_specialty']) ? $validated['signature_specialty'] : 'premium general trade crafts';
-        $regions = !empty($validated['target_service_cities']) ? 'dispatching crews across ' . $validated['target_service_cities'] : 'serving our local neighborhoods';
+        $regions = !empty($validated['target_service_cities']) ? 'proudly dispatching service crews across ' . $validated['target_service_cities'] : 'serving local properties';
 
         $advantages = [
             'owner_onsite' => 'maintaining a strict owner on-site policy to personally oversee every single framing and structural pass',
@@ -200,30 +200,29 @@ class CompanyProfileController extends Controller
         ];
         $vibeText = data_get($vibes, $validated['ideal_client_vibe'], 'providing top-tier trade services');
 
-        // ✨ POSITIVE VOLUME TRIGGERS: Shift focus from restrictions to descriptive expansion
         if ($validated['type'] === 'bio') {
-            $systemInstruction = "You are an expert consumer psychology copywriter for high-traffic local contractor directories. Your goal is to write a detailed, substantial company biography. You must generate a long, thick, comprehensive paragraph of at least 150 words. Focus heavily on building localized trade authority and trust.";
+            $systemInstruction = "You are an elite conversion copywriter for local contractor directories. Your job is to draft a comprehensive, trust-building company profile biography. You must generate a substantive narrative block containing 4 to 5 highly descriptive sentences. Avoid generic corporate buzzwords. Do not wrap the text in quotes.";
 
-            $userPrompt = "Write a long, highly detailed company biography paragraph for '{$name}'. You must thoroughly weave all the following details into a fluid, multi-sentence narrative asset:\n"
-                . "- Core Specialty Focus: They excel at {$specialty}\n"
-                . "- Service Area Boundaries: Proudly {$regions}\n"
-                . "- Field History Profile: Operating field crews for over {$years}\n"
-                . "- Trade Credentials: Fully legal, verified as {$license}\n"
-                . "- Execution Distinction: Their main advantage relies on {$edgeText}\n"
-                . "- Project Scope Tier: They are widely recognized for {$vibeText}\n\n"
-                . "Make the paragraph comprehensive, descriptive, welcoming, and thorough. Ensure it is a full, thick block of text containing multiple sentences that explain these values clearly to a property owner looking to hire them.";
+            $userPrompt = "Write a comprehensive contractor company biography for the business named '{$name}'. You must expand the text to thoroughly weave in every one of these details across multiple distinct sentences:\n"
+                . "1. Specialty: They specialize in {$specialty}.\n"
+                . "2. Location: They serve homeowners across {$regions}.\n"
+                . "3. Experience: They bring over {$years} of hands-on field expertise.\n"
+                . "4. Legitimacy: They are fully legal, {$license}.\n"
+                . "5. Advantage: Their competitive signature edge relies on {$edgeText}.\n"
+                . "6. Project Focus: They are widely recognized for {$vibeText}.\n\n"
+                . "Elaborate on each point to create a professional paragraph that demonstrates expertise.";
         } else {
-            $systemInstruction = "You are a master brand reputation engineer for premium trade construction operations. Your goal is to write a detailed, substantive customer commitment promise. You must generate a thick, comprehensive paragraph of at least 130 words focusing on craftsmanship values and project execution safety.";
+            $systemInstruction = "You are a premium brand reputation engineer for elite construction specialties. Your job is to draft a thorough customer value commitment pledge. You must generate a substantial paragraph containing 3 to 4 thorough sentences detailing field protection rules and craftsmanship pride. Do not wrap the text in quotes.";
 
-            $userPrompt = "Write a long, complete customer promise and work philosophy paragraph from the perspective of '{$name}'. Thoroughly build out a multi-sentence narrative block incorporating these specific parameter values:\n"
-                . "- Service Track Record: Built across {$years} of reliable service\n"
-                . "- Project Execution Stance: They commit to {$edgeText}\n"
-                . "- Project Customization Tier: They excel at {$vibeText}\n\n"
-                . "Ensure the response is a substantial, comprehensive paragraph with multiple thorough sentences that outline an ironclad commitment to the client's home layout, site cleanliness, financial transparency, and project success.";
+            $userPrompt = "Write a substantial customer promise statement paragraph from the perspective of '{$name}'. Weave these specific parameters into a fluid multi-sentence narrative block:\n"
+                . "1. Experience: Backed by over {$years} of reliable local field presence.\n"
+                . "2. Competitive Edge: They strictly follow their promise of {$edgeText}.\n"
+                . "3. Service Standard: They ensure high-end results by {$vibeText}.\n\n"
+                . "Elaborate thoroughly on their dedication to structural site protection, cleanliness, communication updates, and craftsmanship warranties.";
         }
 
         try {
-            // 🛡️ Utilizing native, structured root-level systemInstruction arrays
+            // 🛡️ Restructured payload isolating the ambient systemInstruction from content matrices
             $response = Http::withHeaders([
                 'x-goog-api-key' => $apiKey,
                 'Content-Type'   => 'application/json',
@@ -241,7 +240,7 @@ class CompanyProfileController extends Controller
                     ]
                 ],
                 'generationConfig' => [
-                    'temperature' => 0.75,
+                    'temperature' => 1.0, // Restored to full canonical generation specs to prevent compression behavior
                     'maxOutputTokens' => 600,
                 ]
             ]);
@@ -259,7 +258,6 @@ class CompanyProfileController extends Controller
                 return response()->json(['error' => 'Model engine output an unparsable content body layout.'], 502);
             }
 
-            // Strips trailing symbols but keeps all punctuation and whitespace blocks intact
             $cleanSuggestion = trim(str_replace(['`', '""'], '', $suggestion));
 
             return response()->json(['suggestion' => $cleanSuggestion]);
