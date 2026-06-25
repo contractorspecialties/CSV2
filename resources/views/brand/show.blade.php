@@ -6,25 +6,30 @@
     <title>{{ $company->name }} | Verified Contractor Profile</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>[x-cloak] { display: none !important; }</style>
 </head>
-<body class="bg-slate-50 text-slate-900 font-sans antialiased selection:bg-[#f58613] selection:text-white">
+<body class="bg-slate-50 text-slate-900 font-sans antialiased selection:bg-[#f58613] selection:text-white"
+      x-data="{
+          lightboxOpen: false,
+          activeIndex: 0,
+          imagePool: {{ json_encode(array_map(fn($img) => asset($img), $galleryImages)) }}
+      }"
+      @keydown.window.escape="lightboxOpen = false"
+      @keydown.window.arrow-left="if(lightboxOpen) activeIndex = (activeIndex === 0) ? imagePool.length - 1 : activeIndex - 1"
+      @keydown.window.arrow-right="if(lightboxOpen) activeIndex = (activeIndex === imagePool.length - 1) ? 0 : activeIndex + 1">
 
-    <!-- Trust Guard Bar -->
-    <div class="bg-slate-950 text-white text-center py-2.5 px-4 border-b border-slate-900 text-[10px] font-black uppercase tracking-widest">
+    <div class="bg-slate-950 text-white text-center py-2.5 px-4 border-b border-slate-900 text-[10px] font-black uppercase tracking-widest select-none">
         🛡️ Secure Identity Profile • Verified Corporate Member of ContractorSpecialties Network
     </div>
 
-    <!-- Main Viewport Layout -->
     <div class="max-w-4xl mx-auto px-4 py-10 space-y-8">
 
-        <!-- Header: Legitimacy & Identity Anchor Card -->
         <div class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
             <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
 
-                <!-- Brand Mark Logo Container with Dynamic Fallback -->
                 <div class="w-24 h-24 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-center p-2 shadow-inner shrink-0 overflow-hidden">
                     @if(!empty($company->logo_path))
-                        <img src="/{{ $company->logo_path }}" class="w-full h-full object-contain" alt="{{ $company->name }} Logo">
+                        <img src="{{ asset($company->logo_path) }}" class="w-full h-full object-contain" alt="{{ $company->name }} Logo">
                     @else
                         <div class="text-center">
                             <span class="text-3xl block select-none">🏢</span>
@@ -50,7 +55,6 @@
                 </div>
             </div>
 
-            <!-- Social Proof Star Anchor Row -->
             <div class="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 text-center shrink-0 w-full sm:w-auto">
                 <div class="text-2xl font-black font-mono text-slate-950 leading-none">4.9</div>
                 <div class="text-[#f58613] text-sm tracking-tighter my-1">★★★★★</div>
@@ -60,10 +64,8 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
 
-            <!-- Left Side Core Narrative Column Matrix -->
             <div class="md:col-span-2 space-y-6">
 
-                <!-- Personal Reliability Deck -->
                 @if(!empty($company->company_bio))
                     <div class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-3">
                         <h3 class="text-xs font-black uppercase text-slate-400 tracking-wider">About Our Operation</h3>
@@ -80,14 +82,19 @@
                     </div>
                 @endif
 
-                <!-- Visual Proof Photo Grid -->
                 @if(!empty($galleryImages) && count($galleryImages) > 0)
                     <div class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
                         <h3 class="text-xs font-black uppercase text-slate-400 tracking-wider">Showcase Proof of Recent Work</h3>
                         <div class="grid grid-cols-2 gap-3">
-                            @foreach($galleryImages as $img)
-                                <div class="rounded-2xl border border-slate-100 overflow-hidden aspect-video bg-slate-50 shadow-sm">
-                                    <img src="/{{ $img }}" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300" alt="Job site showcase photography">
+                            @foreach($galleryImages as $index => $img)
+                                <div @click="lightboxOpen = true; activeIndex = {{ $index }}"
+                                     class="rounded-2xl border border-slate-200 overflow-hidden aspect-video bg-slate-100 shadow-sm relative group cursor-pointer">
+                                    <img src="{{ asset($img) }}" class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300" alt="Job site showcase photography">
+                                    <div class="absolute inset-0 bg-slate-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <span class="bg-white/90 backdrop-blur-sm text-slate-950 font-black text-[10px] uppercase tracking-wider py-2 px-3.5 rounded-xl shadow-sm">
+                                            🔍 View Project
+                                        </span>
+                                    </div>
                                 </div>
                             @endforeach
                         </div>
@@ -95,10 +102,8 @@
                 @endif
             </div>
 
-            <!-- Right Side Sidebar Checklist Array -->
             <div class="space-y-6">
 
-                <!-- Guarantees & Credentials Quick Matrix -->
                 <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
                     <h3 class="text-xs font-black uppercase text-slate-400 tracking-wider border-b border-slate-100 pb-2">Compliance & Safety</h3>
 
@@ -143,7 +148,6 @@
                     </div>
                 </div>
 
-                <!-- Instant Action Button Card -->
                 <div class="bg-slate-950 border border-slate-900 rounded-3xl p-6 shadow-xl text-white text-center space-y-4">
                     <div class="space-y-1">
                         <h4 class="font-black text-xs text-[#f58613] uppercase tracking-widest">Need Immediate Attention?</h4>
@@ -155,6 +159,104 @@
                 </div>
 
             </div>
+        </div>
+    </div>
+
+    <div x-show="lightboxOpen"
+         x-cloak
+         class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/95 backdrop-blur-md p-4 sm:p-6 select-none"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0 scale-95"
+         x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95">
+
+        <div class="absolute inset-0 z-10" @click="lightboxOpen = false"></div>
+
+        <button type="button" @click="lightboxOpen = false" class="absolute top-4 right-4 z-50 text-slate-400 hover:text-white text-2xl font-black bg-slate-900/60 border border-slate-800 p-2 rounded-xl cursor-pointer transition-colors outline-none">
+            ✕
+        </button>
+
+        <div class="relative z-20 w-full max-w-5xl bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-2xl grid grid-cols-1 md:grid-cols-3 max-h-[90vh] md:max-h-[80vh]">
+
+            <div class="md:col-span-2 bg-slate-950 relative flex items-center justify-center min-h-[300px] md:min-h-[450px] overflow-hidden">
+                <img :src="imagePool[activeIndex]" class="max-w-full max-h-[50vh] md:max-h-[75vh] object-contain select-none" alt="Enlarged visual confirmation asset">
+
+                <div class="absolute bottom-4 left-4 bg-slate-900/80 backdrop-blur border border-slate-800 text-[10px] font-mono font-black text-slate-300 px-2.5 py-1 rounded-lg">
+                    <span x-text="activeIndex + 1"></span> / <span x-text="imagePool.length"></span> PHOTO
+                </div>
+
+                <button type="button"
+                        @click="activeIndex = (activeIndex === 0) ? imagePool.length - 1 : activeIndex - 1"
+                        class="absolute left-3 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-slate-900/70 border border-slate-800 text-white font-black flex items-center justify-center hover:bg-black transition-colors shadow outline-none cursor-pointer">
+                    &larr;
+                </button>
+
+                <button type="button"
+                        @click="activeIndex = (activeIndex === imagePool.length - 1) ? 0 : activeIndex + 1"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-slate-900/70 border border-slate-800 text-white font-black flex items-center justify-center hover:bg-black transition-colors shadow outline-none cursor-pointer">
+                    &rarr;
+                </button>
+            </div>
+
+            <div class="bg-white p-6 md:p-8 flex flex-col justify-between overflow-y-auto border-t md:border-t-0 md:border-l border-slate-200">
+                <div class="space-y-5">
+                    <div>
+                        <span class="text-[9px] bg-orange-50 text-[#f58613] font-black tracking-widest uppercase px-2 py-0.5 rounded border border-orange-100 shadow-sm">
+                            Artifact Proof Folder
+                        </span>
+                        <h4 class="text-base font-black uppercase text-slate-950 tracking-tight mt-1.5">Project Field Capture</h4>
+
+                        @if(!empty($company->city))
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
+                                Market Domain: <span class="text-slate-900 font-black">{{ $company->city }}, {{ strtoupper($company->state ?? '') }}</span>
+                            </p>
+                        @endif
+                    </div>
+
+                    <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-3.5 text-xs font-semibold text-slate-600 shadow-inner">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-sm">🛡️</span>
+                            <div>
+                                <div class="text-[9px] font-black uppercase text-slate-400 tracking-wider">Corporate Wrapper</div>
+                                <div class="text-slate-900 font-bold leading-tight">{{ $company->name }}</div>
+                            </div>
+                        </div>
+
+                        @if(!empty($company->license_number))
+                            <div class="flex items-center gap-2.5 border-t border-slate-200/50 pt-2.5">
+                                <span class="text-sm">📋</span>
+                                <div>
+                                    <div class="text-[9px] font-black uppercase text-slate-400 tracking-wider">Credential ID</div>
+                                    <div class="text-slate-700 font-mono font-bold leading-tight">{{ $company->license_number }}</div>
+                                </div>
+                            </div>
+                        @endif
+
+                        @if(!empty($company->warranty_details))
+                            <div class="flex items-center gap-2.5 border-t border-slate-200/50 pt-2.5">
+                                <span class="text-sm">✨</span>
+                                <div>
+                                    <div class="text-[9px] font-black uppercase text-slate-400 tracking-wider">Protection Policy</div>
+                                    <div class="text-emerald-700 font-black uppercase text-[10px] tracking-tight leading-tight">{{ $company->warranty_details }}</div>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+
+                    <p class="text-[11px] text-slate-400 font-medium leading-relaxed italic bg-slate-50/50 p-3 rounded-xl border border-slate-200/40">
+                        💡 "This dynamic project image constitutes documented proof of standard local workmanship parameters and compliance values cataloged within our public consumer framework map."
+                    </p>
+                </div>
+
+                <div class="pt-6 border-t border-slate-100">
+                    <a href="tel:{{ $company->sms_phone_number ?? '' }}" class="block w-full text-center bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-3.5 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer">
+                        📞 Request Similar Scope
+                    </a>
+                </div>
+            </div>
+
         </div>
     </div>
 
