@@ -148,9 +148,10 @@ class CompanyProfileController extends Controller
      */
     public function generateAiAssist(Request $request)
     {
-        $apiKey = env('GEMINI_API_KEY');
+        // 🛡️ Bypassed the unstable env() trap by reading directly from cached services mapping blocks
+        $apiKey = config('services.gemini.key');
         if (empty($apiKey)) {
-            return response()->json(['error' => 'Gemini API operational token is missing inside framework environments.'], 500);
+            return response()->json(['error' => 'Gemini API operational token is missing inside cached configurations.'], 500);
         }
 
         $validated = $request->validate([
@@ -173,7 +174,6 @@ class CompanyProfileController extends Controller
         }
 
         try {
-            // 🛡️ Mapped to the rock-solid gemini-1.5-flash stable tier model endpoint
             $response = Http::withHeaders([
                 'x-goog-api-key' => $apiKey,
                 'Content-Type'   => 'application/json',
