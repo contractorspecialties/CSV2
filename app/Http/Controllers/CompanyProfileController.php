@@ -144,7 +144,7 @@ class CompanyProfileController extends Controller
     }
 
     /**
-     * 🧠 SECURE ENDPOINT: Flat-Payload Stable Gemini Assist Engine Handshaker
+     * 🧠 SECURE ENDPOINT: Production GA Tier Gemini Assist Engine Handshaker
      */
     public function generateAiAssist(Request $request)
     {
@@ -173,11 +173,11 @@ class CompanyProfileController extends Controller
         }
 
         try {
-            // 🛡️ Flat payload configuration mapped to the ultra-reliable gemini-2.0-flash core framework
+            // 🛡️ Upgraded destination parameter routing maps explicitly to production-grade gemini-2.5-flash engines
             $response = Http::withHeaders([
                 'x-goog-api-key' => $apiKey,
                 'Content-Type'   => 'application/json',
-            ])->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent", [
+            ])->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", [
                 'contents' => [
                     [
                         'parts' => [
@@ -192,7 +192,7 @@ class CompanyProfileController extends Controller
             ]);
 
             if ($response->failed()) {
-                Log::error('Gemini API flat-payload gateway rejection: ' . $response->body());
+                Log::error('Gemini API production-tier gateway rejection: ' . $response->body());
                 return response()->json(['error' => 'API gateway rejected content streams. Response Status Code: ' . $response->status()], 502);
             }
 
@@ -200,7 +200,7 @@ class CompanyProfileController extends Controller
             $suggestion = data_get($responseJson, 'candidates.0.content.parts.0.text');
 
             if (empty($suggestion)) {
-                Log::error('Gemini API flat structural pass returned an unparsable body layout: ' . json_encode($responseJson));
+                Log::error('Gemini API production pass returned an unparsable body layout: ' . json_encode($responseJson));
                 return response()->json(['error' => 'Model engine output an unparsable content body layout.'], 502);
             }
 
@@ -209,7 +209,7 @@ class CompanyProfileController extends Controller
             return response()->json(['suggestion' => $cleanSuggestion]);
 
         } catch (\Exception $exception) {
-            Log::error('Gemini Flat Gateway Connection Exception: ' . $exception->getMessage());
+            Log::error('Gemini GA Gateway Connection Exception: ' . $exception->getMessage());
             return response()->json(['error' => 'Network framework failed to complete communication streams.'], 500);
         }
     }
