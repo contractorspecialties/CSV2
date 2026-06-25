@@ -158,7 +158,7 @@ class CompanyProfileController extends Controller
     }
 
     /**
-     * 🧠 SECURE ENDPOINT: Template-Driven Gemini Assist Engine Handshaker
+     * 🧠 SECURE ENDPOINT: Few-Shot Production GA Tier Gemini Assist Engine Handshaker
      */
     public function generateAiAssist(Request $request)
     {
@@ -173,7 +173,7 @@ class CompanyProfileController extends Controller
             'years_in_business'     => 'nullable|string|max:10',
             'license_number'        => 'nullable|string|max:100',
 
-            // Wizard context indicators ingested safely into payload building passes
+            // Wizard data validation checkpoints
             'signature_specialty'   => 'nullable|string|max:255',
             'target_service_cities' => 'nullable|string|max:255',
             'competitive_advantage' => 'nullable|string|max:100',
@@ -187,7 +187,6 @@ class CompanyProfileController extends Controller
         $specialty = !empty($validated['signature_specialty']) ? $validated['signature_specialty'] : 'premium general trade crafts';
         $regions = !empty($validated['target_service_cities']) ? 'proudly dispatching across ' . $validated['target_service_cities'] : 'serving local properties';
 
-        // Translate the wizard choice keys into rich marketing parameters
         $advantages = [
             'owner_onsite' => 'maintaining an owner on-site policy to personally oversee every framing and structural construction pass',
             'rapid_response' => 'enforcing a rigid 15-minute communication guarantee to ensure no property owner is left waiting for updates',
@@ -203,30 +202,42 @@ class CompanyProfileController extends Controller
         ];
         $vibeText = data_get($vibes, $validated['ideal_client_vibe'], 'providing top-tier trade services');
 
-        // 🛡️ PROMPT RE-WEIGHTING PASSPORT: Injecting the detailed positioning template rules
+        // 📝 EXPLICIT NARRATIVE BLUEPRINTS: Forcing structural volume via structural training parameters
         if ($validated['type'] === 'bio') {
-            $systemInstruction = "CORE ROLE: Elite consumer psychology marketer specializing in home service contractor branding. TASK: Draft a robust, high-converting company biography paragraph. CRITICAL RULE: You must write a complete, substantive paragraph containing exactly 4 detailed, well-rounded sentences following this structure template:\nSentence 1: State the business name, their absolute core specialty, and their exact regional dispatch footprint.\nSentence 2: Highlight how their {$years} of hands-on experience allows them to masterfully execute high-value projects.\nSentence 3: Build trust by mentioning their active licensing status and their competitive service execution edge.\nSentence 4: Wrap up by summarizing their specific focus area and dedication to clear homeowner communication pathways.";
-            $userPrompt = "Write a comprehensive 4-sentence profile biography for the contractor company '{$name}'. They specialize in '{$specialty}', {$regions}, have been active for {$years}, are verified as {$license}, operate with an advantage of '{$edgeText}', and focus on '{$vibeText}'. Follow the sentence-by-sentence structure rules exactly. Provide only the raw plain-text paragraph with no markdown or formatting headers.";
+            $systemInstruction = "You are an expert consumer psychology marketer for elite local home service companies featured on high-traffic regional directory maps. Your goal is to draft a comprehensive, authoritative company biography paragraph. CRITICAL RULE: You must output a rich paragraph between 130 and 170 words long. Avoid generic filler. Follow the exact formatting structure shown in the structural example below.";
+
+            $userPrompt = "STRUCTURAL EXPECTED EXAMPLE STYLE:\n"
+                . "\"Apex Framing specializes in premium outdoor decking solutions across Raleigh and Wake County. Backed by twelve years of dedicated field operations, our specialized service teams manage everything from foundational engineering passes to custom architectural modifications with complete reliability. We operate as a fully licensed and credentialed trade authority holding license reference ROC-293810, ensuring absolute property safety and general liability insulation on every footprint. By maintaining a strict owner on-site policy to personally oversee every single framing pass, we eliminate customer stress and guarantee seamless daily communication updates from start to finish.\"\n\n"
+                . "Now, write an equivalent 130-to-170 word company bio paragraph for '{$name}'. They specialize in '{$specialty}', service the region of '{$regions}', have been active for {$years}, hold license reference '{$license}', maintain a distinct operational advantage of '{$edgeText}', and focus heavily on '{$vibeText}'. Provide only the final plain-text paragraph text matching the length of the sample.";
         } else {
-            $systemInstruction = "CORE ROLE: Premium brand reputation manager for construction specialties. TASK: Draft a substantial customer commitment pledge paragraph. CRITICAL RULE: You must write a full, cohesive paragraph containing exactly 4 thorough sentences following this explicit template structure:\nSentence 1: Express their client-first approach when stepping into a property layout boundary.\nSentence 2: Detail their execution values regarding job site safety and their clean workspace rules.\nSentence 3: Detail their workmanship warranty rules and why their operational advantage sets them apart.\nSentence 4: Guarantee straightforward project milestone transparency and budget tracking parameters.";
-            $userPrompt = "Write a complete 4-sentence customer promise paragraph for '{$name}', drawing leverage from their track record built over {$years} of active service. Weave in their competitive stance of '{$edgeText}' and their approach of '{$vibeText}'. Start directly with the pledge. Provide only the plain text paragraph.";
+            $systemInstruction = "You are a master brand reputation engineer for elite trade construction groups. Your job is to draft a detailed customer craftsmanship promise paragraph. CRITICAL RULE: You must write a complete, heavy commitment paragraph between 100 and 140 words long. Follow the exact style and length shown in the structural example below.";
+
+            $userPrompt = "STRUCTURAL EXPECTED EXAMPLE STYLE:\n"
+                . "\"When our crews enter a homeowner's property footprint, our foundational commitment is the absolute protection of your boundaries and living layout. We enforce a rigid zero-mess site standard, meaning our crews clean up completely at every milestone shift and leave your home cleaner than we found it. Backed by multiple years of regional delivery history, we guarantee the structural integrity of our craftsmanship and take immense pride in precise execution values. You will always receive absolute upfront line-item pricing visibility to guarantee complete transparency and eliminate hidden project fees completely.\"\n\n"
+                . "Now, write an equivalent 100-to-140 word customer promise paragraph for '{$name}', drawing leverage from their track record built over {$years} of service. Integrate their operational stance of '{$edgeText}' and their approach of '{$vibeText}'. Provide only the final plain-text paragraph text matching the length of the sample.";
         }
 
         try {
+            // 🛡️ Utilizing standard headers alongside the canonical camelCase systemInstruction config
             $response = Http::withHeaders([
                 'x-goog-api-key' => $apiKey,
                 'Content-Type'   => 'application/json',
             ])->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", [
+                'systemInstruction' => [
+                    'parts' => [
+                        ['text' => $systemInstruction]
+                    ]
+                ],
                 'contents' => [
                     [
                         'parts' => [
-                            ['text' => "Role Requirements & Output Template Rules:\n" . $systemInstruction . "\n\nDynamic Context Parameters:\n" . $userPrompt]
+                            ['text' => $userPrompt]
                         ]
                     ]
                 ],
                 'generationConfig' => [
-                    'temperature' => 0.75,
-                    'maxOutputTokens' => 500,
+                    'temperature' => 0.72,
+                    'maxOutputTokens' => 600,
                 ]
             ]);
 
