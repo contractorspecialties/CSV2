@@ -322,10 +322,18 @@ class EstimateController extends Controller
      */
     public function checkout($token)
     {
-        $estimate = Estimate::with(['customer', 'items', 'company'])
+        // 🛡️ Bypassed defined Eloquent array lookup check here to avoid fatal breaks
+        $estimate = Estimate::with(['customer', 'items'])
             ->where('id', $token)
             ->orWhere('estimate_number', $token)
             ->firstOrFail();
+
+        // Dynamically resolve custom database prefix safely matching configured User contexts
+        $userTable = (new \App\Models\User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+
+        // Load the company row via raw query builder, bypassing the undefined relationship route
+        $estimate->company = DB::table($prefix . 'companies')->where('id', $estimate->company_id)->first();
 
         $attachments = JobAttachment::where('estimate_id', $estimate->id)->get();
 
