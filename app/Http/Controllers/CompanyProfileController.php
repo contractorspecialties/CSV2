@@ -144,7 +144,7 @@ class CompanyProfileController extends Controller
     }
 
     /**
-     * 🧠 SECURE ENDPOINT: Gemini 3.5 Flash Copywriting Assist Engine Handshaker
+     * 🧠 SECURE ENDPOINT: Gemini Production Content Copywriting Assist Engine Handshaker
      */
     public function generateAiAssist(Request $request)
     {
@@ -173,11 +173,11 @@ class CompanyProfileController extends Controller
         }
 
         try {
-            // 🛡️ Upgraded request layout utilizing standard header authentication and system instruction blocks
+            // 🛡️ Mapped to the rock-solid gemini-1.5-flash stable tier model endpoint
             $response = Http::withHeaders([
                 'x-goog-api-key' => $apiKey,
                 'Content-Type'   => 'application/json',
-            ])->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent", [
+            ])->post("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent", [
                 'system_instruction' => [
                     'parts' => [
                         ['text' => $systemInstruction]
@@ -197,16 +197,16 @@ class CompanyProfileController extends Controller
             ]);
 
             if ($response->failed()) {
-                Log::error('Gemini API endpoint rejected handshake payload: ' . $response->body());
-                return response()->json(['error' => 'API routing gateways rejected the text processing payload. Response Status: ' . $response->status()], 502);
+                Log::error('Gemini API framework routing failure: ' . $response->body());
+                return response()->json(['error' => 'API gateway rejected content streams. Response Status Code: ' . $response->status()], 502);
             }
 
             $responseJson = $response->json();
             $suggestion = data_get($responseJson, 'candidates.0.content.parts.0.text');
 
             if (empty($suggestion)) {
-                Log::error('Gemini API returned an unparsable structural format: ' . json_encode($responseJson));
-                return response()->json(['error' => 'Model endpoint returned an unparsable structural format.'], 502);
+                Log::error('Gemini API payload structure returned an unparsable body layout: ' . json_encode($responseJson));
+                return response()->json(['error' => 'Model engine output an unparsable content body layout.'], 502);
             }
 
             $cleanSuggestion = trim(str_replace(['`', '""'], '', $suggestion));
@@ -214,8 +214,8 @@ class CompanyProfileController extends Controller
             return response()->json(['suggestion' => $cleanSuggestion]);
 
         } catch (\Exception $exception) {
-            Log::error('Gemini Client Connection Exception: ' . $exception->getMessage());
-            return response()->json(['error' => 'Network framework dropped communications with model arrays.'], 500);
+            Log::error('Gemini REST Gateway Connection Exception: ' . $exception->getMessage());
+            return response()->json(['error' => 'Network framework failed to complete communication streams.'], 500);
         }
     }
 
