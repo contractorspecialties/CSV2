@@ -18,7 +18,7 @@
                 <img src="/images/header-logo.webp" alt="ContractorSpecialties Logo" class="w-full h-auto max-h-[75px] object-contain object-left">
             </div>
             <div class="flex items-center gap-2">
-                <span class="text-[10px] bg-slate-900 border border-slate-800 text-slate-400 font-mono font-black px-3 py-1.5 rounded-xl uppercase tracking-widest shadow-inner">
+                <span class="text-[10px] bg-slate-900 text-slate-400 font-mono font-black px-3 py-1.5 rounded-xl uppercase tracking-widest shadow-inner">
                     🔒 Encrypted Client Link
                 </span>
             </div>
@@ -27,7 +27,6 @@
 
     <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-8 space-y-6">
 
-        <!-- STATUS/CONFIRMATION FLASHER COCKPIT -->
         @if(session('status'))
             <div class="bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl p-5 flex items-center gap-3 shadow-sm">
                 <span class="text-xl">⚡</span>
@@ -35,23 +34,26 @@
             </div>
         @endif
 
-        <!-- HUB IDENTITY HEADER CARD -->
         <div class="bg-slate-900 text-white rounded-2xl p-6 shadow-md border border-slate-950 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div class="space-y-0.5">
+            <div class="space-y-1">
                 <span class="text-[9px] font-mono font-black tracking-widest text-[#f58613] uppercase bg-orange-950/40 border border-orange-900/30 px-2 py-0.5 rounded-md">Official Digital Contract</span>
-                <h1 class="text-xl font-black uppercase tracking-tight pt-1">Project Scope & Proposal Canvas</h1>
-                <p class="text-slate-400 text-xs font-medium">Review architectural line item specifications, track project details, or approve to authorize mobilization loops.</p>
+                <h1 class="text-xl font-black uppercase tracking-tight pt-1">Project Proposal & Agreement Canvas</h1>
+                <p class="text-slate-400 text-xs font-medium">
+                    Prepared Exclusively For: <span class="text-white font-black">{{ $estimate->customer->first_name }} {{ $estimate->customer->last_name }}</span>
+                    @if($estimate->items->isNotEmpty())
+                        • <span class="text-slate-300 font-bold italic">Scope: {{ Str::limit($estimate->items->first()->description, 60) }}</span>
+                    @endif
+                </p>
             </div>
             <div class="text-xs font-mono font-black text-slate-400 shrink-0 bg-black/40 px-3 py-2 rounded-xl border border-slate-800 shadow-inner">
                 BID REF ID: {{ $estimate->estimate_number }}
             </div>
         </div>
 
-        <!-- 🛡️ BRAND TRUST HEADER: Identity & Legitimacy Filter -->
         <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-4 text-center sm:text-left flex-col sm:flex-row">
                 <div class="w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 p-1 shrink-0 overflow-hidden flex items-center justify-center">
-                    <img src="/{{ $estimate->company->logo_path ?? 'images/placeholder-logo.webp' }}" class="w-full h-full object-contain">
+                    <img src="{{ !empty($estimate->company->logo_path) ? asset($estimate->company->logo_path) : asset('images/placeholder-logo.webp') }}" class="w-full h-full object-contain">
                 </div>
                 <div>
                     <h2 class="text-base font-black text-slate-950 uppercase tracking-tight">{{ $estimate->company->name ?? 'Verified Partner Contractor' }}</h2>
@@ -71,10 +73,8 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            <!-- COLUMN 1 & 2: LINE ITEMS & PHYSICAL FIELD GRAPHICS -->
             <div class="lg:col-span-2 space-y-6">
 
-                <!-- ITEMIZED SCOPE LEDGER PANEL -->
                 <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
                     <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                         <h3 class="font-black text-xs text-slate-900 uppercase tracking-wider">Itemized Project Specifications</h3>
@@ -93,7 +93,14 @@
                             <tbody class="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
                                 @foreach($estimate->items as $item)
                                     <tr class="hover:bg-slate-50/40 transition-colors">
-                                        <td class="py-4 px-6 font-bold text-slate-900 text-sm leading-normal whitespace-pre-line">{{ $item->description }}</td>
+                                        <td class="py-4 px-6 font-bold text-slate-900 text-sm leading-normal whitespace-pre-line">
+                                            <div class="flex items-center justify-between gap-4">
+                                                <span>{{ $item->description }}</span>
+                                                @if(isset($item->is_taxable) && $item->is_taxable)
+                                                    <span class="bg-slate-100 text-slate-400 font-mono text-[8px] uppercase font-black px-1.5 py-0.5 rounded border border-slate-200 shrink-0">Taxable</span>
+                                                @endif
+                                            </div>
+                                        </td>
                                         <td class="py-4 px-4 text-center font-mono text-slate-500 font-bold bg-slate-50/30">{{ number_format($item->quantity, 1) }}</td>
                                         <td class="py-4 px-6 text-right font-mono font-black text-slate-950">${{ number_format($item->total_price, 2) }}</td>
                                     </tr>
@@ -102,7 +109,6 @@
                         </table>
                     </div>
 
-                    <!-- FINANCIAL COMPILATION LOWER BLOCK -->
                     <div class="bg-slate-50/80 border-t border-slate-100 p-6 flex justify-end">
                         <div class="w-full sm:w-72 font-mono text-xs text-slate-600 space-y-2">
                             <div class="flex justify-between items-center">
@@ -112,7 +118,7 @@
                             @if($estimate->tax_rate > 0)
                                 <div class="flex justify-between items-center">
                                     <span class="font-bold text-slate-400 uppercase tracking-wider">Local Sales Tax ({{ number_format($estimate->tax_rate, 2) }}%):</span>
-                                    <span class="font-black text-slate-900">+${{ number_format($estimate->subtotal * ($estimate->tax_rate / 100), 2) }}</span>
+                                    <span class="font-black text-slate-900">+${{ number_format($estimate->grand_total - $estimate->subtotal, 2) }}</span>
                                 </div>
                             @endif
                             <div class="flex justify-between items-center pt-2.5 border-t border-slate-200 text-sm">
@@ -123,7 +129,6 @@
                     </div>
                 </div>
 
-                <!-- 🛡️ RISK NEUTRALIZER: Guarantees & Workmanship Warranties -->
                 @if(!empty($estimate->company->warranty_details))
                     <div class="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200/60 rounded-2xl p-5 shadow-sm flex items-start gap-4">
                         <span class="text-2xl shrink-0">🛡️</span>
@@ -136,7 +141,6 @@
                     </div>
                 @endif
 
-                <!-- HISTORICAL PROJECT REMARKS / LEDGER CHAT BLOCK -->
                 @if(!empty($estimate->notes))
                     <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-3">
                         <h4 class="font-black text-xs text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
@@ -148,18 +152,17 @@
                     </div>
                 @endif
 
-                <!-- VISUAL MARKUP TIMELINE COMPONENT -->
                 @if($attachments->isNotEmpty())
                     <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                         <div class="border-b border-slate-100 pb-2">
-                            <h3 class="font-black text-xs text-slate-900 uppercase tracking-wider flex items-center gap-2">📸 Field Site Evidence & Dimension Markups</h3>
+                            <h3 class="font-black text-xs text-slate-900 uppercase tracking-wider flex items-center gap-2">📸 Project Site Imagery & Visual Specs</h3>
                             <p class="text-slate-400 text-[11px] font-medium mt-0.5">Photographic parameters recorded directly from the project site layout lines.</p>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             @foreach($attachments as $media)
                                 <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50 shadow-sm group hover:border-slate-400 transition-all">
                                     <div class="w-full h-48 bg-black overflow-hidden relative">
-                                        <img src="{{ $media->file_path }}" alt="Project Documentation" class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-[1.01]">
+                                        <img src="{{ asset($media->file_path) }}" alt="Project Documentation" class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-[1.01]">
                                     </div>
                                     <div class="p-3 bg-white text-[11px] font-bold text-slate-700 border-t border-slate-100/80 flex items-center gap-2">
                                         <span class="text-slate-400 shrink-0">📍 Tag:</span>
@@ -172,12 +175,9 @@
                 @endif
             </div>
 
-            <!-- COLUMN 3: DIGITAL GATEWAY INTERACTION HUB -->
             <div class="space-y-6">
-
                 <div x-data="{ currentConsole: 'main', sigName: '' }" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm min-h-[340px] flex flex-col justify-between border-t-4 border-t-slate-950">
 
-                    <!-- CONSOLE HUB LAYER 1: BASE ACTION ROUTER -->
                     <div x-show="currentConsole === 'main'" class="space-y-4 contents">
                         <div class="border-b border-slate-100 pb-3">
                             <span class="inline-block px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider border shadow-sm
@@ -193,13 +193,13 @@
 
                         @if($estimate->status !== 'approved' && $estimate->status !== 'closed')
                             <div class="space-y-2.5 flex-grow flex flex-col justify-center">
-                                <button @click="currentConsole = 'schedule'" class="w-full bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-4 px-4 rounded-xl uppercase tracking-widest transition-all shadow-md flex items-center justify-between active:scale-[0.99] cursor-pointer">
+                                <button type="button" @click="currentConsole = 'schedule'" class="w-full bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-4 px-4 rounded-xl uppercase tracking-widest transition-all shadow-md flex items-center justify-between active:scale-[0.99] cursor-pointer border-0 outline-none">
                                     <span>✍️ Approve & Authorize</span>
                                     <span class="text-sm font-black">&rarr;</span>
                                 </button>
 
-                                <button @click="currentConsole = 'revision'" class="w-full bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-800 font-black text-xs py-3.5 px-4 rounded-xl uppercase tracking-wider transition-all shadow-sm flex items-center justify-between active:scale-[0.99] cursor-pointer">
-                                    <span>💬 Request Adjustments</span>
+                                <button type="button" @click="currentConsole = 'revision'" class="w-full bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-800 font-black text-xs py-3.5 px-4 rounded-xl uppercase tracking-wider transition-all shadow-sm flex items-center justify-between active:scale-[0.99] cursor-pointer outline-none">
+                                    <span>💬 Request Scope Revisions</span>
                                     <span class="text-sm font-black">&rarr;</span>
                                 </button>
                             </div>
@@ -219,14 +219,12 @@
                         </div>
                     </div>
 
-                    <!-- CONSOLE HUB LAYER 2: SIGNATURE FORM AND TERMS VERIFICATION -->
                     <div x-show="currentConsole === 'schedule'" x-cloak style="display: none;" class="space-y-4 contents">
                         <div class="border-b border-slate-100 pb-2">
                             <h3 class="font-black text-sm text-slate-950 uppercase tracking-wider">Review Terms & Authorize</h3>
                             <p class="text-[11px] text-slate-400 font-medium mt-0.5">Authorizing registers your job contract straight into our crew scheduling layout loops.</p>
                         </div>
 
-                        <!-- LIVE DYNAMIC DEPOSIT LEDGER CARRIER BLOCK -->
                         <div class="p-4 rounded-xl border font-mono text-xs space-y-1 shadow-inner bg-slate-50 border-slate-200">
                             <div class="flex justify-between items-center">
                                 <span class="font-bold text-slate-400 uppercase">Mobilization Deposit:</span>
@@ -247,7 +245,6 @@
                             @endif
                         </div>
 
-                        <!-- 📝 THE DIRECT ACCEPTANCE BLOCK: Strict Signature Requirements -->
                         <form action="/portal/action/{{ $estimate->id }}" method="POST" class="space-y-3">
                             @csrf
                             <input type="hidden" name="action" value="schedule">
@@ -258,7 +255,7 @@
                                 <p class="text-[9px] text-slate-400 font-medium mt-1 leading-normal">By signing, you agree to the project specs and line items detailed inside this contract framework.</p>
                             </div>
 
-                            <button type="submit" :disabled="sigName.trim().length < 3" class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-100 disabled:text-slate-400 text-white font-black text-xs py-4 px-4 rounded-xl uppercase tracking-widest transition-all shadow-md active:scale-[0.99] cursor-pointer text-center">
+                            <button type="submit" :disabled="sigName.trim().length < 3" class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-100 disabled:text-slate-400 text-white font-black text-xs py-4 px-4 rounded-xl uppercase tracking-widest transition-all shadow-md active:scale-[0.99] cursor-pointer text-center border-0 outline-none">
                                 @if($estimate->deposit_amount > 0)
                                     Sign Contract & Pay Deposit 💳
                                 @else
@@ -266,13 +263,12 @@
                                 @endif
                             </button>
 
-                            <button type="button" @click="currentConsole = 'main'" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-black text-[10px] py-2.5 rounded-xl uppercase tracking-wide cursor-pointer text-center transition-colors">
+                            <button type="button" @click="currentConsole = 'main'" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-black text-[10px] py-2.5 rounded-xl uppercase tracking-wide cursor-pointer text-center transition-colors border-0 outline-none">
                                 &larr; Go Back
                             </button>
                         </form>
                     </div>
 
-                    <!-- CONSOLE HUB LAYER 3: CORRECTION & REVISION LEDGER DESK -->
                     <div x-show="currentConsole === 'revision'" x-cloak style="display: none;" class="space-y-4 contents">
                         <div class="border-b border-slate-100 pb-2">
                             <h3 class="font-black text-sm text-slate-950 uppercase tracking-wider">Request Scope Revisions</h3>
@@ -286,10 +282,10 @@
                                 <label class="block text-[9px] font-black uppercase text-slate-400 mb-1 tracking-wider">Adjustment Details</label>
                                 <textarea name="notes" rows="5" required placeholder="e.g., The raw footprint layout lines look solid. Can we adjust line item #2 to expand paving pathway scope, and look into pulling scheduling up to next Tuesday morning?" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs font-medium focus:outline-none focus:border-[#f58613] leading-normal shadow-inner text-slate-800"></textarea>
                             </div>
-                            <button type="submit" class="w-full bg-slate-950 hover:bg-black text-white font-black text-xs py-3.5 px-4 rounded-xl uppercase tracking-wider transition-all shadow-md active:scale-[0.99] cursor-pointer text-center">
+                            <button type="submit" class="w-full bg-slate-950 hover:bg-black text-white font-black text-xs py-3.5 px-4 rounded-xl uppercase tracking-wider transition-all shadow-md active:scale-[0.99] cursor-pointer text-center border-0 outline-none">
                                 Submit Revision Instructions &rarr;
                             </button>
-                            <button type="button" @click="currentConsole = 'main'" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-black text-[10px] py-2.5 rounded-xl uppercase tracking-wide cursor-pointer text-center transition-colors">
+                            <button type="button" @click="currentConsole = 'main'" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-500 font-black text-[10px] py-2.5 rounded-xl uppercase tracking-wide cursor-pointer text-center transition-colors border-0 outline-none">
                                 Cancel Revisions
                             </button>
                         </form>

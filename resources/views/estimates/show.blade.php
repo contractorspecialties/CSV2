@@ -19,7 +19,7 @@
                 <img src="/images/header-logo.webp" alt="ContractorSpecialties Logo" class="w-full h-auto max-h-[90px] object-contain object-left">
             </div>
             <a href="/dashboard" class="text-xs font-black text-slate-400 hover:text-white uppercase tracking-wider bg-slate-900 border border-slate-800 px-4 py-2.5 rounded-xl transition-all shadow-inner">
-                ← Back to Dashboard
+                &larr; Back to Dashboard
             </a>
         </div>
     </header>
@@ -112,7 +112,14 @@
                             <tbody class="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
                                 @foreach($estimate->items as $item)
                                     <tr>
-                                        <td class="py-4 px-6 font-bold text-slate-900 text-sm">{{ $item->description }}</td>
+                                        <td class="py-4 px-6 font-bold text-slate-900 text-sm">
+                                            <div class="flex items-center justify-between gap-4">
+                                                <span>{{ $item->description }}</span>
+                                                @if(isset($item->is_taxable) && $item->is_taxable)
+                                                    <span class="bg-slate-100 text-slate-500 font-mono font-black text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded border border-slate-200 shrink-0">Taxable</span>
+                                                @endif
+                                            </div>
+                                        </td>
                                         <td class="py-4 px-4 text-center font-mono">{{ number_format($item->quantity, 2) }}</td>
                                         <td class="py-4 px-4 text-right font-mono">${{ number_format($item->unit_price, 2) }}</td>
                                         <td class="py-4 px-6 text-right font-mono font-black text-slate-950">${{ number_format($item->total_price, 2) }}</td>
@@ -129,8 +136,8 @@
                                 <span class="font-black text-slate-900">${{ number_format($estimate->subtotal, 2) }}</span>
                             </div>
                             <div class="flex justify-between" {{ $estimate->tax_rate == 0 ? 'style=display:none' : '' }}>
-                                <span class="font-bold text-slate-400 uppercase">Tax ({{ $estimate->tax_rate }}%):</span>
-                                <span class="font-black text-slate-900">+${{ number_format($estimate->subtotal * ($estimate->tax_rate / 100), 2) }}</span>
+                                <span class="font-bold text-slate-400 uppercase">Sales Tax ({{ $estimate->tax_rate }}%):</span>
+                                <span class="font-black text-slate-900">+${{ number_format($estimate->grand_total - $estimate->subtotal, 2) }}</span>
                             </div>
                             <div class="flex justify-between pt-2 border-t border-slate-200 text-sm">
                                 <span class="font-black text-slate-800 uppercase">Total:</span>
@@ -153,11 +160,11 @@
                         <form action="/estimates/{{ $estimate->id }}/blueprint" method="POST" class="space-y-3 pt-2">
                             @csrf
                             <div>
-                                <label for="response_notes" class="block text-[10px] font-black uppercase text-slate-500 mb-1">Update Scope Notes / Post Your Response</label>
-                                <textarea id="response_notes" name="notes" rows="3" placeholder="Type clarification or updated contract parameters here..." class="w-full bg-white border border-slate-300 rounded-xl p-3 text-xs font-medium focus:outline-none focus:border-[#f58613] text-slate-900"></textarea>
+                                <label for="response_notes" class="block text-[10px] font-black uppercase text-slate-500 mb-1">Adjust Proposal Parameters & Reply</label>
+                                <textarea id="response_notes" name="notes" rows="3" placeholder="Type structural adjustments, timeline parameter changes, or direct clarification answers here..." class="w-full bg-white border border-slate-300 rounded-xl p-3 text-xs font-medium focus:outline-none focus:border-[#f58613] text-slate-900"></textarea>
                             </div>
                             <button type="submit" class="bg-slate-950 hover:bg-black text-white font-black text-xs py-2.5 px-4 rounded-xl uppercase tracking-wider transition-all cursor-pointer border-0">
-                                Save Notes & Re-Send Link ⚡
+                                Lock Adjustments & Notify Client ⚡
                             </button>
                         </form>
                     </div>
@@ -220,7 +227,7 @@
 
                 <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                     <div class="border-b border-slate-100 pb-2">
-                        <h3 class="font-black text-xs text-slate-900 uppercase tracking-wider">📸 Field Site Visual Timeline</h3>
+                        <h3 class="font-black text-xs text-slate-900 uppercase tracking-wider">📸 Job Site Verification Photos</h3>
                         <p class="text-[11px] text-slate-400 font-medium mt-0.5">Upload visual proof or job status photos directly to this folder profile.</p>
                     </div>
 
@@ -241,14 +248,14 @@
                     <div class="pt-2 border-t border-slate-100 space-y-3">
                         @forelse($attachments as $media)
                             <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50 shadow-sm">
-                                <img src="{{ $media->file_path }}" alt="Field Upload Log" class="w-full h-auto object-cover max-h-48">
+                                <img src="{{ asset($media->file_path) }}" alt="Field Upload Log" class="w-full h-auto object-cover max-h-48">
                                 <div class="p-2.5 bg-white text-[11px] font-medium text-slate-700 flex justify-between items-center">
                                     <span>{{ $media->caption }}</span>
                                     <span class="text-[9px] text-slate-400 font-mono font-bold">{{ $media->created_at->format('m/d H:i') }}</span>
                                 </div>
                             </div>
                         @empty
-                            <div class="text-center py-6 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 italic text-xs font-medium">
+                            <div class="text-center py-6 text-xs text-slate-400 font-bold italic border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
                                 No site attachments linked yet.
                             </div>
                         @endforelse
@@ -260,7 +267,6 @@
     </main>
 
     <div x-show="showStudio" x-cloak class="fixed inset-0 z-100 bg-slate-950 flex flex-col select-none" @window:resize.debounce.200="resizeCanvas()">
-
         <div class="bg-slate-900 border-b border-slate-800 px-4 h-16 shrink-0 flex items-center justify-between">
             <button type="button" @click="closeStudio()" class="text-slate-400 hover:text-white font-black text-xs tracking-widest uppercase cursor-pointer bg-transparent border-0">
                 &larr; Cancel
@@ -279,7 +285,6 @@
         </div>
 
         <div class="flex-grow relative bg-slate-950 overflow-hidden flex items-center justify-center p-2">
-
             <div class="absolute left-3 top-1/2 -translate-y-1/2 bg-slate-900/90 backdrop-blur-md border border-slate-800 p-2.5 rounded-2xl flex flex-col gap-4 z-10 shadow-xl">
                 <div class="space-y-2">
                     <span class="block text-[8px] font-black text-slate-500 uppercase tracking-wider text-center">Size</span>
@@ -340,14 +345,12 @@
                 color: '#f58613',
                 thickness: 6,
                 textSize: 22,
-
                 canvas: null,
                 ctx: null,
                 bgImage: null,
                 isDrawing: false,
                 startX: 0,
                 startY: 0,
-
                 history: [],
                 currentPoints: [],
 
@@ -381,15 +384,10 @@
 
                     const maxWidth = window.innerWidth * 0.90;
                     const maxHeight = window.innerHeight * 0.70;
+                    const ratio = Math.min(maxWidth / this.bgImage.width, maxHeight / this.bgImage.height);
 
-                    let newWidth = this.bgImage.width;
-                    let newHeight = this.bgImage.height;
-
-                    const ratio = Math.min(maxWidth / newWidth, maxHeight / newHeight);
-
-                    this.canvas.width = newWidth * ratio;
-                    this.canvas.height = newHeight * ratio;
-
+                    this.canvas.width = this.bgImage.width * ratio;
+                    this.canvas.height = this.bgImage.height * ratio;
                     this.redrawCanvasWorkspace();
                 },
 
@@ -402,21 +400,10 @@
                 },
 
                 getCoordinates(event) {
-                    let clientX, clientY;
-
-                    if (event.touches && event.touches.length > 0) {
-                        clientX = event.touches[0].clientX;
-                        clientY = event.touches[0].clientY;
-                    } else {
-                        clientX = event.clientX;
-                        clientY = event.clientY;
-                    }
-
+                    let clientX = event.touches ? event.touches[0].clientX : event.clientX;
+                    let clientY = event.touches ? event.touches[0].clientY : event.clientY;
                     const rect = this.canvas.getBoundingClientRect();
-                    return {
-                        x: clientX - rect.left,
-                        y: clientY - rect.top
-                    };
+                    return { x: clientX - rect.left, y: clientY - rect.top };
                 },
 
                 startDrawing(event) {
@@ -432,14 +419,7 @@
                         this.isDrawing = false;
                         const note = prompt("Enter text instruction to place at coordinates:");
                         if (note) {
-                            this.history.push({
-                                type: 'text',
-                                x: this.startX,
-                                y: this.startY,
-                                text: note,
-                                color: this.color,
-                                size: this.textSize
-                            });
+                            this.history.push({ type: 'text', x: this.startX, y: this.startY, text: note, color: this.color, size: this.textSize });
                             this.redrawCanvasWorkspace();
                         }
                     }
@@ -449,19 +429,9 @@
                     if (!this.isDrawing) return;
                     event.preventDefault();
                     const coords = this.getCoordinates(event);
-
                     this.redrawCanvasWorkspace();
 
-                    const tempShape = {
-                        type: this.tool,
-                        startX: this.startX,
-                        startY: this.startY,
-                        endX: coords.x,
-                        endY: coords.y,
-                        color: this.color,
-                        thickness: this.thickness,
-                        points: this.currentPoints
-                    };
+                    const tempShape = { type: this.tool, startX: this.startX, startY: this.startY, endX: coords.x, endY: coords.y, color: this.color, thickness: this.thickness, points: this.currentPoints };
 
                     if (this.tool === 'pen') {
                         this.currentPoints.push({ x: coords.x, y: coords.y });
@@ -479,22 +449,9 @@
                     const coords = this.getCoordinates(event) || { x: this.startX, y: this.startY };
 
                     if (this.tool === 'pen') {
-                        this.history.push({
-                            type: 'pen',
-                            points: this.currentPoints,
-                            color: this.color,
-                            thickness: this.thickness
-                        });
+                        this.history.push({ type: 'pen', points: this.currentPoints, color: this.color, thickness: this.thickness });
                     } else if (this.tool !== 'text') {
-                        this.history.push({
-                            type: this.tool,
-                            startX: this.startX,
-                            startY: this.startY,
-                            endX: coords.x,
-                            endY: coords.y,
-                            color: this.color,
-                            thickness: this.thickness
-                        });
+                        this.history.push({ type: this.tool, startX: this.startX, startY: this.startY, endX: coords.x, endY: coords.y, color: this.color, thickness: this.thickness });
                     }
 
                     this.currentPoints = [];
@@ -507,33 +464,27 @@
                     this.ctx.lineWidth = shape.thickness;
                     this.ctx.lineCap = 'round';
                     this.ctx.lineJoin = 'round';
-
                     this.ctx.beginPath();
 
                     if (shape.type === 'pen' && shape.points && shape.points.length > 0) {
                         this.ctx.moveTo(shape.points[0].x, shape.points[0].y);
                         shape.points.forEach(p => this.ctx.lineTo(p.x, p.y));
                         this.ctx.stroke();
-                    }
-                    else if (shape.type === 'line') {
+                    } else if (shape.type === 'line') {
                         this.ctx.moveTo(shape.startX, shape.startY);
                         this.ctx.lineTo(shape.endX, shape.endY);
                         this.ctx.stroke();
-                    }
-                    else if (shape.type === 'box') {
+                    } else if (shape.type === 'box') {
                         this.ctx.rect(shape.startX, shape.startY, shape.endX - shape.startX, shape.endY - shape.startY);
                         this.ctx.stroke();
-                    }
-                    else if (shape.type === 'circle') {
+                    } else if (shape.type === 'circle') {
                         const radius = Math.sqrt(Math.pow(shape.endX - shape.startX, 2) + Math.pow(shape.endY - shape.startY, 2));
                         this.ctx.arc(shape.startX, shape.startY, radius, 0, 2 * Math.PI);
                         this.ctx.stroke();
-                    }
-                    else if (shape.type === 'text') {
+                    } else if (shape.type === 'text') {
                         this.ctx.font = `bold ${shape.size}px sans-serif`;
                         this.ctx.fillText(shape.text, shape.x, shape.y);
-                    }
-                    else if (shape.type === 'arrow') {
+                    } else if (shape.type === 'arrow') {
                         const angle = Math.atan2(shape.endY - shape.startY, shape.endX - shape.startX);
                         const headLength = Math.max(shape.thickness * 3, 15);
 
@@ -584,6 +535,5 @@
             }
         }
     </script>
-
 </body>
 </html>

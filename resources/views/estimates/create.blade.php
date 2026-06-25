@@ -127,8 +127,8 @@
                     <template x-for="(item, index) in items" :key="item.id">
                         <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-slate-50/50 p-4 border border-slate-200 rounded-xl relative group">
 
-                            <div class="md:col-span-3">
-                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Auto-Fill from Pricebook</label>
+                            <div class="md:col-span-2">
+                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Pricebook</label>
                                 <select @change="loadPricebookItem(index, $event.target.value)" class="w-full bg-white border border-slate-300 rounded-lg py-2 px-2.5 text-xs font-bold focus:outline-none focus:border-[#f58613] cursor-pointer">
                                     <option value="">-- Choose Item --</option>
                                     <template x-for="pItem in pricebook" :key="pItem.id">
@@ -143,26 +143,33 @@
                                        class="w-full bg-white border border-slate-300 rounded-lg py-2 px-2.5 text-xs font-semibold focus:outline-none focus:border-[#f58613]">
                             </div>
 
-                            <div class="md:col-span-2">
-                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-1 text-center">Quantity</label>
+                            <div class="md:col-span-1">
+                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-1 text-center">Qty</label>
                                 <input type="number" step="any" :name="'items[' + index + '][quantity]'" required x-model.number="item.quantity" min="0.01"
                                        class="w-full bg-white border border-slate-300 rounded-lg py-2 px-2.5 text-xs font-mono font-black focus:outline-none focus:border-[#f58613] text-center">
                             </div>
 
                             <div class="md:col-span-2">
-                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-1 text-right">Unit Cost / Rate ($)</label>
+                                <label class="block text-[10px] font-black uppercase text-slate-400 mb-1 text-right">Unit Rate ($)</label>
                                 <input type="number" step="0.01" :name="'items[' + index + '][unit_price]'" required x-model.number="item.unit_price" placeholder="0.00"
                                        class="w-full bg-white border border-slate-300 rounded-lg py-2 px-2.5 text-xs font-mono font-black focus:outline-none focus:border-[#f58613] text-right">
                             </div>
 
-                            <div class="md:col-span-1 flex items-center justify-between gap-2 h-9 pb-0.5">
-                                <label class="flex items-center gap-1 cursor-pointer select-none">
-                                    <input type="hidden" :name="'items[' + index + '][save_to_pricebook]'" value="0">
-                                    <input type="checkbox" :name="'items[' + index + '][save_to_pricebook]'" value="1" x-model="item.save_to_pricebook" class="rounded border-slate-300 text-[#f58613] focus:ring-[#f58613]">
-                                    <span class="text-[9px] font-black text-slate-400 uppercase tracking-tight">Save</span>
-                                </label>
+                            <div class="md:col-span-1 flex flex-col items-center justify-center pb-1">
+                                <label class="block text-[9px] font-black uppercase text-slate-400 mb-1.5 select-none">Taxable</label>
+                                <input type="hidden" :name="'items[' + index + '][is_taxable]'" value="0">
+                                <input type="checkbox" :name="'items[' + index + '][is_taxable]'" value="1" x-model="item.is_taxable" class="w-4 h-4 rounded border-slate-300 text-[#f58613] focus:ring-[#f58613] cursor-pointer">
+                            </div>
+
+                            <div class="md:col-span-1 flex flex-col items-center justify-center pb-1">
+                                <label class="block text-[9px] font-black uppercase text-slate-400 mb-1.5 select-none">Save</label>
+                                <input type="hidden" :name="'items[' + index + '][save_to_pricebook]'" value="0">
+                                <input type="checkbox" :name="'items[' + index + '][save_to_pricebook]'" value="1" x-model="item.save_to_pricebook" class="w-4 h-4 rounded border-slate-300 text-[#f58613] focus:ring-[#f58613] cursor-pointer">
+                            </div>
+
+                            <div class="md:col-span-1 flex items-center justify-center pb-0.5">
                                 <button type="button" @click="removeItem(index)" :disabled="items.length === 1"
-                                        class="text-xs font-black text-red-500 disabled:opacity-30 bg-red-50 border border-red-200/40 px-2 py-1 rounded hover:bg-red-100 transition-all cursor-pointer">
+                                        class="text-xs font-black text-red-500 disabled:opacity-30 bg-red-50 border border-red-200/40 w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-100 transition-all cursor-pointer border-0">
                                     &#10005;
                                 </button>
                             </div>
@@ -238,7 +245,7 @@
                             </div>
                         </div>
 
-                        <div x-show="hasImageSelected" x-cloak class="flex gap-2">
+                        <div class="flex gap-2" x-show="hasImageSelected" x-cloak>
                             <button type="button" @click="launchMarkupStudioWithCurrentImage()" class="flex-1 bg-slate-900 hover:bg-black text-slate-200 hover:text-white border border-slate-950 font-black text-[10px] py-2 rounded-lg uppercase tracking-wider text-center transition-all shadow-sm cursor-pointer">
                                 Open Markup Desk &rarr;
                             </button>
@@ -291,7 +298,7 @@
                                    class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 px-3 text-xs font-mono font-black focus:outline-none focus:border-[#f58613]">
                         </div>
                         <div>
-                            <label for="tax_rate" class="block text-[10px] font-black uppercase text-slate-500 mb-2">Sales Tax (%)</label>
+                            <label class="for="tax_rate" class="block text-[10px] font-black uppercase text-slate-500 mb-2">Sales Tax (%)</label>
                             <input type="number" id="tax_rate" name="tax_rate" step="0.01" min="0" max="100" x-model.number="taxRate" placeholder="0.00" required
                                    class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 px-3 text-xs font-mono font-black focus:outline-none focus:border-[#f58613]">
                         </div>
@@ -335,20 +342,20 @@
         </form>
     </main>
 
-    <div x-show="showStudio" x-cloak class="fixed inset-0 z-[100] bg-slate-950 flex flex-col select-none" @window:resize.debounce.200="resizeCanvas()">
+    <div x-show="showStudio" x-cloak class="fixed inset-0 z-100 bg-slate-950 flex flex-col select-none" @window:resize.debounce.200="resizeCanvas()">
         <div class="bg-slate-900 border-b border-slate-800 px-4 h-16 shrink-0 flex items-center justify-between">
-            <button type="button" @click="closeStudio()" class="text-slate-400 hover:text-white font-black text-xs tracking-widest uppercase cursor-pointer">
+            <button type="button" @click="closeStudio()" class="text-slate-400 hover:text-white font-black text-xs tracking-widest uppercase cursor-pointer bg-transparent border-0">
                 &larr; Cancel
             </button>
             <div class="flex items-center gap-3">
-                <button type="button" @click="undoLastShape()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all">
+                <button type="button" @click="undoLastShape()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all border-0">
                     &larr; Undo
                 </button>
-                <button type="button" @click="clearStudioCanvas()" class="bg-red-950/40 text-red-400 hover:bg-red-900/40 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all">
+                <button type="button" @click="clearStudioCanvas()" class="bg-red-950/40 text-red-400 hover:bg-red-900/40 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all border-0">
                     🗑️ Clear
                 </button>
             </div>
-            <button type="button" @click="commitStudioMarkup()" class="bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs px-5 py-2.5 rounded-xl uppercase tracking-widest shadow transition-all active:scale-95 cursor-pointer">
+            <button type="button" @click="commitStudioMarkup()" class="bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs px-5 py-2.5 rounded-xl uppercase tracking-widest shadow transition-all active:scale-95 cursor-pointer border-0">
                 Save Markup ✓
             </button>
         </div>
@@ -357,17 +364,17 @@
             <div class="absolute left-3 top-1/2 -translate-y-1/2 bg-slate-900/90 backdrop-blur-md border border-slate-800 p-2.5 rounded-2xl flex flex-col gap-4 z-10 shadow-xl">
                 <div class="space-y-2">
                     <span class="block text-[8px] font-black text-slate-500 uppercase tracking-wider text-center">Size</span>
-                    <button type="button" @click="thickness = 2; textSize = 14" :class="thickness === 2 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold cursor-pointer">F</button>
-                    <button type="button" @click="thickness = 6; textSize = 22" :class="thickness === 6 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold cursor-pointer">M</button>
-                    <button type="button" @click="thickness = 12; textSize = 32" :class="thickness === 12 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-base font-bold cursor-pointer">B</button>
+                    <button type="button" @click="thickness = 2; textSize = 14" :class="thickness === 2 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold cursor-pointer border-0">F</button>
+                    <button type="button" @click="thickness = 6; textSize = 22" :class="thickness === 6 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold cursor-pointer border-0">M</button>
+                    <button type="button" @click="thickness = 12; textSize = 32" :class="thickness === 12 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-base font-bold cursor-pointer border-0">B</button>
                 </div>
             </div>
 
             <div class="absolute right-3 top-1/2 -translate-y-1/2 bg-slate-900/90 backdrop-blur-md border border-slate-800 p-2.5 rounded-2xl flex flex-col gap-3 z-10 shadow-xl">
                 <span class="block text-[8px] font-black text-slate-500 uppercase tracking-wider text-center">Color</span>
-                <button type="button" @click="color = '#f58613'" :class="color === '#f58613' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-[#f58613] cursor-pointer transition-transform"></button>
-                <button type="button" @click="color = '#eab308'" :class="color === '#eab308' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-yellow-500 cursor-pointer transition-transform"></button>
-                <button type="button" @click="color = '#dc2626'" :class="color === '#dc2626' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-red-600 cursor-pointer transition-transform"></button>
+                <button type="button" @click="color = '#f58613'" :class="color === '#f58613' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-[#f58613] cursor-pointer transition-transform border-0"></button>
+                <button type="button" @click="color = '#eab308'" :class="color === '#eab308' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-yellow-500 cursor-pointer transition-transform border-0"></button>
+                <button type="button" @click="color = '#dc2626'" :class="color === '#dc2626' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-red-600 cursor-pointer transition-transform border-0"></button>
                 <button type="button" @click="color = '#ffffff'" :class="color === '#ffffff' ? 'ring-2 ring-orange-500 scale-110' : ''" class="w-6 h-6 rounded-full bg-white border border-slate-300 cursor-pointer transition-transform"></button>
                 <button type="button" @click="color = '#0f172a'" :class="color === '#0f172a' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-slate-900 border border-slate-800 cursor-pointer transition-transform"></button>
             </div>
@@ -385,22 +392,22 @@
         </div>
 
         <div class="bg-slate-900 border-t border-slate-800 px-4 h-20 shrink-0 flex items-center justify-center gap-1.5 sm:gap-3 overflow-x-auto">
-            <button type="button" @click="tool = 'pen'" :class="tool === 'pen' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
+            <button type="button" @click="tool = 'pen'" :class="tool === 'pen' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0">
                 <span>✏️</span> Pen
             </button>
-            <button type="button" @click="tool = 'line'" :class="tool === 'line' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
+            <button type="button" @click="tool = 'line'" :class="tool === 'line' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0">
                 <span>📏</span> Line
             </button>
-            <button type="button" @click="tool = 'arrow'" :class="tool === 'arrow' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
+            <button type="button" @click="tool = 'arrow'" :class="tool === 'arrow' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0">
                 <span>↗️</span> Arrow
             </button>
-            <button type="button" @click="tool = 'box'" :class="tool === 'box' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
+            <button type="button" @click="tool = 'box'" :class="tool === 'box' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0">
                 <span>⬜</span> Box
             </button>
-            <button type="button" @click="tool = 'circle'" :class="tool === 'circle' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
+            <button type="button" @click="tool = 'circle'" :class="tool === 'circle' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0">
                 <span>⚪</span> Circle
             </button>
-            <button type="button" @click="tool = 'text'" :class="tool === 'text' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
+            <button type="button" @click="tool = 'text'" :class="tool === 'text' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0">
                 <span>🔤</span> Text
             </button>
         </div>
@@ -419,7 +426,7 @@
                 customersList: @js($customers ?? []),
 
                 customerSource: @js(old('customerSource', 'directory')),
-                customer_id: @js(old('customer_id', '')), // FIX: Retain historical selected ID states safely
+                customer_id: @js(old('customer_id', '')),
                 customer_first_name: @js(old('customer_first_name', '')),
                 customer_last_name: @js(old('customer_last_name', '')),
                 customer_email: @js(old('customer_email', '')),
@@ -453,11 +460,12 @@
                                 description: @js($oldItem['description'] ?? ''),
                                 quantity: parseFloat(@js($oldItem['quantity'] ?? 1)) || 1,
                                 unit_price: parseFloat(@js($oldItem['unit_price'] ?? 0.00)) || 0.00,
-                                save_to_pricebook: @js(($oldItem['save_to_pricebook'] == 1 || $oldItem['save_to_pricebook'] === 'true'))
+                                is_taxable: @js(!isset($oldItem['is_taxable']) || $oldItem['is_taxable'] == 1 || $oldItem['is_taxable'] === 'true' || $oldItem['is_taxable'] === 'on'),
+                                save_to_pricebook: @js($oldItem['save_to_pricebook'] == 1 || $oldItem['save_to_pricebook'] === 'true' || $oldItem['save_to_pricebook'] === 'on')
                             });
                         @endforeach
                     @else
-                        this.items.push({ id: Date.now(), description: '', quantity: 1, unit_price: 0.00, save_to_pricebook: false });
+                        this.items.push({ id: Date.now(), description: '', quantity: 1, unit_price: 0.00, is_taxable: true, save_to_pricebook: false });
                     @endif
 
                     const preselectedId = '{{ $preselectedCustomerId ?? "" }}';
@@ -466,7 +474,7 @@
                     }
                 },
                 addItem() {
-                    this.items.push({ id: Date.now() + Math.random(), description: '', quantity: 1, unit_price: 0.00, save_to_pricebook: false });
+                    this.items.push({ id: Date.now() + Math.random(), description: '', quantity: 1, unit_price: 0.00, is_taxable: true, save_to_pricebook: false });
                 },
                 removeItem(index) {
                     if (this.items.length > 1) this.items.splice(index, 1);
@@ -482,7 +490,7 @@
                 loadDirectoryProfile(id) {
                     const match = this.customersList.find(c => c.id == id);
                     if (match) {
-                        this.customer_id = match.id; // FIX: Lock ID carrier reference state
+                        this.customer_id = match.id;
                         this.customer_first_name = match.first_name;
                         this.customer_last_name = match.last_name;
                         this.customer_email = match.email;
@@ -493,7 +501,7 @@
                     }
                 },
                 clearCustomerFields() {
-                    this.customer_id = ''; // FIX: Purge tracking reference cleanly
+                    this.customer_id = '';
                     this.customer_first_name = '';
                     this.customer_last_name = '';
                     this.customer_email = '';
@@ -504,7 +512,11 @@
                     return this.items.reduce((sum, item) => sum + ((parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0)), 0);
                 },
                 get taxTotal() {
-                    return this.subtotal * ((parseFloat(this.taxRate) || 0) / 100);
+                    // Filter and aggregate calculations purely from checked rows
+                    const taxableAggregate = this.items.reduce((sum, item) => {
+                        return sum + (item.is_taxable ? ((parseFloat(item.quantity) || 0) * (parseFloat(item.unit_price) || 0)) : 0);
+                    }, 0);
+                    return taxableAggregate * ((parseFloat(this.taxRate) || 0) / 100);
                 },
                 get grandTotal() {
                     return this.subtotal + this.taxTotal;
