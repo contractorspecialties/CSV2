@@ -84,9 +84,10 @@
                     <span class="text-xs font-black text-white uppercase tracking-wider text-center px-1">New Estimate</span>
                 </a>
 
+                <!-- HIGH-GLARE MOBILE DESK BUTTON: Simplified Client Roster Link -->
                 <a href="/workspace/crm" class="relative flex flex-col items-center justify-center aspect-square bg-white border-2 border-slate-900 rounded-2xl shadow-sm hover:border-[#f58613] active:scale-95 transition-all group overflow-hidden cursor-pointer text-decoration-none ring-4 ring-[#f58613]/10">
                     <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">🗂️</span>
-                    <span class="text-xs font-black text-slate-950 uppercase tracking-wider text-center px-1">Field CRM</span>
+                    <span class="text-xs font-black text-slate-950 uppercase tracking-wider text-center px-1">Clients</span>
                 </a>
 
                 <a href="/pricebook" class="relative flex flex-col items-center justify-center aspect-square bg-white border border-slate-200 rounded-2xl shadow-sm hover:border-slate-800 active:scale-95 transition-all group overflow-hidden cursor-pointer text-decoration-none">
@@ -206,7 +207,7 @@
                                         </form>
                                         <form action="/estimates/{{ $bid->id }}" method="POST" class="inline-block" onsubmit="return confirm('🛑 Delete this draft record completely?')">
                                             @csrf
-                                            @body('DELETE')
+                                            @method('DELETE')
                                             <button type="submit" class="bg-red-50 hover:bg-red-600 border border-red-200 text-red-600 hover:text-white font-black text-[11px] p-1.5 rounded-lg transition-colors cursor-pointer" title="Delete Quote">
                                                 🗑️
                                             </button>
@@ -336,7 +337,7 @@
                         <h3 class="font-black text-sm tracking-tight text-slate-900 uppercase flex items-center gap-2">
                             👥 Recent Clients Connected
                         </h3>
-                        <a href="/workspace/crm" class="text-xs font-bold text-[#f58613] hover:underline uppercase tracking-wider">Open CRM Desk →</a>
+                        <a href="/workspace/crm" class="text-xs font-bold text-[#f58613] hover:underline uppercase tracking-wider text-decoration-none">Open CRM Desk →</a>
                     </div>
 
                     <div class="overflow-x-auto">

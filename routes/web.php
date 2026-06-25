@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\MagicAuthController;
-use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PricebookController;
 use App\Http\Controllers\EstimateController;
@@ -48,6 +48,7 @@ Route::middleware(['auth'])->group(function () {
     | These routes remain exempt from the onboarding intercept gate middleware
     | to eliminate cascading infinite loop execution sequences.
     |
+    |
     */
     Route::get('/workspace/setup', [OnboardingController::class, 'showWizard'])->name('onboarding.view');
     Route::post('/workspace/setup', [OnboardingController::class, 'processWizard'])->name('onboarding.submit');
@@ -59,6 +60,7 @@ Route::middleware(['auth'])->group(function () {
     | The user must possess a valid 'onboarding_completed_at' timestamp token
     | inside database memory to pierce this boundary layer. If incomplete,
     | they are gracefully rerouted back to the workspace configurator.
+    |
     |
     */
     Route::middleware([EnsureOnboardingIsCompleted::class])->group(function () {
@@ -93,9 +95,10 @@ Route::middleware(['auth'])->group(function () {
             return back()->with('status', "🔒 Number verified and formatted to {$cleanE164} successfully.");
         })->name('user.security-phone');
 
-        // Customers Management
-        Route::get('/customers/export', [CustomerController::class, 'exportCsv'])->name('customers.export');
-        Route::resource('customers', CustomerController::class);
+        // 📱 Unified Mobile Client Management CRM Engine Routing
+        Route::get('/workspace/crm', [ClientController::class, 'index'])->name('workspace.crm.index');
+        Route::post('/workspace/crm/store', [ClientController::class, 'store'])->name('workspace.crm.store');
+        Route::post('/workspace/crm/update/{id}', [ClientController::class, 'update'])->name('workspace.crm.update');
 
         // Pricebook Management
         Route::resource('pricebook', PricebookController::class)->only(['index', 'store', 'destroy']);
