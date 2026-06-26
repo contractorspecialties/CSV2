@@ -14,8 +14,8 @@ class PricebookController extends Controller
     public function index()
     {
         $items = PricebookItem::where('company_id', Auth::user()->company_id)
-            ->orderBy('category')
-            ->orderBy('name')
+            ->orderBy('category', 'asc')
+            ->orderBy('name', 'asc')
             ->get();
 
         return view('pricebook.index', compact('items'));
@@ -27,12 +27,12 @@ class PricebookController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'category' => 'required|string|max:255',
-            'unit_type' => 'required|string|in:flat_rate,sqft,linear_ft,hourly',
-            'base_unit_cost' => 'required|numeric|min:0',
+            'name'              => 'required|string|max:255',
+            'category'          => 'required|string|max:255',
+            'unit_type'         => 'required|string|in:flat_rate,sqft,linear_ft,hourly',
+            'base_unit_cost'    => 'required|numeric|min:0',
             'markup_percentage' => 'required|numeric|min:0',
-            'description' => 'nullable|string',
+            'description'       => 'nullable|string|max:1000',
         ]);
 
         PricebookItem::create([
