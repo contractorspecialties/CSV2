@@ -1,17 +1,29 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-black text-3xl text-slate-900 tracking-tight leading-tight">
-                {{ __('Add New Client') }}
-            </h2>
-            <a href="{{ route('workspace.crm.index') }}" class="text-base font-black text-white hover:text-slate-200 transition bg-slate-900 hover:bg-black px-6 py-3 rounded-2xl shadow-md transform active:scale-95 flex items-center text-decoration-none">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                Back to CRM
-            </a>
-        </div>
-    </x-slot>
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-100 text-slate-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add New Client | ContractorSpecialties</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="flex flex-col min-h-full font-sans antialiased bg-slate-50 text-slate-900 selection:bg-[#f58613] selection:text-white">
 
-    <div class="py-8">
+    <header class="bg-black border-b border-slate-900 sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 h-24 flex items-center justify-between">
+            <div class="w-[400px] max-w-[45%] h-[100px] flex items-center">
+                <img src="/images/header-logo.webp" alt="ContractorSpecialties Logo" class="w-full h-auto max-h-[90px] object-contain object-left">
+            </div>
+
+            <div class="flex items-center gap-4">
+                <a href="{{ route('workspace.crm.index') }}" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 hover:text-white font-black text-[10px] py-2.5 px-4 rounded-xl uppercase tracking-wider transition-all text-decoration-none shadow-sm cursor-pointer">
+                    &larr; Back to CRM
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="py-12 flex-grow">
         <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
 
             <div class="bg-white rounded-3xl shadow-md border-2 border-slate-300 overflow-hidden mb-10">
@@ -152,4 +164,5 @@
             }
         </style>
     @endif
-</x-app-layout>
+</body>
+</html>
