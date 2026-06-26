@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Customer;
+use App\Models\Client;
 use App\Models\Estimate;
 use App\Models\EstimateItem;
 use App\Models\JobAttachment;
@@ -28,11 +28,18 @@ class EstimateController extends Controller
     {
         $companyId = Auth::user()->company_id;
 
-        // Fetch company directory customers ordered cleanly by name properties
-        $customers = Customer::where('company_id', $companyId)
-            ->orderBy('last_name', 'asc')
-            ->orderBy('first_name', 'asc')
+        // Fetch company directory clients ordered cleanly by name properties
+        $customers = Client::where('company_id', $companyId)
+            ->orderBy('name', 'asc')
             ->get();
+
+        // Inject first/last split properties into memory so legacy view variables evaluate cleanly
+        $customers->each(function($client) {
+            $parts = explode(' ', trim($client->name ?? ''), 2);
+            $client->first_name = $parts[0] ?? 'Client';
+            $client->last_name = $parts[1] ?? ' ';
+            $client->billing_address = $client->address;
+        });
 
         // Optimized Model-Driven Query automatically tracking prefix definitions
         $pricebookItems = PricebookItem::where('company_id', $companyId)
@@ -59,7 +66,7 @@ class EstimateController extends Controller
             $inputData['deposit_amount'] = null;
         }
 
-        // Cast pricebook and line item tax array checkbox tokens to absolute booleans before hitting validation layers
+        // Cast pricebook and line item tax array checkbox tokens to absolute booleans
         if (isset($inputData['items']) && is_array($inputData['items'])) {
             foreach ($inputData['items'] as $key => $item) {
                 $inputData['items'][$key]['save_to_pricebook'] = (isset($item['save_to_pricebook']) && ($item['save_to_pricebook'] === 'true' || $item['save_to_pricebook'] === 'on' || $item['save_to_pricebook'] == 1)) ? true : false;
@@ -67,7 +74,7 @@ class EstimateController extends Controller
             }
         }
 
-        // Re-bind sanitized variables back into a clean workspace request array
+        // Re-bind sanitized variables back into a clean request array
         $request->merge($inputData);
 
         // Run plugin-driven structural modifications safely across dependent tables
@@ -97,27 +104,27 @@ class EstimateController extends Controller
 
         $estimate = DB::transaction(function () use ($validated, $companyId, $request) {
             $customer = null;
+            $fullName = trim($validated['customer_first_name'] . ' ' . $validated['customer_last_name']);
 
             if (!empty($validated['customer_id'])) {
-                $customer = Customer::where('company_id', $companyId)->find($validated['customer_id']);
+                $customer = Client::where('company_id', $companyId)->find($validated['customer_id']);
             }
 
             if (!$customer && !empty($validated['customer_email'])) {
-                $customer = Customer::where('company_id', $companyId)
+                $customer = Client::where('company_id', $companyId)
                     ->where('email', $validated['customer_email'])
                     ->first();
             }
 
             if (!$customer) {
-                $customer = new Customer();
+                $customer = new Client();
                 $customer->company_id = $companyId;
             }
 
-            $customer->first_name = $validated['customer_first_name'];
-            $customer->last_name = $validated['customer_last_name'];
+            $customer->name = $fullName;
             $customer->email = $validated['customer_email'];
             $customer->phone = $validated['customer_phone'];
-            $customer->billing_address = $validated['customer_address'];
+            $customer->address = $validated['customer_address'];
             $customer->save();
 
             $estimateNumber = 'EST-' . strtoupper(Str::random(4)) . '-' . rand(1000, 9999);
@@ -155,8 +162,7 @@ class EstimateController extends Controller
                 $item->is_taxable = !empty($itemData['is_taxable']) ? 1 : 0;
                 $item->save();
 
-                $mustSave = !empty($itemData['save_to_pricebook']);
-                if ($mustSave) {
+                if (!empty($itemData['save_to_pricebook'])) {
                     $cleanDesc = Str::limit($itemData['description'], 100);
                     $pbItem = PricebookItem::where('company_id', $companyId)->where('name', $cleanDesc)->first();
                     if (!$pbItem) {
@@ -172,7 +178,6 @@ class EstimateController extends Controller
                 }
             }
 
-            // Granular, itemized calculation pass logic matching tax specifications
             $taxAmount = $taxableSubtotal * ($validated['tax_rate'] / 100);
             $calculatedGrandTotal = $calculatedSubtotal + $taxAmount;
 
@@ -180,7 +185,6 @@ class EstimateController extends Controller
             $estimate->grand_total = $calculatedGrandTotal;
             $estimate->save();
 
-            // Direct public folder mapping pass to eliminate asset symlink visibility bugs
             if ($request->hasFile('image') && $request->file('image')->isValid()) {
                 if (!file_exists(public_path('uploads/attachments'))) {
                     mkdir(public_path('uploads/attachments'), 0755, true);
@@ -214,6 +218,12 @@ class EstimateController extends Controller
         $estimate = Estimate::where('company_id', $companyId)
             ->with(['customer', 'items'])
             ->findOrFail($id);
+
+        if ($estimate->customer) {
+            $parts = explode(' ', trim($estimate->customer->name ?? ''), 2);
+            $estimate->customer->first_name = $parts[0] ?? 'Client';
+            $estimate->customer->last_name = $parts[1] ?? ' ';
+        }
 
         $attachments = JobAttachment::where('estimate_id', $estimate->id)->get();
 
@@ -262,7 +272,6 @@ class EstimateController extends Controller
             'status' => 'sent'
         ]);
 
-        // Explicit, updated notification alerting homeowners of the contractor adjustments
         if (!empty($estimate->customer->phone)) {
             $portalLink = route('portal.checkout', ['token' => $estimate->estimate_number]);
 
@@ -273,13 +282,14 @@ class EstimateController extends Controller
 
             if (!empty($fromLine)) {
                 try {
+                    $firstName = explode(' ', trim($estimate->customer->name ?? ''))[0] ?? 'Client';
                     Http::withHeaders([
                         'Authorization' => 'Bearer ' . env('TELNYX_API_KEY'),
                         'Content-Type'  => 'application/json',
                     ])->post('https://api.telnyx.com/v2/messages', [
                         'from' => $fromLine,
                         'to'   => $estimate->customer->phone,
-                        'text' => "Hello " . $estimate->customer->first_name . ", we have processed your feedback and adjusted your project proposal specifications package. Review revisions here: " . $portalLink,
+                        'text' => "Hello " . $firstName . ", we have processed your feedback and adjusted your project proposal specifications package. Review revisions here: " . $portalLink,
                     ]);
                 } catch (\Exception $e) {
                     Log::error('Telnyx response notification failed: ' . $e->getMessage());
@@ -334,6 +344,12 @@ class EstimateController extends Controller
             ->where('id', $token)
             ->orWhere('estimate_number', $token)
             ->firstOrFail();
+
+        if ($estimate->customer) {
+            $parts = explode(' ', trim($estimate->customer->name ?? ''), 2);
+            $estimate->customer->first_name = $parts[0] ?? 'Client';
+            $estimate->customer->last_name = $parts[1] ?? ' ';
+        }
 
         $userTable = (new \App\Models\User())->getTable();
         $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
@@ -404,7 +420,6 @@ class EstimateController extends Controller
             return back()->with('status', '💳 Upfront payment verified! Production lines locked onto master operational schedule.');
         }
 
-        // 🚨 CRITICAL: INTERCEPT REVISION REQUEST AND NOTIFY THE CONTRACTOR INSTANTLY
         if ($action === 'revision') {
             $request->validate(['notes' => 'required|string|max:1000']);
 
@@ -412,21 +427,20 @@ class EstimateController extends Controller
                 'notes' => "🚨 Homeowner Modification Request:\n" . $request->notes . "\n\n" . $estimate->notes
             ]);
 
-            // Resolve company communications route properties dynamically
-            $userTable = (new \App\Models\User())->getTable();
+            $userTable = (new \App\App\Models\User() ?? new \App\Models\User())->getTable();
             $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
             $company = DB::table($prefix . 'companies')->where('id', $estimate->company_id)->first();
 
             if ($company && !empty($company->sms_phone_number)) {
                 try {
-                    $controlDashboardLink = url("/estimates/{$estimate->id}");
+                    $firstName = explode(' ', trim($estimate->customer->name ?? ''))[0] ?? 'Client';
                     Http::withHeaders([
                         'Authorization' => 'Bearer ' . env('TELNYX_API_KEY'),
                         'Content-Type'  => 'application/json',
                     ])->post('https://api.telnyx.com/v2/messages', [
                         'from' => env('TELNYX_DEFAULT_FROM'),
                         'to'   => $company->sms_phone_number,
-                        'text' => "⚠️ Alert: Client has logged a change request on Estimate #{$estimate->estimate_number} ({$estimate->customer->first_name} {$estimate->customer->last_name}). Review details and adjust parameters immediately here: " . $headerLink = url("/estimates/{$estimate->id}")
+                        'text' => "⚠️ Alert: Client has logged a change request on Estimate #{$estimate->estimate_number} ({$firstName}). Review details here: " . url("/estimates/{$estimate->id}")
                     ]);
                 } catch (\Exception $e) {
                     Log::error('Contractor instant revision SMS dispatch error: ' . $e->getMessage());
@@ -484,7 +498,7 @@ class EstimateController extends Controller
             $estimate->delete();
         });
 
-        return redirect()->route('dashboard')->with('status', '🗑️ Old estimate record and associated canvas markup archives permanently purged.');
+        return redirect()->route('dashboard')->with('status', '🗑️ Old estimate record permanently purged.');
     }
 
     /**
@@ -509,7 +523,7 @@ class EstimateController extends Controller
             });
         }
 
-        if (Schema::hasTable($itemsTable = $estimateTable . '_items' ?: $itemsTable)) {
+        if (Schema::hasTable($itemsTable)) {
             Schema::table($itemsTable, function (Blueprint $table) use ($itemsTable) {
                 if (!Schema::hasColumn($itemsTable, 'is_taxable')) {
                     $table->boolean('is_taxable')->default(1)->after('total_price');
