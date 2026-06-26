@@ -48,7 +48,6 @@ Route::middleware(['auth'])->group(function () {
     | These routes remain exempt from the onboarding intercept gate middleware
     | to eliminate cascading infinite loop execution sequences.
     |
-    |
     */
     Route::get('/workspace/setup', [OnboardingController::class, 'showWizard'])->name('onboarding.view');
     Route::post('/workspace/setup', [OnboardingController::class, 'processWizard'])->name('onboarding.submit');
@@ -61,7 +60,6 @@ Route::middleware(['auth'])->group(function () {
     | inside database memory to pierce this boundary layer. If incomplete,
     | they are gracefully rerouted back to the workspace configurator.
     |
-    |
     */
     Route::middleware([EnsureOnboardingIsCompleted::class])->group(function () {
 
@@ -71,7 +69,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/workspace/profile', [CompanyProfileController::class, 'edit'])->name('workspace.profile.edit');
         Route::post('/workspace/profile', [CompanyProfileController::class, 'update'])->name('workspace.profile.update');
 
-        // ✨ DYNAMIC REPUTATION ENGINE: Gemini 3.5 Flash Automated Copywriting Port
+        // ✨ DYNAMIC REPUTATION ENGINE: Gemini 3.5 Automated Copywriting Port
         Route::post('/workspace/profile/ai-assist', [CompanyProfileController::class, 'generateAiAssist'])->name('workspace.profile.ai-assist');
 
         // Secure Login Line Configuration (With Smart String Normalization)
@@ -96,9 +94,13 @@ Route::middleware(['auth'])->group(function () {
         })->name('user.security-phone');
 
         // 📱 Unified Mobile Client Management CRM Engine Routing
+        Route::get('/workspace/crm/export', [ClientController::class, 'exportCsv'])->name('workspace.crm.export');
         Route::get('/workspace/crm', [ClientController::class, 'index'])->name('workspace.crm.index');
+        Route::get('/workspace/crm/create', [ClientController::class, 'create'])->name('workspace.crm.create');
         Route::post('/workspace/crm/store', [ClientController::class, 'store'])->name('workspace.crm.store');
+        Route::get('/workspace/crm/edit/{id}', [ClientController::class, 'edit'])->name('workspace.crm.edit');
         Route::post('/workspace/crm/update/{id}', [ClientController::class, 'update'])->name('workspace.crm.update');
+        Route::delete('/workspace/crm/destroy/{id}', [ClientController::class, 'destroy'])->name('workspace.crm.destroy');
 
         // Pricebook Management
         Route::resource('pricebook', PricebookController::class)->only(['index', 'store', 'destroy']);
@@ -152,7 +154,6 @@ Route::post('/webhooks/telnyx', [EstimateController::class, 'handleTelnyxWebhook
 |--------------------------------------------------------------------------
 */
 
-// FIX: Shielded class definition against double-pass evaluation routing loops
 if (!class_exists('AdminGateMiddleware')) {
     class AdminGateMiddleware
     {
