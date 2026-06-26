@@ -11,7 +11,15 @@
     </style>
 </head>
 <body class="flex flex-col min-h-full font-sans antialiased bg-slate-50 text-slate-900 selection:bg-[#f58613] selection:text-white"
-      x-data="{ showAddModal: false }">
+      x-data="{
+          showAddModal: false,
+          showEditModal: false,
+          editItem: { id: '', name: '', category: '', unit_type: 'flat_rate', base_unit_cost: 0, markup_percentage: 0, description: '' },
+          openEditModal(item) {
+              this.editItem = { ...item };
+              this.showEditModal = true;
+          }
+      }">
 
     <header class="bg-black border-b border-slate-900 sticky top-0 z-50 shadow-md">
         <div class="max-w-5xl mx-auto px-4 h-24 flex items-center justify-between">
@@ -55,11 +63,11 @@
                         <th class="py-4 px-4 text-right">Corporate Base Cost</th>
                         <th class="py-4 px-4 text-center">Markup</th>
                         <th class="py-4 px-4 text-right">Retail Calculation Price</th>
-                        <th class="py-4 px-5 text-center">Action</th>
+                        <th class="py-4 px-5 text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200 font-bold text-slate-700">
-                    @forelse($items as $item)
+                    @foreach($items as $item)
                         <tr class="hover:bg-slate-50/60 transition-colors">
                             <td class="py-4 px-5">
                                 <div class="font-black text-slate-950 text-base uppercase tracking-tight">{{ $item->name }}</div>
@@ -93,23 +101,29 @@
                                 ${{ number_format($item->base_unit_cost * (1 + ($item->markup_percentage / 100)), 2) }}
                             </td>
                             <td class="py-4 px-5 text-center">
-                                <form action="/pricebook/{{ $item->id }}" method="POST" onsubmit="return confirm('Permanently delete this row from your price book portfolio?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-xs font-black text-red-500 hover:text-white bg-red-50 hover:bg-red-600 border border-red-200 px-3 py-2 rounded-xl transition-colors cursor-pointer uppercase tracking-wider border-0 outline-none">
-                                        Delete
+                                <div class="flex items-center justify-center gap-2">
+                                    <button type="button"
+                                            @click="openEditModal({{ json_encode($item) }})"
+                                            class="text-xs font-black text-slate-600 hover:text-white bg-slate-100 hover:bg-slate-800 border border-slate-300 px-3 py-2 rounded-xl transition-colors cursor-pointer uppercase tracking-wider outline-none">
+                                        Edit
                                     </button>
-                                </form>
+                                    <form action="/pricebook/{{ $item->id }}" method="POST" onsubmit="return confirm('Permanently delete this row from your price book portfolio?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-xs font-black text-red-500 hover:text-white bg-red-50 hover:bg-red-600 border border-red-200 px-3 py-2 rounded-xl transition-colors cursor-pointer uppercase tracking-wider border-0 outline-none">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
-                    @empty
-                        @endforelse
+                    @endforeach
                 </tbody>
             </table>
         </div>
 
         <div class="block md:hidden space-y-4">
-            @forelse($items as $item)
+            @foreach($items as $item)
                 <div class="bg-white border-2 border-slate-300 rounded-3xl p-5 shadow-sm space-y-4 relative">
                     <div class="flex items-start justify-between gap-4 border-b border-slate-100 pb-3">
                         <div>
@@ -119,13 +133,20 @@
                             <h3 class="text-xl font-black text-slate-950 uppercase tracking-tight mt-1.5 leading-tight">{{ $item->name }}</h3>
                         </div>
 
-                        <form action="/pricebook/{{ $item->id }}" method="POST" onsubmit="return confirm('Permanently delete this row?');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="bg-red-50 border-2 border-red-200 text-red-600 font-black p-2.5 rounded-xl text-sm transition-colors border-0 cursor-pointer outline-none">
-                                🗑️
+                        <div class="flex items-center gap-2">
+                            <button type="button"
+                                    @click="openEditModal({{ json_encode($item) }})"
+                                    class="bg-slate-100 border-2 border-slate-200 text-slate-700 font-black p-2.5 rounded-xl text-sm transition-colors border-0 cursor-pointer outline-none">
+                                ✏️
                             </button>
-                        </form>
+                            <form action="/pricebook/{{ $item->id }}" method="POST" onsubmit="return confirm('Permanently delete this row?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="bg-red-50 border-2 border-red-200 text-red-600 font-black p-2.5 rounded-xl text-sm transition-colors border-0 cursor-pointer outline-none">
+                                    🗑️
+                                </button>
+                            </form>
+                        </div>
                     </div>
 
                     @if($item->description)
@@ -153,8 +174,7 @@
                         </div>
                     </div>
                 </div>
-            @empty
-                @endforelse
+            @endforeach
         </div>
 
         @if($items->isEmpty())
@@ -172,89 +192,103 @@
 
     <div x-show="showAddModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
         <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity" @click="showAddModal = false"></div>
-
-        <div class="bg-white border-4 border-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl relative z-10 max-h-[92vh] overflow-y-auto shadow-black/40"
-             x-transition:enter="transition ease-out duration-200 transform scale-95"
-             x-transition:enter-start="opacity-0 scale-95"
-             x-transition:enter-end="opacity-100 scale-100">
-
+        <div class="bg-white border-4 border-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl relative z-10 max-h-[92vh] overflow-y-auto" x-transition>
             <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-5">
-                <h3 class="text-lg font-black uppercase text-slate-950 tracking-tight font-mono flex items-center gap-1.5">
-                    <span>📊</span> Create Pricebook Entry
-                </h3>
+                <h3 class="text-lg font-black uppercase text-slate-950 tracking-tight font-mono flex items-center gap-1.5"><span>📊</span> Create Entry</h3>
                 <button type="button" @click="showAddModal = false" class="text-slate-400 hover:text-slate-900 font-bold text-base bg-transparent border-0 cursor-pointer outline-none">✕</button>
             </div>
-
-            <form action="/pricebook" method="POST"
-                  x-data="{
-                      baseCost: 0,
-                      markupPercent: 0,
-                      get profitDollars() {
-                          return (parseFloat(this.baseCost) || 0) * ((parseFloat(this.markupPercent) || 0) / 100);
-                      },
-                      get finalRetailPrice() {
-                          return (parseFloat(this.baseCost) || 0) + this.profitDollars;
-                      }
-                  }" class="space-y-5">
+            <form action="/pricebook" method="POST" x-data="{ baseCost: 0, markupPercent: 0 }" class="space-y-5">
                 @csrf
-
                 <div>
                     <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Service / Item Catalog Title *</label>
-                    <input type="text" name="name" required placeholder="e.g. Standard Framing Repair Run" autocomplete="off"
-                           class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3 px-4 text-base font-bold focus:outline-none focus:border-slate-900 text-slate-900">
+                    <input type="text" name="name" required placeholder="e.g. Standard Framing Repair Run" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3 px-4 text-base font-bold focus:outline-none focus:border-slate-900 text-slate-900">
                 </div>
-
                 <div>
                     <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Category Group *</label>
-                    <input type="text" name="category" required placeholder="e.g. Carpentry Work" autocomplete="off"
-                           class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3 px-4 text-base font-bold focus:outline-none focus:border-slate-900 text-slate-900">
+                    <input type="text" name="category" required placeholder="e.g. Carpentry Work" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3 px-4 text-base font-bold focus:outline-none focus:border-slate-900 text-slate-900">
                 </div>
-
                 <div>
                     <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Metric Calculation Basis *</label>
-                    <select name="unit_type" required
-                            class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3.5 px-4 text-base font-bold focus:outline-none focus:border-slate-900 cursor-pointer bg-white text-slate-900">
+                    <select name="unit_type" required class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3.5 px-4 text-base font-bold focus:outline-none focus:border-slate-900 cursor-pointer bg-white text-slate-900">
                         <option value="flat_rate">Fixed Flat Rate Price</option>
                         <option value="sqft">Square Footage (Sq. Ft.)</option>
                         <option value="linear_ft">Linear Foot Run</option>
                         <option value="hourly">Hourly Labor Rate</option>
                     </select>
                 </div>
-
                 <div class="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
                     <div>
                         <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Base Cost ($) *</label>
-                        <input type="number" name="base_unit_cost" step="0.01" min="0" required x-model.number="baseCost" placeholder="0.00" autocomplete="off"
-                               class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3 px-4 text-base font-mono font-black focus:outline-none focus:border-slate-900 text-slate-900">
+                        <input type="number" name="base_unit_cost" step="0.01" min="0" required x-model.number="baseCost" placeholder="0.00" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3 px-4 text-base font-mono font-black focus:outline-none focus:border-slate-900 text-slate-900">
                     </div>
                     <div>
                         <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Markup (%) *</label>
-                        <input type="number" name="markup_percentage" step="0.1" min="0" required x-model.number="markupPercent" placeholder="0.0" autocomplete="off"
-                               class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3 px-4 text-base font-mono font-black focus:outline-none focus:border-slate-900 text-slate-900">
+                        <input type="number" name="markup_percentage" step="0.1" min="0" required x-model.number="markupPercent" placeholder="0.0" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3 px-4 text-base font-mono font-black focus:outline-none focus:border-slate-900 text-slate-900">
                     </div>
                 </div>
-
-                <div class="bg-slate-950 text-white p-4 rounded-2xl space-y-2 font-mono text-xs shadow-inner border border-slate-900">
-                    <span class="block text-[9px] font-sans font-black tracking-widest text-slate-500">Live Profit Calculation Margin Matrix</span>
-                    <div class="flex justify-between font-bold">
-                        <span class="text-slate-400">Net Surcharge Margin:</span>
-                        <span class="text-orange-500 font-black" x-text="'+$' + profitDollars.toFixed(2)">+$0.00</span>
-                    </div>
-                    <div class="flex justify-between items-baseline pt-2 border-t border-slate-800 mt-2">
-                        <span class="text-[10px] font-sans font-black uppercase tracking-wider text-slate-200">Customer Retail Price:</span>
-                        <span class="text-2xl font-black text-emerald-400" x-text="'$' + finalRetailPrice.toFixed(2)">$0.00</span>
-                    </div>
+                <div class="bg-slate-950 text-white p-4 rounded-2xl space-y-2 font-mono text-xs border border-slate-900">
+                    <div class="flex justify-between font-bold"><span class="text-slate-400">Net Surcharge Margin:</span><span class="text-orange-500 font-black" x-text="'+$' + ((baseCost || 0) * ((markupPercent || 0) / 100)).toFixed(2)">+$0.00</span></div>
+                    <div class="flex justify-between items-baseline pt-2 border-t border-slate-800 mt-2"><span class="text-[10px] font-sans font-black text-slate-200">Customer Retail Price:</span><span class="text-2xl font-black text-emerald-400" x-text="'$' + ((baseCost || 0) * (1 + ((markupPercent || 0) / 100))).toFixed(2)">$0.00</span></div>
                 </div>
-
                 <div>
-                    <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Scope Notes / Guidelines (Internal Only)</label>
-                    <textarea name="description" rows="2" placeholder="Describe standard material specs or performance limits for crew configurations..."
-                              class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl p-3 text-sm font-medium focus:outline-none focus:border-slate-900 text-slate-900 leading-relaxed"></textarea>
+                    <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Scope Notes (Internal Only)</label>
+                    <textarea name="description" rows="2" placeholder="Describe standard material specs..." class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl p-3 text-sm font-medium focus:outline-none focus:border-slate-900 text-slate-900"></textarea>
                 </div>
-
                 <div class="pt-2 flex justify-end gap-3">
-                    <button type="button" @click="showAddModal = false" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs py-3.5 px-5 rounded-xl uppercase tracking-wider border-0 cursor-pointer outline-none">Cancel</button>
-                    <button type="submit" class="bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-3.5 px-6 rounded-xl uppercase tracking-wider shadow border-0 cursor-pointer outline-none">Log To Pricebook</button>
+                    <button type="button" @click="showAddModal = false" class="bg-slate-100 text-slate-700 font-black text-xs py-3.5 px-5 rounded-xl uppercase tracking-wider border-0 cursor-pointer outline-none">Cancel</button>
+                    <button type="submit" class="bg-[#f58613] text-white font-black text-xs py-3.5 px-6 rounded-xl uppercase tracking-wider border-0 cursor-pointer outline-none">Log To Pricebook</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div x-show="showEditModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity" @click="showEditModal = false"></div>
+        <div class="bg-white border-4 border-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl relative z-10 max-h-[92vh] overflow-y-auto shadow-black/40" x-transition>
+            <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-5">
+                <h3 class="text-lg font-black uppercase text-slate-950 tracking-tight font-mono flex items-center gap-1.5"><span>🔄</span> Modify Pricebook Record</h3>
+                <button type="button" @click="showEditModal = false" class="text-slate-400 hover:text-slate-900 font-bold text-base bg-transparent border-0 cursor-pointer outline-none">✕</button>
+            </div>
+            <form :action="'/pricebook/update/' + editItem.id" method="POST" class="space-y-5">
+                @csrf
+                <div>
+                    <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Service / Item Catalog Title *</label>
+                    <input type="text" name="name" required x-model="editItem.name" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3 px-4 text-base font-bold focus:outline-none focus:border-slate-900 text-slate-900">
+                </div>
+                <div>
+                    <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Category Group *</label>
+                    <input type="text" name="category" required x-model="editItem.category" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3 px-4 text-base font-bold focus:outline-none focus:border-slate-900 text-slate-900">
+                </div>
+                <div>
+                    <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Metric Calculation Basis *</label>
+                    <select name="unit_type" required x-model="editItem.unit_type" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3.5 px-4 text-base font-bold focus:outline-none focus:border-slate-900 cursor-pointer bg-white text-slate-900">
+                        <option value="flat_rate">Fixed Flat Rate Price</option>
+                        <option value="sqft">Square Footage (Sq. Ft.)</option>
+                        <option value="linear_ft">Linear Foot Run</option>
+                        <option value="hourly">Hourly Labor Rate</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                    <div>
+                        <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Base Cost ($) *</label>
+                        <input type="number" name="base_unit_cost" step="0.01" min="0" required x-model.number="editItem.base_unit_cost" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3 px-4 text-base font-mono font-black focus:outline-none focus:border-slate-900 text-slate-900">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Markup (%) *</label>
+                        <input type="number" name="markup_percentage" step="0.1" min="0" required x-model.number="editItem.markup_percentage" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3 px-4 text-base font-mono font-black focus:outline-none focus:border-slate-900 text-slate-900">
+                    </div>
+                </div>
+                <div class="bg-slate-950 text-white p-4 rounded-2xl space-y-2 font-mono text-xs border border-slate-900">
+                    <div class="flex justify-between font-bold"><span class="text-slate-400">Net Surcharge Margin:</span><span class="text-orange-500 font-black" x-text="'+$' + ((parseFloat(editItem.base_unit_cost) || 0) * ((parseFloat(editItem.markup_percentage) || 0) / 100)).toFixed(2)">+$0.00</span></div>
+                    <div class="flex justify-between items-baseline pt-2 border-t border-slate-800 mt-2"><span class="text-[10px] font-sans font-black text-slate-200">Customer Retail Price:</span><span class="text-2xl font-black text-emerald-400" x-text="'$' + ((parseFloat(editItem.base_unit_cost) || 0) * (1 + ((parseFloat(editItem.markup_percentage) || 0) / 100))).toFixed(2)">$0.00</span></div>
+                </div>
+                <div>
+                    <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Scope Notes (Internal Only)</label>
+                    <textarea name="description" rows="2" x-model="editItem.description" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl p-3 text-sm font-medium focus:outline-none focus:border-slate-900 text-slate-900"></textarea>
+                </div>
+                <div class="pt-2 flex justify-end gap-3">
+                    <button type="button" @click="showEditModal = false" class="bg-slate-100 text-slate-700 font-black text-xs py-3.5 px-5 rounded-xl uppercase tracking-wider border-0 cursor-pointer outline-none">Cancel</button>
+                    <button type="submit" class="bg-slate-900 text-white font-black text-xs py-3.5 px-6 rounded-xl uppercase tracking-wider border-0 cursor-pointer outline-none">Save Changes ⚡</button>
                 </div>
             </form>
         </div>

@@ -103,6 +103,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/workspace/crm/destroy/{id}', [ClientController::class, 'destroy'])->name('workspace.crm.destroy');
 
         // Pricebook Management
+        Route::post('/pricebook/update/{id}', [PricebookController::class, 'update'])->name('pricebook.update');
         Route::resource('pricebook', PricebookController::class)->only(['index', 'store', 'destroy']);
 
         // Estimates & Job Operational Processing (Unified under EstimateController)

@@ -49,6 +49,34 @@ class PricebookController extends Controller
     }
 
     /**
+     * Update an existing pricebook item partition row securely.
+     */
+    public function update(Request $request, $id)
+    {
+        $item = PricebookItem::where('company_id', Auth::user()->company_id)->findOrFail($id);
+
+        $validated = $request->validate([
+            'name'              => 'required|string|max:255',
+            'category'          => 'required|string|max:255',
+            'unit_type'         => 'required|string|in:flat_rate,sqft,linear_ft,hourly',
+            'base_unit_cost'    => 'required|numeric|min:0',
+            'markup_percentage' => 'required|numeric|min:0',
+            'description'       => 'nullable|string|max:1000',
+        ]);
+
+        $item->update([
+            'name'              => $validated['name'],
+            'category'          => $validated['category'],
+            'unit_type'         => $validated['unit_type'],
+            'base_unit_cost'    => $validated['base_unit_cost'],
+            'markup_percentage' => $validated['markup_percentage'],
+            'description'       => $validated['description'],
+        ]);
+
+        return redirect()->route('pricebook.index')->with('status', '🔄 Pricebook entry parameters updated successfully.');
+    }
+
+    /**
      * Remove a structural pricing model row from the company partition.
      */
     public function destroy($id)
