@@ -106,6 +106,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/pricebook/update/{id}', [PricebookController::class, 'update'])->name('pricebook.update');
         Route::resource('pricebook', PricebookController::class)->only(['index', 'store', 'destroy']);
 
+        // 💵 Quick On-Site Mobile Billing Counter UI View Node
+        Route::get('/workspace/billing/quick', function () { return view('billing.quick'); })->name('workspace.billing.quick');
+
         // Estimates & Job Operational Processing (Unified under EstimateController)
         Route::post('/estimates/{id}/blueprint', [EstimateController::class, 'saveBlueprint'])->name('estimates.blueprint');
         Route::post('/estimates/{id}/text-dispatch', [EstimateController::class, 'sendEstimateSms'])->name('estimates.text-dispatch');
