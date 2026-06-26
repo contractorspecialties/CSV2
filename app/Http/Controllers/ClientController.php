@@ -25,7 +25,7 @@ class ClientController extends Controller
         $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
         $clientTable = $prefix . 'clients';
 
-        // Run the self-healing guard to ensure table and columns match the layout metrics
+        // Self-heal the schema structure safely
         $this->ensureSchemaIsHealed($clientTable);
 
         $query = DB::table($clientTable)->where('company_id', $user->company_id);
@@ -34,14 +34,50 @@ class ClientController extends Controller
         if ($request->filled('search')) {
             $search = trim($request->input('search'));
             $query->where(function($q) use ($search) {
+                // Multi-column safety search fallback
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('company', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%");
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  // Support old table names if search runs before cache drops
+                  ->orWhere('client_name', 'like', "%{$search}%");
             });
         }
 
-        $clients = $query->orderBy('name', 'asc')->get();
+        // Order by updated_at so contractors always see recently touched files first
+        $rawClients = $query->orderBy('updated_at', 'desc')->get();
+
+        // 🛡️ INDESTRUCTIBLE DATA NORMALIZATION COMPATIBILITY LAYER
+        // Maps old table structures and new layout targets seamlessly so Blade never throws an undefined property error
+        $clients = $rawClients->map(function ($client) {
+            $normalized = new \stdClass();
+            $normalized->id = $client->id;
+            $normalized->company_id = $client->company_id;
+
+            // Core Identity Normalization
+            $normalized->name = $client->name ?? $client->client_name ?? 'Unknown Client';
+            $normalized->company = $client->company ?? $client->company_name ?? '';
+
+            // Communication Lines Normalization
+            $normalized->phone = $client->phone ?? $client->phone_number ?? '';
+            $normalized->email = $client->email ?? $client->email_address ?? '';
+
+            // Address System Normalization
+            if (isset($client->address)) {
+                $normalized->address = $client->address;
+            } else {
+                $street = $client->street_address ?? '';
+                $city = $client->city ?? '';
+                $state = $client->state ?? '';
+                $zip = $client->zip_code ?? '';
+                $normalized->address = trim("{$street} {$city} {$state} {$zip}");
+            }
+
+            // Notes & Logs Normalization
+            $normalized->notes = $client->notes ?? $client->customer_notes ?? $client->project_description ?? 'No specific job site notes saved yet.';
+
+            return $normalized;
+        });
 
         return view('workspace.crm.index', compact('clients', 'search'));
     }
@@ -76,7 +112,8 @@ class ClientController extends Controller
 
         $this->ensureSchemaIsHealed($clientTable);
 
-        DB::table($clientTable)->insert([
+        // Double-write array structure to support legacy or newly patched schemas safely
+        $insertData = [
             'company_id' => $user->company_id,
             'name'       => $validated['name'],
             'company'    => $validated['company'],
@@ -86,9 +123,16 @@ class ClientController extends Controller
             'notes'      => $validated['notes'],
             'created_at' => now(),
             'updated_at' => now(),
-        ]);
+        ];
 
-        Log::info("⚡ Fresh field client profile saved to list by User ID: {$user->id}");
+        if (Schema::hasColumn($clientTable, 'client_name')) { $insertData['client_name'] = $validated['name']; }
+        if (Schema::hasColumn($clientTable, 'phone_number')) { $insertData['phone_number'] = $validated['phone']; }
+        if (Schema::hasColumn($clientTable, 'email_address')) { $insertData['email_address'] = $validated['email']; }
+        if (Schema::hasColumn($clientTable, 'customer_notes')) { $insertData['customer_notes'] = $validated['notes']; }
+
+        DB::table($clientTable)->insert($insertData);
+
+        Log::info("静态 field client profile saved to list by User ID: {$user->id}");
 
         return redirect()->route('workspace.crm.index')->with('status', '⚡ New customer profile successfully saved to your list.');
     }
@@ -112,7 +156,26 @@ class ClientController extends Controller
             abort(404, 'Client target data row missing.');
         }
 
-        return view('workspace.crm.edit', compact('client'));
+        // Normalize single data model for edit frame rendering safely
+        $normalized = new \stdClass();
+        $normalized->id = $client->id;
+        $normalized->name = $client->name ?? $client->client_name ?? '';
+        $normalized->company = $client->company ?? $client->company_name ?? '';
+        $normalized->phone = $client->phone ?? $client->phone_number ?? '';
+        $normalized->email = $client->email ?? $client->email_address ?? '';
+        $normalized->notes = $client->notes ?? $client->customer_notes ?? $client->project_description ?? '';
+
+        if (isset($client->address)) {
+            $normalized->address = $client->address;
+        } else {
+            $street = $client->street_address ?? '';
+            $city = $client->city ?? '';
+            $state = $client->state ?? '';
+            $zip = $client->zip_code ?? '';
+            $normalized->address = trim("{$street} {$city} {$state} {$zip}");
+        }
+
+        return view('workspace.crm.edit', compact('client', 'normalized'));
     }
 
     /**
@@ -146,17 +209,22 @@ class ClientController extends Controller
             abort(403, 'Unauthorized database write bypass flagged.');
         }
 
-        DB::table($clientTable)
-            ->where('id', $id)
-            ->update([
-                'name'       => $validated['name'],
-                'company'    => $validated['company'],
-                'email'      => $validated['email'],
-                'phone'      => $validated['phone'],
-                'address'    => $validated['address'],
-                'notes'      => $validated['notes'],
-                'updated_at' => now(),
-            ]);
+        $updateData = [
+            'name'       => $validated['name'],
+            'company'    => $validated['company'],
+            'email'      => $validated['email'],
+            'phone'      => $validated['phone'],
+            'address'    => $validated['address'],
+            'notes'      => $validated['notes'],
+            'updated_at' => now(),
+        ];
+
+        if (Schema::hasColumn($clientTable, 'client_name')) { $updateData['client_name'] = $validated['name']; }
+        if (Schema::hasColumn($clientTable, 'phone_number')) { $updateData['phone_number'] = $validated['phone']; }
+        if (Schema::hasColumn($clientTable, 'email_address')) { $updateData['email_address'] = $validated['email']; }
+        if (Schema::hasColumn($clientTable, 'customer_notes')) { $updateData['customer_notes'] = $validated['notes']; }
+
+        DB::table($clientTable)->where('id', $id)->update($updateData);
 
         return redirect()->route('workspace.crm.index')->with('status', '🔄 Customer profile details successfully updated.');
     }
@@ -191,7 +259,7 @@ class ClientController extends Controller
 
         $this->ensureSchemaIsHealed($clientTable);
 
-        $clients = DB::table($clientTable)
+        $rawClients = DB::table($clientTable)
             ->where('company_id', $user->company_id)
             ->orderBy('name', 'asc')
             ->get();
@@ -207,20 +275,28 @@ class ClientController extends Controller
 
         $columns = ['ID', 'Client Name', 'Company', 'Email Address', 'Phone Number', 'Site Address', 'Notes'];
 
-        $callback = function() use($clients, $columns) {
+        $callback = function() use($rawClients, $columns) {
             $file = fopen('php://output', 'w');
             fputcsv($file, $columns);
 
-            foreach ($clients as $client) {
-                fputcsv($file, [
-                    $client->id,
-                    $client->name,
-                    $client->company ?? 'N/A',
-                    $client->email ?? 'N/A',
-                    $client->phone ?? 'N/A',
-                    $client->address ?? 'N/A',
-                    $client->notes ?? ''
-                ]);
+            foreach ($rawClients as $client) {
+                $name = $client->name ?? $client->client_name ?? 'Unknown';
+                $company = $client->company ?? $client->company_name ?? 'N/A';
+                $phone = $client->phone ?? $client->phone_number ?? 'N/A';
+                $email = $client->email ?? $client->email_address ?? 'N/A';
+                $notes = $client->notes ?? $client->customer_notes ?? $client->project_description ?? '';
+
+                if (isset($client->address)) {
+                    $address = $client->address;
+                } else {
+                    $street = $client->street_address ?? '';
+                    $city = $client->city ?? '';
+                    $state = $client->state ?? '';
+                    $zip = $client->zip_code ?? '';
+                    $address = trim("{$street} {$city} {$state} {$zip}");
+                }
+
+                fputcsv($file, [$client->id, $name, $company, $email, $phone, $address, $notes]);
             }
             fclose($file);
         };
@@ -246,26 +322,13 @@ class ClientController extends Controller
                 $table->timestamps();
             });
         } else {
-            // Augmented column self-healer to add the exact naming layout if missing
             Schema::table($tableName, function (Blueprint $table) use ($tableName) {
-                if (!Schema::hasColumn($tableName, 'name')) {
-                    $table->string('name', 255)->nullable()->after('company_id');
-                }
-                if (!Schema::hasColumn($tableName, 'company')) {
-                    $table->string('company', 255)->nullable()->after('name');
-                }
-                if (!Schema::hasColumn($tableName, 'phone')) {
-                    $table->string('phone', 50)->nullable()->after('company');
-                }
-                if (!Schema::hasColumn($tableName, 'email')) {
-                    $table->string('email', 255)->nullable()->after('phone');
-                }
-                if (!Schema::hasColumn($tableName, 'address')) {
-                    $table->text('address')->nullable()->after('email');
-                }
-                if (!Schema::hasColumn($tableName, 'notes')) {
-                    $table->text('notes')->nullable()->after('address');
-                }
+                if (!Schema::hasColumn($tableName, 'name')) { $table->string('name', 255)->nullable()->after('company_id'); }
+                if (!Schema::hasColumn($tableName, 'company')) { $table->string('company', 255)->nullable()->after('name'); }
+                if (!Schema::hasColumn($tableName, 'phone')) { $table->string('phone', 50)->nullable()->after('company'); }
+                if (!Schema::hasColumn($tableName, 'email')) { $table->string('email', 255)->nullable()->after('phone'); }
+                if (!Schema::hasColumn($tableName, 'address')) { $table->text('address')->nullable()->after('email'); }
+                if (!Schema::hasColumn($tableName, 'notes')) { $table->text('notes')->nullable()->after('address'); }
             });
         }
     }
