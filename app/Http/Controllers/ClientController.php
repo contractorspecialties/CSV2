@@ -7,77 +7,67 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 
 class ClientController extends Controller
 {
     /**
-     * Display the mobile-first client roster list.
+     * Display the prioritized CRM directory loop with active lookup variables.
      */
     public function index(Request $request)
     {
         $user = Auth::user();
 
-        // Resolve the custom database prefix automatically (e.g., sc_clients)
+        // Resolve custom database prefix configurations dynamically (e.g., sc_clients)
         $userTable = (new User())->getTable();
         $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
         $clientTable = $prefix . 'clients';
 
-        // Make sure the database table exists and is ready for field data
+        // Run the self-healing guard to ensure table and columns match the layout metrics
         $this->ensureSchemaIsHealed($clientTable);
 
-        // Fetch clients tied to this company, sorting newest jobs to the top
         $query = DB::table($clientTable)->where('company_id', $user->company_id);
 
-        // Quick filter for searching by name or city while on site
+        $search = '';
         if ($request->filled('search')) {
-            $search = $request->input('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('client_name', 'like', "%{$search}%")
-                  ->orWhere('city', 'like', "%{$search}%")
-                  ->orWhere('project_type', 'like', "%{$search}%");
+            $search = trim($request->input('search'));
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('company', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
             });
         }
 
-        $clients = $query->orderBy('updated_at', 'desc')->get();
+        $clients = $query->orderBy('name', 'asc')->get();
 
-        // Add easy-to-use helpers for mobile map strings and clipboard sharing text
-        $clients->transform(function ($client) {
-            // Build a full unmapped address string for quick navigation tracking
-            $fullAddress = trim("{$client->street_address} {$client->city} {$client->state} {$client->zip_code}");
-            $client->google_maps_url = 'https://www.google.com/maps/search/?api=1&query=' . urlencode($fullAddress);
-
-            // Text payload that a contractor can text to a subcontractor (Hides customer name/phone for privacy)
-            $client->subcontractor_share_text = "PROJECT DETAILS:\n" .
-                "Type: " . ($client->project_type ?? 'General Trade') . "\n" .
-                "Location: " . ($client->city ?? 'Local Area') . ", " . ($client->zip_code ?? '') . "\n" .
-                "Work Scope: " . ($client->project_description ?? 'See attached file details.');
-
-            return $client;
-        });
-
-        return view('workspace.crm.index', compact('clients'));
+        return view('workspace.crm.index', compact('clients', 'search'));
     }
 
     /**
-     * Store a brand-new client profile entry.
+     * Render fast field context customer creation card.
+     */
+    public function create()
+    {
+        return view('workspace.crm.create');
+    }
+
+    /**
+     * Commit a fresh target account profile inline.
      */
     public function store(Request $request)
     {
         $user = Auth::user();
 
         $validated = $request->validate([
-            'client_name'         => 'required|string|max:255',
-            'phone_number'        => 'required|string|max:50',
-            'email_address'       => 'nullable|email|max:255',
-            'street_address'      => 'nullable|string|max:255',
-            'city'                => 'nullable|string|max:100',
-            'state'               => 'nullable|string|max:50',
-            'zip_code'            => 'nullable|string|max:20',
-            'project_type'        => 'required|string|max:150', // e.g., Deck Build, Metal Roof, Tile Repair
-            'project_description' => 'nullable|string|max:2000',
-            'job_status'          => 'required|in:lead,active,completed,paused',
+            'name'    => 'required|string|max:255',
+            'company' => 'nullable|string|max:255',
+            'email'   => 'nullable|email|max:255',
+            'phone'   => 'nullable|string|max:50',
+            'address' => 'nullable|string|max:500',
+            'notes'   => 'nullable|string|max:2000'
         ]);
 
         $userTable = (new User())->getTable();
@@ -87,46 +77,58 @@ class ClientController extends Controller
         $this->ensureSchemaIsHealed($clientTable);
 
         DB::table($clientTable)->insert([
-            'company_id'          => $user->company_id,
-            'client_name'         => $validated['client_name'],
-            'phone_number'        => $validated['phone_number'],
-            'email_address'       => $validated['email_address'],
-            'street_address'      => $validated['street_address'],
-            'city'                => $validated['city'],
-            'state'               => $validated['state'] ?? 'NC',
-            'zip_code'            => $validated['zip_code'],
-            'project_type'        => $validated['project_type'],
-            'project_description' => $validated['project_description'],
-            'job_status'          => $validated['job_status'],
-            'customer_notes'      => null,
-            'created_at'          => now(),
-            'updated_at'          => now(),
+            'company_id' => $user->company_id,
+            'name'       => $validated['name'],
+            'company'    => $validated['company'],
+            'email'      => $validated['email'],
+            'phone'      => $validated['phone'],
+            'address'    => $validated['address'],
+            'notes'      => $validated['notes'],
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
-        Log::info("📌 New client file logged successfully by User ID: {$user->id}");
+        Log::info("⚡ Fresh field client profile saved to list by User ID: {$user->id}");
 
-        return redirect()->route('workspace.crm.index')->with('status', '👍 Client profile added to roster.');
+        return redirect()->route('workspace.crm.index')->with('status', '⚡ New customer profile successfully saved to your list.');
     }
 
     /**
-     * Append field updates or timestamped site notes to a client file.
+     * Render inline CRM profile edit views securely.
+     */
+    public function edit($id)
+    {
+        $user = Auth::user();
+        $userTable = (new User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+        $clientTable = $prefix . 'clients';
+
+        $client = DB::table($clientTable)
+            ->where('id', $id)
+            ->where('company_id', $user->company_id)
+            ->first();
+
+        if (!$client) {
+            abort(404, 'Client target data row missing.');
+        }
+
+        return view('workspace.crm.edit', compact('client'));
+    }
+
+    /**
+     * Process inline CRM profile edits securely.
      */
     public function update(Request $request, $id)
     {
         $user = Auth::user();
 
         $validated = $request->validate([
-            'client_name'         => 'required|string|max:255',
-            'phone_number'        => 'required|string|max:50',
-            'email_address'       => 'nullable|email|max:255',
-            'street_address'      => 'nullable|string|max:255',
-            'city'                => 'nullable|string|max:100',
-            'state'               => 'nullable|string|max:50',
-            'zip_code'            => 'nullable|string|max:20',
-            'project_type'        => 'required|string|max:150',
-            'project_description' => 'nullable|string|max:2000',
-            'job_status'          => 'required|in:lead,active,completed,paused',
-            'new_site_note'       => 'nullable|string|max:1000', // Capture immediate updates from the field
+            'name'    => 'required|string|max:255',
+            'company' => 'nullable|string|max:255',
+            'email'   => 'nullable|email|max:255',
+            'phone'   => 'nullable|string|max:50',
+            'address' => 'nullable|string|max:500',
+            'notes'   => 'nullable|string|max:2000'
         ]);
 
         $userTable = (new User())->getTable();
@@ -135,45 +137,99 @@ class ClientController extends Controller
 
         $this->ensureSchemaIsHealed($clientTable);
 
-        $client = DB::table($clientTable)
+        $exists = DB::table($clientTable)
             ->where('id', $id)
             ->where('company_id', $user->company_id)
-            ->first();
+            ->exists();
 
-        if (!$client) {
-            abort(403, 'Unauthorized client records manipulation bypass.');
-        }
-
-        // Manage and format running site journal notes
-        $runningNotes = $client->customer_notes ?? '';
-        if (!empty($validated['new_site_note'])) {
-            $timestamp = date('m/d/Y g:i A');
-            $newEntry = "[{$timestamp} - Added from Field]: " . trim($validated['new_site_note']);
-            $runningNotes = empty($runningNotes) ? $newEntry : $newEntry . "\n\n" . $runningNotes;
+        if (!$exists) {
+            abort(403, 'Unauthorized database write bypass flagged.');
         }
 
         DB::table($clientTable)
             ->where('id', $id)
             ->update([
-                'client_name'         => $validated['client_name'],
-                'phone_number'        => $validated['phone_number'],
-                'email_address'       => $validated['email_address'],
-                'street_address'      => $validated['street_address'],
-                'city'                => $validated['city'],
-                'state'               => $validated['state'],
-                'zip_code'            => $validated['zip_code'],
-                'project_type'        => $validated['project_type'],
-                'project_description' => $validated['project_description'],
-                'job_status'          => $validated['job_status'],
-                'customer_notes'      => $runningNotes,
-                'updated_at'          => now(),
+                'name'       => $validated['name'],
+                'company'    => $validated['company'],
+                'email'      => $validated['email'],
+                'phone'      => $validated['phone'],
+                'address'    => $validated['address'],
+                'notes'      => $validated['notes'],
+                'updated_at' => now(),
             ]);
 
-        return redirect()->route('workspace.crm.index')->with('status', '⚡ Client record file updated.');
+        return redirect()->route('workspace.crm.index')->with('status', '🔄 Customer profile details successfully updated.');
     }
 
     /**
-     * Safe Plugin-Driven Table Self-Healing Structural Guard.
+     * Purge a customer profile record from the tenant partition.
+     */
+    public function destroy($id)
+    {
+        $user = Auth::user();
+        $userTable = (new User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+        $clientTable = $prefix . 'clients';
+
+        DB::table($clientTable)
+            ->where('id', $id)
+            ->where('company_id', $user->company_id)
+            ->delete();
+
+        return redirect()->route('workspace.crm.index')->with('status', '🗑️ Customer account cleanly scrubbed from company directory registries.');
+    }
+
+    /**
+     * Stream memory-isolated CSV data backups using modern architecture structures.
+     */
+    public function exportCsv()
+    {
+        $user = Auth::user();
+        $userTable = (new User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+        $clientTable = $prefix . 'clients';
+
+        $this->ensureSchemaIsHealed($clientTable);
+
+        $clients = DB::table($clientTable)
+            ->where('company_id', $user->company_id)
+            ->orderBy('name', 'asc')
+            ->get();
+
+        $fileName = 'client_list_export_' . date('Y-m-d_His') . '.csv';
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$fileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $columns = ['ID', 'Client Name', 'Company', 'Email Address', 'Phone Number', 'Site Address', 'Notes'];
+
+        $callback = function() use($clients, $columns) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+
+            foreach ($clients as $client) {
+                fputcsv($file, [
+                    $client->id,
+                    $client->name,
+                    $client->company ?? 'N/A',
+                    $client->email ?? 'N/A',
+                    $client->phone ?? 'N/A',
+                    $client->address ?? 'N/A',
+                    $client->notes ?? ''
+                ]);
+            }
+            fclose($file);
+        };
+
+        return Response::stream($callback, 200, $headers);
+    }
+
+    /**
+     * Safe Plugin-Driven Database Self-Healing Structural Guard.
      */
     private function ensureSchemaIsHealed(string $tableName): void
     {
@@ -181,24 +237,34 @@ class ClientController extends Controller
             Schema::create($tableName, function (Blueprint $table) {
                 $table->id();
                 $table->unsignedBigInteger('company_id')->index();
-                $table->string('client_name', 255);
-                $table->string('phone_number', 50);
-                $table->string('email_address', 255)->nullable();
-                $table->string('street_address', 255)->nullable();
-                $table->string('city', 100)->nullable();
-                $table->string('state', 50)->default('NC');
-                $table->string('zip_code', 20)->nullable();
-                $table->string('project_type', 150)->nullable(); // e.g., Framing Repair, Landscape Install
-                $table->text('project_description')->nullable();
-                $table->string('job_status', 50)->default('lead'); // lead, active, completed, paused
-                $table->text('customer_notes')->nullable(); // Chronological timestamped notes block
+                $table->string('name', 255)->nullable();
+                $table->string('company', 255)->nullable();
+                $table->string('phone', 50)->nullable();
+                $table->string('email', 255)->nullable();
+                $table->text('address')->nullable();
+                $table->text('notes')->nullable();
                 $table->timestamps();
             });
         } else {
-            // Self-healing columns checker if you add features later
+            // Augmented column self-healer to add the exact naming layout if missing
             Schema::table($tableName, function (Blueprint $table) use ($tableName) {
-                if (!Schema::hasColumn($tableName, 'project_type')) {
-                    $table->string('project_type', 150)->nullable()->after('zip_code');
+                if (!Schema::hasColumn($tableName, 'name')) {
+                    $table->string('name', 255)->nullable()->after('company_id');
+                }
+                if (!Schema::hasColumn($tableName, 'company')) {
+                    $table->string('company', 255)->nullable()->after('name');
+                }
+                if (!Schema::hasColumn($tableName, 'phone')) {
+                    $table->string('phone', 50)->nullable()->after('company');
+                }
+                if (!Schema::hasColumn($tableName, 'email')) {
+                    $table->string('email', 255)->nullable()->after('phone');
+                }
+                if (!Schema::hasColumn($tableName, 'address')) {
+                    $table->text('address')->nullable()->after('email');
+                }
+                if (!Schema::hasColumn($tableName, 'notes')) {
+                    $table->text('notes')->nullable()->after('address');
                 }
             });
         }
