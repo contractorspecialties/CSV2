@@ -22,13 +22,18 @@ class Estimate extends Model
         return $prefix . 'estimates';
     }
 
+    /**
+     * Bind estimates securely to the unified field clients table workspace partition.
+     */
     public function customer(): BelongsTo
     {
-        return $this->belongsTo(Customer::class);
+        // Explicitly map to the new Client model while maintaining the historic database key link
+        return $this->belongsTo(Client::class, 'customer_id');
     }
 
     public function items(): HasMany
     {
+        // Points down to line items array records
         return $this->hasMany(EstimateItem::class);
     }
 }
