@@ -32,8 +32,11 @@ class CompanyProfileController extends Controller
 
         $company = DB::table($companyTable)->where('id', $user->company_id)->first();
 
-        // Unpack portfolio paths cleanly using our anti-collision decoding filter
+        // Harmonize legacy array structures with fresh onboarding profiles
         $galleryImages = $this->safeJsonDecode($company->gallery_paths ?? null);
+        if (empty($galleryImages) && !empty($company->portfolio_image_path)) {
+            $galleryImages[] = $company->portfolio_image_path;
+        }
 
         return view('workspace.profile', compact('company', 'galleryImages'));
     }
@@ -48,11 +51,15 @@ class CompanyProfileController extends Controller
         $validated = $request->validate([
             'name'                        => 'required|string|max:255',
             'logo'                        => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'company_bio'                 => 'nullable|string|max:3000', // Expanded to accept deep copy assets
-            'work_philosophy'             => 'nullable|string|max:3000', // Expanded to accept deep copy assets
+            'company_bio'                 => 'nullable|string|max:3000',
+            'company_bio_long'            => 'nullable|string|max:3000',
+            'company_bio_short'           => 'nullable|string|max:255',
+            'work_philosophy'             => 'nullable|string|max:3000',
             'years_in_business'           => 'nullable|integer|min:0|max:100',
+            'years_experience'            => 'nullable|integer|min:0|max:100',
             'license_number'              => 'nullable|string|max:100',
             'insurance_badge'             => 'nullable|boolean',
+            'is_insured'                  => 'nullable|boolean',
             'typical_response_time'       => 'required|string|max:100',
             'warranty_details'            => 'nullable|string|max:255',
             'new_gallery_images.*'        => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
@@ -60,6 +67,7 @@ class CompanyProfileController extends Controller
 
             // Directory Positioning Parameters
             'signature_specialty'         => 'nullable|string|max:255',
+            'trade'                       => 'nullable|string|max:255',
             'target_service_cities'       => 'nullable|string|max:255',
             'competitive_advantage'       => 'nullable|string|max:100',
             'ideal_client_vibe'           => 'nullable|string|max:100',
@@ -128,23 +136,34 @@ class CompanyProfileController extends Controller
         // Re-index target array parameters clean to avoid associative index formatting errors
         $sanitizedGallery = array_values(array_filter($currentGallery));
 
-        // 4. Persist flat updates using explicit unescaped slashing filters
+        // Synchronize values between dual schema frameworks to lock data integrity
+        $bioLong = $validated['company_bio_long'] ?? $validated['company_bio'] ?? '';
+        $yearsExp = $validated['years_experience'] ?? $validated['years_in_business'] ?? 0;
+        $tradeSpecialty = $validated['trade'] ?? $validated['signature_specialty'] ?? '';
+        $insuranceStatus = $request->has('insurance_badge') || $request->has('is_insured') ? 1 : 0;
+
+        // 4. Persist updates across both legacy metrics and fresh blueprint rows
         DB::table($companyTable)
             ->where('id', $user->company_id)
             ->update([
                 'name'                        => $validated['name'],
                 'logo_path'                   => $logoPath,
-                'company_bio'                 => $validated['company_bio'],
-                'work_philosophy'             => $validated['work_philosophy'],
-                'years_in_business'           => $validated['years_in_business'],
-                'license_number'              => $validated['license_number'],
-                'insurance_badge'             => $request->has('insurance_badge') ? 1 : 0,
+                'company_bio'                 => $bioLong,
+                'company_bio_long'            => $bioLong,
+                'company_bio_short'           => $validated['company_bio_short'] ?? substr($bioLong, 0, 180),
+                'work_philosophy'             => $validated['work_philosophy'] ?? null,
+                'years_in_business'           => $yearsExp,
+                'years_experience'            => $yearsExp,
+                'license_number'              => $validated['license_number'] ?? null,
+                'insurance_badge'             => $insuranceStatus,
+                'is_insured'                  => $insuranceStatus,
                 'typical_response_time'       => $validated['typical_response_time'],
-                'warranty_details'            => $validated['warranty_details'],
+                'warranty_details'            => $validated['warranty_details'] ?? null,
                 'gallery_paths'               => json_encode($sanitizedGallery, JSON_UNESCAPED_SLASHES),
 
                 // Save Directory Layout Positioning Fields Permanently
-                'signature_specialty'         => $validated['signature_specialty'] ?? null,
+                'signature_specialty'         => $tradeSpecialty,
+                'trade'                       => $tradeSpecialty,
                 'target_service_cities'       => $validated['target_service_cities'] ?? null,
                 'competitive_advantage'       => $validated['competitive_advantage'] ?? null,
                 'ideal_client_vibe'           => $validated['ideal_client_vibe'] ?? null,
@@ -254,7 +273,7 @@ class CompanyProfileController extends Controller
             $suggestion = data_get($responseJson, 'candidates.0.content.parts.0.text');
 
             if (empty($suggestion)) {
-                Log::error('Gemini structural extraction failure: ' + json_encode($responseJson));
+                Log::error('Gemini structural extraction failure: ' . json_encode($responseJson));
 
                 $finishReason = data_get($responseJson, 'candidates.0.finishReason');
                 $blockReason = data_get($responseJson, 'promptFeedback.blockReason');
@@ -296,8 +315,17 @@ class CompanyProfileController extends Controller
             abort(404, 'Contractor profile workspace not found.');
         }
 
-        // Unpack portfolio paths cleanly using our anti-collision decoding filter
+        // Hydrate visual arrays dynamically across old structure boundaries and new assets
         $galleryImages = $this->safeJsonDecode($company->gallery_paths ?? null);
+        if (empty($galleryImages) && !empty($company->portfolio_image_path)) {
+            $galleryImages[] = $company->portfolio_image_path;
+        }
+
+        // Build seamless server-side content fallbacks for programmatic SEO stability
+        $company->computed_bio_long = $company->company_bio_long ?? $company->company_bio ?? 'Professional field services provider.';
+        $company->computed_bio_short = $company->company_bio_short ?? substr($company->computed_bio_long, 0, 160);
+        $company->computed_experience = $company->years_experience ?? $company->years_in_business ?? 0;
+        $company->computed_trade = $company->trade ?? $company->primary_specialty ?? $company->signature_specialty ?? 'Construction Specialties Trade Partner';
 
         return view('brand.show', compact('company', 'galleryImages'));
     }
@@ -369,7 +397,7 @@ class CompanyProfileController extends Controller
                     $table->longText('gallery_paths')->nullable();
                 }
 
-                // Self-Healing Core Positioning Schema Updates
+                // Self-Healing Core Onboarding Positioning Schema Updates
                 if (!Schema::hasColumn($tableName, 'signature_specialty')) {
                     $table->string('signature_specialty', 255)->nullable()->after('license_number');
                 }
