@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $company->name }} | Verified Contractor Profile</title>
+    <title>{{ $company->name }} | {{ $company->computed_trade }} | Verified Contractor Profile</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>[x-cloak] { display: none !important; }</style>
@@ -32,7 +32,7 @@
                         <img src="{{ asset($company->logo_path) }}" class="w-full h-full object-contain" alt="{{ $company->name }} Logo">
                     @else
                         <div class="text-center">
-                            <span class="text-3xl block select-none">🏢</span>
+                            <span class="text-3xl block select-none"> 🏗️ </span>
                             <span class="text-[9px] font-mono uppercase font-black text-slate-400 tracking-tight">No Logo</span>
                         </div>
                     @endif
@@ -41,15 +41,22 @@
                 <div class="space-y-2">
                     <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                         <span class="bg-orange-50 text-[#f58613] text-[9px] font-black tracking-widest uppercase px-2.5 py-1 rounded-md border border-orange-100 shadow-sm">✓ Verified Contractor</span>
-                        @if(!empty($company->insurance_badge))
+                        @if(!empty($company->is_insured) || !empty($company->insurance_badge))
                             <span class="bg-emerald-50 text-emerald-700 text-[9px] font-black tracking-widest uppercase px-2.5 py-1 rounded-md border border-emerald-100 shadow-sm">🛡️ Licensed & Insured</span>
+                        @endif
+                        @if(!empty($company->emergency_availability))
+                            <span class="bg-red-50 text-red-700 text-[9px] font-black tracking-widest uppercase px-2.5 py-1 rounded-md border border-red-100 animate-pulse shadow-sm">🚨 24/7 Rapid Dispatch</span>
                         @endif
                     </div>
                     <h1 class="text-2xl sm:text-3xl font-black text-slate-950 uppercase tracking-tight leading-none">{{ $company->name }}</h1>
+                    <p class="text-xs font-black text-[#f58613] uppercase tracking-wider">{{ $company->computed_trade }}</p>
 
                     @if(!empty($company->city))
                         <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                            📍 Primary Market Area: <span class="text-slate-900 font-black">{{ $company->city }}{{ !empty($company->state) ? ', ' . strtoupper($company->state) : '' }}</span>
+                            📍 Dispatch Base: <span class="text-slate-900 font-black">{{ $company->city }}{{ !empty($company->state) ? ', ' . strtoupper($company->state) : '' }}</span>
+                            @if(!empty($company->service_radius_miles))
+                                <span class="text-slate-400 font-normal font-sans">({{ $company->service_radius_miles }} Mile Search Radius)</span>
+                            @endif
                         </p>
                     @endif
                 </div>
@@ -58,7 +65,7 @@
             <div class="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 text-center shrink-0 w-full sm:w-auto">
                 <div class="text-2xl font-black font-mono text-slate-950 leading-none">4.9</div>
                 <div class="text-[#f58613] text-sm tracking-tighter my-1">★★★★★</div>
-                <div class="text-[9px] font-black uppercase text-slate-400 tracking-wider">42 Verified Reviews</div>
+                <div class="text-[9px] font-black uppercase text-slate-400 tracking-wider">Verified Field Log</div>
             </div>
         </div>
 
@@ -66,10 +73,30 @@
 
             <div class="md:col-span-2 space-y-6">
 
-                @if(!empty($company->company_bio))
+                @if(!empty($company->computed_bio_long))
                     <div class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-3">
                         <h3 class="text-xs font-black uppercase text-slate-400 tracking-wider">About Our Operation</h3>
-                        <p class="text-sm font-medium text-slate-700 leading-relaxed">{{ $company->company_bio }}</p>
+                        <p class="text-sm font-medium text-slate-700 leading-relaxed">{{ $company->computed_bio_long }}</p>
+                    </div>
+                @endif
+
+                @php
+                    $serviceTags = [];
+                    if (!empty($company->service_tags)) {
+                        $serviceTags = json_decode($company->service_tags, true);
+                    }
+                @endphp
+                @if(is_array($serviceTags) && count($serviceTags) > 0)
+                    <div class="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
+                        <h3 class="text-xs font-black uppercase text-slate-400 tracking-wider">Core Service Capabilities</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            @foreach($serviceTags as $tag)
+                                <div class="flex items-center gap-2.5 p-3 bg-slate-50 border border-slate-200/60 rounded-xl text-xs font-bold text-slate-900 shadow-inner">
+                                    <span class="text-emerald-500 font-black">✓</span>
+                                    <span>{{ $tag }}</span>
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
                 @endif
 
@@ -105,12 +132,12 @@
             <div class="space-y-6">
 
                 <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
-                    <h3 class="text-xs font-black uppercase text-slate-400 tracking-wider border-b border-slate-100 pb-2">Compliance & Safety</h3>
+                    <h3 class="text-xs font-black uppercase text-slate-400 tracking-wider border-b border-slate-100 pb-2">Compliance & Credentials</h3>
 
                     <div class="space-y-3.5 text-xs font-medium">
                         @if(!empty($company->license_number))
                             <div class="flex items-start gap-3">
-                                <span class="text-base">📋</span>
+                                <span class="text-base select-none">📋</span>
                                 <div>
                                     <div class="font-black text-slate-950 uppercase text-[10px]">Verified License</div>
                                     <div class="text-slate-500 font-mono font-bold mt-0.5">{{ $company->license_number }}</div>
@@ -118,27 +145,25 @@
                             </div>
                         @endif
 
-                        @if(!empty($company->years_in_business))
-                            <div class="flex items-start gap-3">
-                                <span class="text-base">⏱️</span>
-                                <div>
-                                    <div class="font-black text-slate-950 uppercase text-[10px]">Time In Service</div>
-                                    <div class="text-slate-500 font-bold mt-0.5">{{ $company->years_in_business }} Years Active</div>
-                                </div>
+                        <div class="flex items-start gap-3">
+                            <span class="text-base select-none">⏱️</span>
+                            <div>
+                                <div class="font-black text-slate-950 uppercase text-[10px]">Time In Service</div>
+                                <div class="text-slate-500 font-bold mt-0.5">{{ $company->computed_experience }} Years Active Field Presence</div>
                             </div>
-                        @endif
+                        </div>
 
                         <div class="flex items-start gap-3">
-                            <span class="text-base">💬</span>
+                            <span class="text-base select-none">💬</span>
                             <div>
                                 <div class="font-black text-slate-950 uppercase text-[10px]">Response Efficiency</div>
-                                <div class="text-slate-500 font-bold mt-0.5">Typically responds {{ $company->typical_response_time }}</div>
+                                <div class="text-slate-500 font-bold mt-0.5">Typically responds {{ $company->typical_response_time ?? 'within 24 hours' }}</div>
                             </div>
                         </div>
 
                         @if(!empty($company->warranty_details))
                             <div class="flex items-start gap-3 border-t border-slate-100 pt-3.5">
-                                <span class="text-base">🛡️</span>
+                                <span class="text-base select-none">🛡️</span>
                                 <div>
                                     <div class="font-black text-slate-950 uppercase text-[10px]">Warranty Protection Block</div>
                                     <div class="text-orange-500 font-black uppercase tracking-tight text-[11px] mt-0.5">{{ $company->warranty_details }}</div>
@@ -148,15 +173,59 @@
                     </div>
                 </div>
 
-                <div class="bg-slate-950 border border-slate-900 rounded-3xl p-6 shadow-xl text-white text-center space-y-4">
-                    <div class="space-y-1">
-                        <h4 class="font-black text-xs text-[#f58613] uppercase tracking-widest">Need Immediate Attention?</h4>
-                        <p class="text-[11px] text-slate-400 font-medium max-w-[200px] mx-auto leading-normal">Our system pipes text messages instantly straight to the foreman on duty.</p>
+                @if(!empty($company->deposit_rules))
+                    <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-2">
+                        <h3 class="text-xs font-black uppercase text-slate-400 tracking-wider border-b border-slate-100 pb-2">Mobilization Protocols</h3>
+                        <p class="text-[11px] font-medium text-slate-500 leading-normal font-mono bg-slate-50 p-3 rounded-xl border border-slate-200/60 shadow-inner">
+                            {{ $company->deposit_rules }}
+                        </p>
                     </div>
-                    <a href="tel:{{ $company->sms_phone_number ?? '' }}" class="block w-full bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-3.5 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer">
-                        📞 Call Dispatch Line
-                    </a>
-                </div>
+                @endif
+
+                @php
+                    $socialLinks = [];
+                    if (!empty($company->social_links)) {
+                        $socialLinks = json_decode($company->social_links, true);
+                    }
+                    $hasSocials = is_array($socialLinks) && count(array_filter($socialLinks)) > 0;
+                @endphp
+                @if($hasSocials)
+                    <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-3">
+                        <h3 class="text-xs font-black uppercase text-slate-400 tracking-wider border-b border-slate-100 pb-2">Verified Reputations</h3>
+                        <div class="flex flex-col gap-2">
+                            @if(!empty($socialLinks['google']))
+                                <a href="{{ $socialLinks['google'] }}" target="_blank" rel="noopener" class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200 text-[11px] font-bold text-slate-700 hover:bg-slate-100 transition-colors">
+                                    <span>🌐</span> View Google Business Profile Links
+                                </a>
+                            @endif
+                            @if(!empty($socialLinks['facebook']))
+                                <a href="{{ $socialLinks['facebook'] }}" target="_blank" rel="noopener" class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200 text-[11px] font-bold text-slate-700 hover:bg-slate-100 transition-colors">
+                                    <span>🔵</span> Follow Us On Facebook Page
+                                </a>
+                            @endif
+                            @if(!empty($socialLinks['yelp']))
+                                <a href="{{ $socialLinks['yelp'] }}" target="_blank" rel="noopener" class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200 text-[11px] font-bold text-slate-700 hover:bg-slate-100 transition-colors">
+                                    <span>🔴</span> Check Independent Yelp Reviews
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+
+                @php
+                    $routingLine = $company->monetization_routing_phone ?? $company->business_phone ?? '';
+                @endphp
+                @if(!empty($routingLine))
+                    <div class="bg-slate-950 border border-slate-900 rounded-3xl p-6 shadow-xl text-white text-center space-y-4">
+                        <div class="space-y-1">
+                            <h4 class="font-black text-xs text-[#f58613] uppercase tracking-widest">Need Immediate Attention?</h4>
+                            <p class="text-[11px] text-slate-400 font-medium max-w-[200px] mx-auto leading-normal">Our system pipes routing communications instantly straight to the foreman on duty.</p>
+                        </div>
+                        <a href="tel:{{ preg_replace('/[^0-9+]/', '', $routingLine) }}" class="block w-full bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-3.5 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer">
+                            📞 Call Dispatch Line
+                        </a>
+                    </div>
+                @endif
 
             </div>
         </div>
@@ -217,16 +286,16 @@
 
                     <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-3.5 text-xs font-semibold text-slate-600 shadow-inner">
                         <div class="flex items-center gap-2.5">
-                            <span class="text-sm">🛡️</span>
+                            <span class="text-sm select-none">🏗️</span>
                             <div>
-                                <div class="text-[9px] font-black uppercase text-slate-400 tracking-wider">Corporate Wrapper</div>
+                                <div class="text-[9px] font-black uppercase text-slate-400 tracking-wider">Corporate Identifier</div>
                                 <div class="text-slate-900 font-bold leading-tight">{{ $company->name }}</div>
                             </div>
                         </div>
 
                         @if(!empty($company->license_number))
                             <div class="flex items-center gap-2.5 border-t border-slate-200/50 pt-2.5">
-                                <span class="text-sm">📋</span>
+                                <span class="text-sm select-none">📋</span>
                                 <div>
                                     <div class="text-[9px] font-black uppercase text-slate-400 tracking-wider">Credential ID</div>
                                     <div class="text-slate-700 font-mono font-bold leading-tight">{{ $company->license_number }}</div>
@@ -236,7 +305,7 @@
 
                         @if(!empty($company->warranty_details))
                             <div class="flex items-center gap-2.5 border-t border-slate-200/50 pt-2.5">
-                                <span class="text-sm">✨</span>
+                                <span class="text-sm select-none">✨</span>
                                 <div>
                                     <div class="text-[9px] font-black uppercase text-slate-400 tracking-wider">Protection Policy</div>
                                     <div class="text-emerald-700 font-black uppercase text-[10px] tracking-tight leading-tight">{{ $company->warranty_details }}</div>
@@ -250,11 +319,13 @@
                     </p>
                 </div>
 
-                <div class="pt-6 border-t border-slate-100">
-                    <a href="tel:{{ $company->sms_phone_number ?? '' }}" class="block w-full text-center bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-3.5 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer">
-                        📞 Request Similar Scope
-                    </a>
-                </div>
+                @if(!empty($routingLine))
+                    <div class="pt-6 border-t border-slate-100">
+                        <a href="tel:{{ preg_replace('/[^0-9+]/', '', $routingLine) }}" class="block w-full text-center bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-3.5 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer">
+                            📞 Request Similar Scope
+                        </a>
+                    </div>
+                @endif
             </div>
 
         </div>
