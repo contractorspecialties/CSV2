@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 🏗️ Dynamically extract the prefix from the active User model table name
-        $usersTableReal = (new \App\Models\User())->getTable();
-        $prefix = str_contains($usersTableReal, '_') ? explode('_', $usersTableReal)[0] . '_' : '';
+        // 🏗️ Mirror your exact core workspace fallback logic layout
+        $userTableBase = (new \App\Models\User())->getTable();
+        $prefix = str_contains($userTableBase, '_') ? explode('_', $userTableBase)[0] . '_' : 'sc_';
+
+        $usersTableReal = str_contains($userTableBase, '_') ? $userTableBase : $prefix . 'users';
         $companiesTableReal = $prefix . 'companies';
 
         Schema::table($usersTableReal, function (Blueprint $table) use ($usersTableReal) {
@@ -59,8 +61,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        $usersTableReal = (new \App\Models\User())->getTable();
-        $prefix = str_contains($usersTableReal, '_') ? explode('_', $usersTableReal)[0] . '_' : '';
+        $userTableBase = (new \App\Models\User())->getTable();
+        $prefix = str_contains($userTableBase, '_') ? explode('_', $userTableBase)[0] . '_' : 'sc_';
+
+        $usersTableReal = str_contains($userTableBase, '_') ? $userTableBase : $prefix . 'users';
         $companiesTableReal = $prefix . 'companies';
 
         Schema::table($usersTableReal, function (Blueprint $table) {
