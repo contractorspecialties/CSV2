@@ -122,6 +122,10 @@ Route::middleware(['auth'])->group(function () {
         Route::middleware([\AdminGateMiddleware::class])->group(function () {
             Route::get('/admin/management', [AdminDashboardController::class, 'index'])->name('admin.index');
             Route::post('/admin/management/{id}/toggle', [AdminDashboardController::class, 'toggleAdminStatus'])->name('admin.toggle-rights');
+
+            // Overrides & Cascading Clean-Sweep Triggers
+            Route::post('/admin/management/company/{id}', [AdminDashboardController::class, 'updateCompany'])->name('admin.company.update');
+            Route::post('/admin/management/purge/{id}', [AdminDashboardController::class, 'destroyWorkspace'])->name('admin.workspace.purge');
         });
 
     });
