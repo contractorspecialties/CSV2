@@ -127,7 +127,20 @@ class EstimateController extends Controller
             $customer->address = $validated['customer_address'];
             $customer->save();
 
-            $estimateNumber = 'EST-' . strtoupper(Str::random(4)) . '-' . rand(1000, 9999);
+            // 🧮 DYNAMIC SEQUENTIAL SERIAL ENGINE CALCULATION
+            $lastEstimate = Estimate::where('company_id', $companyId)
+                ->orderBy('id', 'desc')
+                ->first();
+
+            $nextSequence = 1001;
+            if ($lastEstimate) {
+                if (preg_match('/EST-(\d+)$/', $lastEstimate->estimate_number, $matches)) {
+                    $nextSequence = ((int) $matches[1]) + 1;
+                } elseif (preg_match('/-(\d+)$/', $lastEstimate->estimate_number, $matches)) {
+                    $nextSequence = ((int) $matches[1]) + 1;
+                }
+            }
+            $estimateNumber = 'EST-' . $nextSequence;
 
             $estimate = new Estimate();
             $estimate->company_id = $companyId;
@@ -282,17 +295,14 @@ class EstimateController extends Controller
 
             if (!empty($fromLine)) {
                 try {
-                    $firstName = explode(' ', trim($estimate->customer->name ?? ''))[0] ?? 'Client';
-                    Http::withHeaders([
-                        'Authorization' => 'Bearer ' . env('TELNYX_API_KEY'),
-                        'Content-Type'  => 'application/json',
-                    ])->post('https://api.telnyx.com/v2/messages', [
-                        'from' => $fromLine,
-                        'to'   => $estimate->customer->phone,
-                        'text' => "Hello " . $firstName . ", we have processed your feedback and adjusted your project proposal specifications package. Review revisions here: " . $portalLink,
-                    ]);
+                    // Offload this synchronous API loop to our background queue terminal engine
+                    \App\Jobs\SendPortalSms::dispatch(
+                        $estimate->customer->phone,
+                        "Hello " . ($estimate->customer->first_name ?? 'Client') . ", we have processed your feedback and adjusted your project proposal specifications package. Review revisions here: " . $portalLink,
+                        $fromLine
+                    );
                 } catch (\Exception $e) {
-                    Log::error('Telnyx response notification failed: ' . $e->getMessage());
+                    Log::error('Telnyx response notification queueing failed: ' . $e->getMessage());
                 }
             }
         }
@@ -427,21 +437,17 @@ class EstimateController extends Controller
                 'notes' => "🚨 Homeowner Modification Request:\n" . $request->notes . "\n\n" . $estimate->notes
             ]);
 
-            $userTable = (new \App\App\Models\User() ?? new \App\Models\User())->getTable();
+            $userTable = (new \App\Models\User())->getTable();
             $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
             $company = DB::table($prefix . 'companies')->where('id', $estimate->company_id)->first();
 
             if ($company && !empty($company->sms_phone_number)) {
                 try {
-                    $firstName = explode(' ', trim($estimate->customer->name ?? ''))[0] ?? 'Client';
-                    Http::withHeaders([
-                        'Authorization' => 'Bearer ' . env('TELNYX_API_KEY'),
-                        'Content-Type'  => 'application/json',
-                    ])->post('https://api.telnyx.com/v2/messages', [
-                        'from' => env('TELNYX_DEFAULT_FROM'),
-                        'to'   => $company->sms_phone_number,
-                        'text' => "⚠️ Alert: Client has logged a change request on Estimate #{$estimate->estimate_number} ({$firstName}). Review details here: " . url("/estimates/{$estimate->id}")
-                    ]);
+                    // Dispatch the notification task safely inside our database queue framework
+                    \App\Jobs\SendPortalSms::dispatch(
+                        $company->sms_phone_number,
+                        "⚠️ Alert: Client has logged a change request on Estimate #{$estimate->estimate_number} (" . ($estimate->customer->first_name ?? 'Client') . "). Review details here: " . url("/estimates/{$estimate->id}")
+                    );
                 } catch (\Exception $e) {
                     Log::error('Contractor instant revision SMS dispatch error: ' . $e->getMessage());
                 }

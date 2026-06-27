@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Estimate extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = ['company_id', 'customer_id', 'estimate_number', 'status', 'subtotal', 'tax_rate', 'grand_total', 'notes', 'expires_at'];
 
     /**
@@ -27,13 +30,11 @@ class Estimate extends Model
      */
     public function customer(): BelongsTo
     {
-        // Explicitly map to the new Client model while maintaining the historic database key link
         return $this->belongsTo(Client::class, 'customer_id');
     }
 
     public function items(): HasMany
     {
-        // Points down to line items array records
         return $this->hasMany(EstimateItem::class);
     }
 }
