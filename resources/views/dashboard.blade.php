@@ -1,612 +1,550 @@
-<?php
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-100 text-slate-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Command Cockpit | ContractorSpecialties</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="flex flex-col min-h-full font-sans antialiased bg-slate-50 text-slate-900 selection:bg-[#f58613] selection:text-white">
 
-namespace App\Http\Controllers;
+    <!-- 🛡️ SECURE INTERCEPT SYSTEM DISCONNECT TERMINAL BANNER -->
+    @if(session()->has('admin_impersonator_id'))
+        <div class="bg-amber-600 border-b border-amber-700 text-white font-sans text-center py-3.5 px-4 flex justify-between items-center z-[9999] sticky top-0 shadow-lg text-left select-none w-full shrink-0">
+            <div class="flex items-center gap-2 text-xs font-black uppercase tracking-wider">
+                🚨 INTERCEPT ACTIVE: Currently operating within Contractor Dashboard partition view
+            </div>
+            <form action="{{ route('admin.impersonate.stop') }}" method="POST" class="m-0">
+                @csrf
+                <button type="submit" class="bg-slate-950 hover:bg-slate-900 border border-slate-900 text-amber-400 font-black text-[10px] py-1.5 px-3.5 rounded-lg uppercase tracking-widest transition-all cursor-pointer shadow-md focus:outline-none">
+                    Disconnect Bridge & Return &rarr;
+                </button>
+            </form>
+        </div>
+    @endif
 
-use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Str;
+    <div x-data="{
+        showInstallModal: false,
+        showApptModal: false,
+        selectedDayJobs: [],
+        selectedDayName: ''
+    }" class="contents">
 
-class OnboardingController extends Controller
-{
-    /**
-     * Render the high-utility 5-step resilient onboarding interface.
-     */
-    public function showWizard(Request $request)
-    {
-        $user = Auth::user();
-
-        // Safety check: If they are already onboarded, send directly to operational dashboard
-        if ($user && $user->onboarding_completed_at) {
-            return redirect()->route('dashboard');
-        }
-
-        // Secure dynamic prefix extraction matching your model standardizations cleanly
-        $userTable = (new User())->getTable();
-        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
-
-        $company = DB::table($prefix . 'companies')->where('id', $user->company_id)->first();
-
-        // Extract current step state from session fallback or user database value
-        $step = session('onboarding_active_step', 1);
-
-        // Defensive check: Inspect if Stripe environment variables are live inside the server shell
-        $stripeConfigured = !empty(env('STRIPE_SECRET'));
-
-        // Dynamically adjust padding layouts if the admin override banner is rendered into the viewport
-        $impersonateBanner = '';
-        $bodySpacingClass = 'py-12';
-
-        if (session()->has('admin_impersonator_id')) {
-            $bodySpacingClass = 'pt-24 pb-12';
-            $impersonateBanner = "
-                <div class=\"fixed top-0 inset-x-0 bg-amber-600 border-b border-amber-700 text-white font-sans text-center py-3.5 px-4 flex justify-between items-center z-[9999] shadow-lg text-left select-none\">
-                    <div class=\"flex items-center gap-2 text-xs font-black uppercase tracking-wider\">
-                        🚨 INTERCEPT ACTIVE: Calibrating setup metrics for un-onboarded profile partition
-                    </div>
-                    <form action=\"" . route('admin.impersonate.stop') . "\" method=\"POST\" class=\"m-0\">
-                        <input type=\"hidden\" name=\"_token\" value=\"" . csrf_token() . "\">
-                        <button type=\"submit\" class=\"bg-slate-950 hover:bg-slate-900 border border-slate-900 text-amber-400 font-black text-[10px] py-1.5 px-3.5 rounded-lg uppercase tracking-widest transition-all cursor-pointer shadow-md focus:outline-none\">
-                            Disconnect Bridge & Return &rarr;
-                        </button>
-                    </form>
+        <header class="bg-black border-b border-slate-900 sticky top-0 z-50 shadow-md">
+            <div class="max-w-7xl mx-auto px-4 h-24 flex items-center justify-between">
+                <div class="w-[400px] max-w-[45%] h-[100px] flex items-center">
+                    <img src="/images/header-logo.webp" alt="ContractorSpecialties Logo" class="w-full h-auto max-h-[90px] object-contain object-left">
                 </div>
-            ";
-        }
 
-        return response("
-            <!DOCTYPE html>
-            <html lang=\"en\" class=\"h-full bg-slate-950 text-slate-200\">
-            <head>
-                <meta charset=\"UTF-8\">
-                <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
-                <title>Workspace Core Calibration Setup | ContractorSpecialties</title>
-                <script src=\"https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4\"></script>
-                <script defer src=\"https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js\"></script>
-                <style>
-                    [x-cloak] { display: none !important; }
-                </style>
-            </head>
-            <body class=\"min-h-full font-sans antialiased text-slate-200 bg-slate-950 flex flex-col justify-center px-4 {$bodySpacingClass} selection:bg-[#f58613] selection:text-white relative\">
+                <div class="flex items-center gap-2 sm:gap-4">
+                    <span class="text-slate-400 font-black text-xs uppercase tracking-widest hidden lg:inline-block">
+                        {{ now()->format('l, F jS') }}
+                    </span>
 
-                {$impersonateBanner}
+                    @auth
+                        <a href="{{ route('workspace.profile.edit') }}" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 hover:text-white font-black text-[10px] py-2.5 px-3.5 sm:px-4 rounded-xl uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm text-decoration-none cursor-pointer">
+                            <span>🎨</span>
+                            <span class="hidden sm:inline">Brand Profile</span>
+                        </a>
 
-                <div class=\"w-full max-w-xl mx-auto bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 md:p-8 space-y-6\">
+                        @if(auth()->user()->is_admin)
+                            <a href="{{ route('admin.index') }}" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-amber-400 hover:text-amber-300 font-black text-[10px] py-2.5 px-3.5 sm:px-4 rounded-xl uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm text-decoration-none cursor-pointer">
+                                <span>⚙️</span>
+                                <span class="hidden sm:inline">Admin Desk</span>
+                            </a>
+                        @endif
 
-                    <!-- Tactical Progress Track Module -->
-                    <div class=\"flex items-center justify-between border-b border-slate-800 pb-5\">
-                        <div>
-                            <span class=\"text-[10px] font-black uppercase text-[#f58613] tracking-widest\">Workspace Activation</span>
-                            <h2 class=\"text-lg font-black text-white tracking-tight uppercase\">
-                                " . match($step) {
-                                    1 => "1. Core Dispatch Vitals",
-                                    2 => "2. Identity & Compliance",
-                                    3 => "3. Scope Calibration",
-                                    4 => "4. Trust Signal Alignment",
-                                    5 => "5. Financial Ledger & Crew",
-                                    default => "Workspace Configuration"
-                                } . "
-                            </h2>
-                        </div>
-                        <div class=\"text-xs font-mono font-bold text-slate-500 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800 shadow-inner shrink-0\">
-                            PHASE <span class=\"text-white font-black\">{$step}</span> OF 5
-                        </div>
-                    </div>
+                        <a href="{{ route('logout') }}" class="bg-slate-900 hover:bg-red-950/40 border border-slate-800 hover:border-red-900/40 text-slate-400 hover:text-red-400 font-black text-[10px] py-2.5 px-3.5 sm:px-4 rounded-xl uppercase tracking-wider transition-all shadow-sm text-decoration-none cursor-pointer">
+                            Sign Out
+                        </a>
+                    @endauth
 
-                    <!-- Progress Bar Layout -->
-                    <div class=\"w-full h-1.5 bg-slate-950 rounded-full overflow-hidden flex gap-1 shadow-inner\">
-                        " . implode('', array_map(function($i) use ($step) {
-                            $color = $i <= $step ? 'bg-[#f58613]' : 'bg-slate-800';
-                            return "<div class=\"h-full flex-1 transition-all duration-300 {$color}\"></div>";
-                        }, range(1, 5))) . "
-                    </div>
+                    @guest
+                        <a href="{{ route('welcome') }}" class="bg-[#f58613] hover:bg-orange-600 text-white font-black text-[10px] py-2.5 px-4 rounded-xl uppercase tracking-wider transition-all shadow-sm text-decoration-none cursor-pointer">
+                            Sign In
+                        </a>
+                    @endguest
 
-                    " . (session()->has('errors') ? "
-                        <div class=\"p-4 bg-red-950/40 border border-red-900/60 text-red-400 rounded-xl text-xs font-bold shadow-inner\">
-                            🛑 " . session('errors')->first() . "
-                        </div>
-                    " : "") . "
-
-                    " . (session()->has('status') ? "
-                        <div class=\"p-4 bg-emerald-950/40 border border-emerald-900/60 text-emerald-400 rounded-xl text-xs font-bold shadow-inner\">
-                            ✓ " . session('status') . "
-                        </div>
-                    " : "") . "
-
-                    <form action=\"" . route('onboarding.submit') . "\" method=\"POST\" enctype=\"multipart/form-data\" class=\"space-y-6\">
-                        <input type=\"hidden\" name=\"_token\" value=\"" . csrf_token() . "\">
-                        <input type=\"hidden\" name=\"current_step\" value=\"{$step}\">
-
-                        <!-- PHASE 1: CORE DISPATCH VITALS -->
-                        " . ($step === 1 ? "
-                            <div class=\"space-y-5\">
-                                <div class=\"p-4 bg-slate-950 border border-slate-800 rounded-xl flex items-start gap-3 shadow-inner\">
-                                    <span class=\"text-base select-none\">⚡</span>
-                                    <p class=\"text-[11px] text-slate-400 leading-normal font-medium\">
-                                        <span class=\"font-black text-white uppercase text-[9px] block tracking-wide mb-0.5\">The Easy Win</span>
-                                        Calibrate your baseline operating files. These metrics anchor your routing map and automated lead engines.
-                                    </p>
-                                </div>
-
-                                <div class=\"grid grid-cols-2 gap-4\">
-                                    <div>
-                                        <label for=\"first_name\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Principal First Name</label>
-                                        <input type=\"text\" id=\"first_name\" name=\"first_name\" required value=\"" . old('first_name', $user->first_name) . "\" placeholder=\"e.g., Jack\" class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold text-white shadow-inner focus:outline-none\">
-                                    </div>
-                                    <div>
-                                        <label for=\"last_name\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Principal Last Name</label>
-                                        <input type=\"text\" id=\"last_name\" name=\"last_name\" required value=\"" . old('last_name', $user->last_name) . "\" placeholder=\"e.g., Person\" class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold text-white shadow-inner focus:outline-none\">
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label for=\"company_name\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Company Logged Name</label>
-                                    <input type=\"text\" id=\"company_name\" name=\"company_name\" required value=\"" . old('company_name', $company->name ?? '') . "\" class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold text-white shadow-inner focus:outline-none\">
-                                </div>
-
-                                <div class=\"grid grid-cols-3 gap-4 items-end\">
-                                    <div class=\"col-span-2\">
-                                        <label for=\"city\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Central Operating Base (City)</label>
-                                        <input type=\"text\" id=\"city\" name=\"city\" required value=\"" . old('city', $company->city ?? '') . "\" placeholder=\"e.g., Washington\" class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold text-white shadow-inner focus:outline-none\">
-                                    </div>
-                                    <div>
-                                        <label for=\"state\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">State</label>
-                                        <input type=\"text\" id=\"state\" name=\"state\" required maxlength=\"2\" value=\"" . old('state', $company->state ?? '') . "\" placeholder=\"NC\" class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm text-center font-mono font-black uppercase text-white shadow-inner focus:outline-none\">
-                                    </div>
-                                </div>
-
-                                <div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\">
-                                    <div>
-                                        <label for=\"trade\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Primary Specialty Trade</label>
-                                        <select id=\"trade\" name=\"trade\" required class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold text-white shadow-inner focus:outline-none appearance-none\">
-                                            <option value=\"\">Select trade specialization...</option>
-                                            " . implode('', array_map(function($t) use ($company) {
-                                                $sel = (isset($company->trade) && $company->trade === $t) ? 'selected' : '';
-                                                return "<option value=\"{$t}\" {$sel}>{$t}</option>";
-                                            }, ['Roofing Architecture', 'Landscape Development', 'Lawn Care Operations', 'HVAC Climatic Systems', 'Plumbing Frameworks', 'Electrical Infrastructure', 'General Contracting Management'])) . "
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label for=\"service_radius_miles\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Dispatch Scope (Radius Miles)</label>
-                                        <input type=\"number\" id=\"service_radius_miles\" name=\"service_radius_miles\" required value=\"" . old('service_radius_miles', $company->service_radius_miles ?? '25') . "\" class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-mono font-bold text-white shadow-inner focus:outline-none\">
-                                    </div>
-                                </div>
-
-                                <div class=\"pt-4 flex justify-end\">
-                                    <button type=\"submit\" name=\"direction\" value=\"next\" class=\"w-full md:w-auto bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-4 px-8 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer text-center\">
-                                        Lock Progress & Continue &rarr;
-                                    </button>
-                                </div>
-                            </div>
-                        " : "") . "
-
-                        <!-- PHASE 2: IDENTITY & COMPLIANCE -->
-                        " . ($step === 2 ? "
-                            <div class=\"space-y-5\">
-                                <div class=\"p-4 bg-slate-950 border border-slate-800 rounded-xl flex items-start gap-3 shadow-inner\">
-                                    <span class=\"text-base select-none\">🗺️</span>
-                                    <p class=\"text-[11px] text-slate-400 leading-normal font-medium\">
-                                        <span class=\"font-black text-white uppercase text-[9px] block tracking-wide mb-0.5\">Build Your Public Profile</span>
-                                        We are gathering SEO gold to establish your public lead-generation footprint. Frame your trust assets perfectly.
-                                    </p>
-                                </div>
-
-                                <div class=\"grid grid-cols-1 md:grid-cols-3 gap-4\">
-                                    <div class=\"md:col-span-1\">
-                                        <label for=\"years_experience\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Years in Business</label>
-                                        <input type=\"number\" id=\"years_experience\" name=\"years_experience\" required value=\"" . old('years_experience', $company->years_experience ?? '0') . "\" class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold text-white shadow-inner focus:outline-none\">
-                                    </div>
-                                    <div class=\"md:col-span-1\">
-                                        <label for=\"license_number\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">License Registration #</label>
-                                        <input type=\"text\" id=\"license_number\" name=\"license_number\" placeholder=\"Optional\" value=\"" . old('license_number', $company->license_number ?? '') . "\" class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold text-white shadow-inner focus:outline-none\">
-                                    </div>
-                                    <div class=\"md:col-span-1\">
-                                        <label for=\"is_insured\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">General Liability Insured</label>
-                                        <select id=\"is_insured\" name=\"is_insured\" required class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold text-white shadow-inner focus:outline-none appearance-none\">
-                                            <option value=\"1\" " . (old('is_insured', $company->is_insured ?? '') == '1' ? 'selected' : '') . ">Yes, Active Policy</option>
-                                            <option value=\"0\" " . (old('is_insured', $company->is_insured ?? '') == '0' ? 'selected' : '') . ">No Coverage Active</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label for=\"company_bio_short\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Company Profile Punchline (Short Hook)</label>
-                                    <input type=\"text\" id=\"company_bio_short\" name=\"company_bio_short\" placeholder=\"Profiles with hooks get 3-5x more clicks\" value=\"" . old('company_bio_short', $company->company_bio_short ?? '') . "\" required class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold text-white shadow-inner focus:outline-none\">
-                                </div>
-
-                                <div>
-                                    <label for=\"company_bio_long\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Detailed Bio Operations Summary (SEO Content Layer)</label>
-                                    <textarea id=\"company_bio_long\" name=\"company_bio_long\" rows=\"4\" required placeholder=\"Describe your team history, warranties, and local commitments...\" class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-medium text-slate-200 shadow-inner focus:outline-none font-sans\">" . old('company_bio_long', $company->company_bio_long ?? '') . "</textarea>
-                                </div>
-
-                                <div>
-                                    <label class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Corporate Brand Logo</label>
-                                    <div class=\"border-2 border-dashed border-slate-800 hover:border-slate-700 rounded-2xl p-6 bg-slate-950 text-center transition-colors relative\">
-                                        <input type=\"file\" name=\"logo\" accept=\"image/*\" class=\"absolute inset-0 w-full h-full opacity-0 cursor-pointer\">
-                                        <div class=\"text-xs font-bold text-slate-400\">
-                                            📸 <span class=\"text-[#f58613]\">Click to upload brand logo</span> or drag file here
-                                            " . (!empty($company->logo_path) ? "<p class=\"text-emerald-400 font-mono text-[10px] mt-1\">✓ Existing logo asset saved in profile</p>" : "<p class=\"text-[10px] text-slate-600 font-mono mt-1\">PNG, JPG, or WEBP up to 2MB</p>") . "
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class=\"grid grid-cols-3 gap-4 pt-4\">
-                                    <button type=\"submit\" name=\"direction\" value=\"back\" class=\"bg-slate-950 border border-slate-800 hover:bg-slate-800 text-slate-400 font-black text-xs py-4 rounded-xl tracking-widest uppercase shadow transition-all cursor-pointer text-center\">&larr; Back</button>
-                                    <button type=\"submit\" name=\"direction\" value=\"next\" class=\"col-span-2 bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer text-center\">Commit & Continue &rarr;</button>
-                                </div>
-                            </div>
-                        " : "") . "
-
-                        <!-- PHASE 3: SCOPE CALIBRATION -->
-                        " . ($step === 3 ? "
-                            <div class=\"space-y-5\">
-                                <div class=\"p-4 bg-slate-950 border border-slate-800 rounded-xl flex items-start gap-3 shadow-inner\">
-                                    <span class=\"text-base select-none\">🔨</span>
-                                    <p class=\"text-[11px] text-slate-400 leading-normal font-medium\">
-                                        <span class=\"font-black text-white uppercase text-[9px] block tracking-wide mb-0.5\">Service Scope Calibration</span>
-                                        Check off your functional operational assets. Write 1-2 sentences about each field capability later for automated copy updates.
-                                    </p>
-                                </div>
-
-                                <div>
-                                    <label class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-3\">Select Active Field Capabilities</label>
-                                    <div class=\"grid grid-cols-1 md:grid-cols-2 gap-3\">
-                                        " . implode('', array_map(function($service) use ($company) {
-                                            $tags = isset($company->service_tags) ? json_decode($company->service_tags, true) : [];
-                                            if (!is_array($tags)) $tags = [];
-                                            $checked = in_array($service, $tags) ? 'checked' : '';
-                                            return "
-                                                <label class=\"flex items-center gap-3 p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs font-bold text-white cursor-pointer hover:border-[#f58613] transition-all shadow-inner\">
-                                                    <input type=\"checkbox\" name=\"service_tags[]\" value=\"{$service}\" {$checked} class=\"accent-[#f58613] w-4 h-4 shrink-0\">
-                                                    <span>{$service}</span>
-                                                </label>
-                                            ";
-                                        }, ['Full Tear-Off Replacement', 'Emergency Structural Patching', 'Storm Damage Remediation', 'Preventative Inspection Maintenance', 'Gutter System Integrations', 'Commercial Property Overhauls', 'Complete Site Layout Renovations', 'Routine Cleanings'])) . "
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label for=\"emergency_availability\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">24/7 Rapid Response Dispatch Capability</label>
-                                    <select id=\"emergency_availability\" name=\"emergency_availability\" required class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold text-white shadow-inner focus:outline-none appearance-none\">
-                                        <option value=\"0\" " . (old('emergency_availability', $company->emergency_availability ?? '') == '0' ? 'selected' : '') . ">No, Standard Working Shifts Only</option>
-                                        <option value=\"1\" " . (old('emergency_availability', $company->emergency_availability ?? '') == '1' ? 'selected' : '') . ">Yes, Available for Emergency Overtime Callouts</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Showcase Portfolio Work Image</label>
-                                    <div class=\"border-2 border-dashed border-slate-800 hover:border-slate-700 rounded-2xl p-6 bg-slate-950 text-center transition-colors relative\">
-                                        <input type=\"file\" name=\"portfolio_img\" accept=\"image/*\" class=\"absolute inset-0 w-full h-full opacity-0 cursor-pointer\">
-                                        <div class=\"text-xs font-bold text-slate-400\">
-                                            🏗️ <span class=\"text-[#f58613]\">Upload an image of recent field execution</span> or drag file here
-                                            " . (!empty($company->portfolio_image_path) ? "<p class=\"text-emerald-400 font-mono text-[10px] mt-1\">✓ Showcase asset active on system disk</p>" : "<p class=\"text-[10px] text-slate-600 font-mono mt-1\">High resolution image up to 4MB</p>") . "
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class=\"grid grid-cols-3 gap-4 pt-4\">
-                                    <button type=\"submit\" name=\"direction\" value=\"back\" class=\"bg-slate-950 border border-slate-800 hover:bg-slate-800 text-slate-400 font-black text-xs py-4 rounded-xl tracking-widest uppercase shadow transition-all cursor-pointer text-center\">&larr; Back</button>
-                                    <button type=\"submit\" name=\"direction\" value=\"next\" class=\"col-span-2 bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer text-center\">Commit & Continue &rarr;</button>
-                                </div>
-                            </div>
-                        " : "") . "
-
-                        <!-- PHASE 4: TRUST SIGNALS -->
-                        " . ($step === 4 ? "
-                            <div class=\"space-y-5\">
-                                <div class=\"p-4 bg-slate-950 border border-slate-800 rounded-xl flex items-start gap-3 shadow-inner\">
-                                    <span class=\"text-base select-none\">📈</span>
-                                    <p class=\"text-[11px] text-slate-400 leading-normal font-medium\">
-                                        <span class=\"font-black text-white uppercase text-[9px] block tracking-wide mb-0.5\">Social Proof Integration</span>
-                                        Drop in external reputation endpoints to link reviews automatically and reinforce conversion signals on public directories.
-                                    </p>
-                                </div>
-
-                                " . (function() use ($company) {
-                                    $links = isset($company->social_links) ? json_decode($company->social_links, true) : [];
-                                    if (!is_array($links)) $links = [];
-                                    $google = $links['google'] ?? '';
-                                    $facebook = $links['facebook'] ?? '';
-                                    $yelp = $links['yelp'] ?? '';
-
-                                    return "
-                                        <div class=\"space-y-4\">
-                                            <div>
-                                                <label for=\"google_review_link\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Google Business Profile Review URL</label>
-                                                <input type=\"url\" id=\"google_review_link\" name=\"google_review_link\" placeholder=\"https://g.page/r/.../review\" value=\"" . old('google_review_link', $google) . "\" class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold text-white shadow-inner focus:outline-none\">
-                                            </div>
-                                            <div>
-                                                <label for=\"facebook_link\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Facebook Corporate Page URL</label>
-                                                <input type=\"url\" id=\"facebook_link\" name=\"facebook_link\" placeholder=\"https://facebook.com/yourbusiness\" value=\"" . old('facebook_link', $facebook) . "\" class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold text-white shadow-inner focus:outline-none\">
-                                            </div>
-                                            <div>
-                                                <label for=\"yelp_link\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Yelp Business Directory URL</label>
-                                                <input type=\"url\" id=\"yelp_link\" name=\"yelp_link\" placeholder=\"https://yelp.com/biz/your-slug\" value=\"" . old('yelp_link', $yelp) . "\" class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold text-white shadow-inner focus:outline-none\">
-                                            </div>
-                                        </div>
-                                    ";
-                                })() . "
-
-                                <div class=\"grid grid-cols-3 gap-4 pt-4\">
-                                    <button type=\"submit\" name=\"direction\" value=\"back\" class=\"bg-slate-950 border border-slate-800 hover:bg-slate-800 text-slate-400 font-black text-xs py-4 rounded-xl tracking-widest uppercase shadow transition-all cursor-pointer text-center\">&larr; Back</button>
-                                    <button type=\"submit\" name=\"direction\" value=\"next\" class=\"col-span-2 bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer text-center\">Commit & Continue &rarr;</button>
-                                </div>
-                            </div>
-                        " : "") . "
-
-                        <!-- PHASE 5: FINANCIAL LEDGER & WORKFLOWS -->
-                        " . ($step === 5 ? "
-                            <div class=\"space-y-5\">
-                                <div class=\"p-4 bg-slate-950 border border-slate-800 rounded-xl flex items-start gap-3 shadow-inner\">
-                                    <span class=\"text-base select-none\">💵</span>
-                                    <p class=\"text-[11px] text-slate-400 leading-normal font-medium\">
-                                        <span class=\"font-black text-white uppercase text-[9px] block tracking-wide mb-0.5\">Operational SaaS Ledger Setup</span>
-                                        Calibrate your tax thresholds, crew structures, and automatic invoicing parameters to deploy your workspace live.
-                                    </p>
-                                </div>
-
-                                <div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\">
-                                    <div>
-                                        <label for=\"crew_structure\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Crew Infrastructure Alignment</label>
-                                        <select id=\"crew_structure\" name=\"crew_structure\" required class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold text-white shadow-inner focus:outline-none appearance-none\">
-                                            <option value=\"solo\" " . (old('crew_structure', $company->crew_structure ?? '') === 'solo' ? 'selected' : '') . ">Solo Operator (Single Line)</option>
-                                            <option value=\"multi-crew\" " . (old('crew_structure', $company->crew_structure ?? '') === 'multi-crew' ? 'selected' : '') . ">Multi-Crew Routing Structure</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label for=\"invoice_preferences\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Billing Dispatch Target</label>
-                                        <select id=\"invoice_preferences\" name=\"invoice_preferences\" required class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold text-white shadow-inner focus:outline-none appearance-none\">
-                                            <option value=\"digital_only\" " . (old('invoice_preferences', $company->invoice_preferences ?? '') === 'digital_only' ? 'selected' : '') . ">Digital Link via Interactive SMS Terminal</option>
-                                            <option value=\"cod\" " . (old('invoice_preferences', $company->invoice_preferences ?? '') === 'cod' ? 'selected' : '') . ">Collect On Delivery (Field Approvals)</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class=\"grid grid-cols-2 gap-4\">
-                                    <div>
-                                        <label for=\"tax_rate\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Default Service Tax Rate (%)</label>
-                                        <input type=\"number\" id=\"tax_rate\" name=\"default_tax_rate\" step=\"0.01\" value=\"" . old('default_tax_rate', $company->default_tax_rate ?? '8.10') . "\" required class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold text-white shadow-inner focus:outline-none\">
-                                    </div>
-                                    <div>
-                                        <label for=\"invoice_sequence\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Estimate/Invoice Starting Serial</label>
-                                        <input type=\"number\" id=\"invoice_sequence\" name=\"starting_invoice_number\" value=\"" . old('starting_invoice_number', $company->starting_invoice_number ?? '1000') . "\" required class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-mono font-bold text-white shadow-inner focus:outline-none\">
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label for=\"deposit_rules\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Mobilization Deposit Guidelines (Contract Rules)</label>
-                                    <textarea id=\"deposit_rules\" name=\"deposit_rules\" rows=\"3\" placeholder=\"e.g., A 50% material mobilization deposit is required on all projects exceeding $2,500 prior to scheduling...\" class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-medium text-slate-200 shadow-inner focus:outline-none font-sans\">" . old('deposit_rules', $company->deposit_rules ?? '') . "</textarea>
-                                </div>
-
-                                " . ($stripeConfigured ? "
-                                    <div class=\"p-4 bg-emerald-950/30 border border-emerald-900/60 rounded-xl text-xs font-bold text-emerald-400 shadow-inner\">
-                                        ✅ Merchant Config recognized. Deploying locks your secure payment parameters on registration complete.
-                                    </div>
-                                " : "
-                                    <div class=\"p-4 bg-amber-950/40 border border-amber-900/60 rounded-xl text-xs font-medium text-amber-400 shadow-inner leading-relaxed\">
-                                        ⚙️ <span class=\"font-black uppercase text-[10px]\">Developer Sandbox Processing Active</span><br>
-                                        Stripe tokens unpopulated inside host shell environment. Fallback processor simulation bypasses live checks for local workspace confirmation.
-                                    </div>
-                                ") . "
-
-                                <div class=\"grid grid-cols-3 gap-4 pt-4\">
-                                    <button type=\"submit\" name=\"direction\" value=\"back\" class=\"bg-slate-950 border border-slate-800 hover:bg-slate-800 text-slate-400 font-black text-xs py-4 rounded-xl tracking-widest uppercase shadow transition-all cursor-pointer text-center\">&larr; Back</button>
-                                    <button type=\"submit\" name=\"direction\" value=\"next\" class=\"col-span-2 bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer text-center\">
-                                        " . ($stripeConfigured ? "Deploy & Activate Control Deck ⚡" : "Simulate Live Field Deployment ⚡") . "
-                                    </button>
-                                </div>
-                            </div>
-                        " : "") . "
-
-                    </form>
+                    <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></div>
                 </div>
-            </body>
-            </html>
-        ");
-    }
+            </div>
+        </header>
 
-    /**
-     * Process progressive setup phases defensively and commit metrics live to disk memory.
-     */
-    public function processWizard(Request $request)
-    {
-        $user = Auth::user();
+        <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8 space-y-8">
 
-        if ($user && $user->onboarding_completed_at) {
-            return redirect()->route('dashboard');
-        }
+            @if(session('status'))
+                <div class="bg-emerald-600 border border-emerald-700 text-white rounded-2xl p-4 flex items-center gap-3 shadow-md">
+                    <span class="text-lg">👍</span>
+                    <p class="text-xs font-black uppercase tracking-tight">{{ session('status') }}</p>
+                </div>
+            @endif
 
-        $userTable = (new User())->getTable();
-        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+            @if($errors->has('security'))
+                <div class="bg-red-600 border border-red-700 text-white rounded-2xl p-4 flex items-center gap-3 shadow-md">
+                    <span class="text-lg">🛑</span>
+                    <p class="text-xs font-black uppercase tracking-tight">{{ $errors->first('security') }}</p>
+                </div>
+            @endif
 
-        $currentStep = (int)$request->input('current_step', 1);
-        $direction = $request->input('direction', 'next');
+            <section class="grid grid-cols-3 md:grid-cols-6 gap-4">
+                <a href="/estimates/create" class="relative flex flex-col items-center justify-center aspect-square bg-gradient-to-b from-[#f58613] to-orange-600 rounded-3xl shadow-md hover:shadow-xl active:scale-95 transition-all group overflow-hidden cursor-pointer text-decoration-none border-0">
+                    <span class="text-4xl mb-2 group-hover:scale-110 transition-transform">txt</span>
+                    <span class="text-xs font-black text-white uppercase tracking-wider text-center px-1">New Estimate</span>
+                </a>
 
-        // Handle navigation step adjustments instantly if rolling backwards
-        if ($direction === 'back') {
-            $prev = max(1, $currentStep - 1);
-            session(['onboarding_active_step' => $prev]);
-            return redirect()->route('onboarding.view')->withInput();
-        }
+                <a href="/workspace/crm" class="relative flex flex-col items-center justify-center aspect-square bg-white border-4 border-slate-900 rounded-3xl shadow-md hover:border-[#f58613] hover:shadow-xl active:scale-95 transition-all group overflow-hidden cursor-pointer text-decoration-none">
+                    <span class="text-4xl mb-2 group-hover:scale-110 transition-transform">🗂️</span>
+                    <span class="text-xs font-black text-slate-950 uppercase tracking-wider text-center px-1">Client Roster</span>
+                </a>
 
-        // Process Phase Specific Validations and Database Commits
-        try {
-            if ($currentStep === 1) {
-                $validated = $request->validate([
-                    'first_name'           => 'required|string|max:255',
-                    'last_name'            => 'required|string|max:255',
-                    'company_name'         => 'required|string|max:255',
-                    'city'                 => 'required|string|max:255',
-                    'state'                => 'required|string|size:2',
-                    'trade'                => 'required|string|max:255',
-                    'service_radius_miles' => 'required|integer|min:1|max:500',
-                ]);
+                <a href="/pricebook" class="relative flex flex-col items-center justify-center aspect-square bg-white border-2 border-slate-300 rounded-3xl shadow-md hover:border-slate-900 hover:shadow-xl active:scale-95 transition-all group overflow-hidden cursor-pointer text-decoration-none">
+                    <span class="text-4xl mb-2 group-hover:scale-110 transition-transform">📖</span>
+                    <span class="text-xs font-black text-slate-800 uppercase tracking-wider text-center px-1">Pricebook Matrix</span>
+                </a>
 
-                $user->update([
-                    'first_name' => $validated['first_name'],
-                    'last_name'  => $validated['last_name'],
-                ]);
+                <a href="{{ route('workspace.billing.quick') }}" class="relative flex flex-col items-center justify-center aspect-square bg-white border-2 border-slate-300 rounded-3xl shadow-md hover:border-slate-900 hover:shadow-xl active:scale-95 transition-all group overflow-hidden cursor-pointer text-decoration-none">
+                    <span class="text-4xl mb-2 group-hover:scale-110 transition-transform">⚡</span>
+                    <span class="text-xs font-black text-slate-800 uppercase tracking-wider text-center px-1">Quick Bill</span>
+                </a>
 
-                $citySlug = Str::slug($validated['city']);
-                $stateSlug = strtolower($validated['state']);
-                $isPubliclyListed = false;
+                <button @click="showInstallModal = true" class="relative flex flex-col items-center justify-center aspect-square bg-slate-900 border-2 border-slate-950 rounded-3xl shadow-md text-[#f58613] hover:shadow-xl active:scale-95 transition-all group overflow-hidden cursor-pointer outline-none">
+                    <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">📱</span>
+                    <span class="text-xs font-black uppercase tracking-wider text-center px-1 text-slate-200">App Shortcut</span>
+                </button>
 
-                if (Schema::hasTable($prefix . 'directory_cities')) {
-                    $record = DB::table($prefix . 'directory_cities')
-                        ->where('slug', $citySlug)
-                        ->where('state_code', $stateSlug)
-                        ->first();
-                    if ($record && $record->status === 'active') {
-                        $isPubliclyListed = true;
-                    }
-                }
+                <a href="{{ route('workspace.profile.edit') }}" class="relative flex flex-col items-center justify-center aspect-square bg-slate-900 border border-slate-950 hover:border-[#f58613] rounded-2xl shadow-sm text-[#f58613] active:scale-95 transition-all group overflow-hidden cursor-pointer text-decoration-none">
+                    <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">🌐</span>
+                    <span class="text-xs font-black uppercase tracking-wider text-center px-1 text-slate-200">Brand Hub</span>
+                </a>
+            </section>
 
-                DB::table($prefix . 'companies')->where('id', $user->company_id)->update([
-                    'name'                 => $validated['company_name'],
-                    'city'                 => $validated['city'],
-                    'state'                => strtoupper($validated['state']),
-                    'city_slug'            => $citySlug,
-                    'state_slug'           => $stateSlug,
-                    'trade'                => $validated['trade'],
-                    'service_radius_miles' => $validated['service_radius_miles'],
-                    'is_publicly_listed'   => $isPubliclyListed,
-                    'updated_at'           => now(),
-                ]);
+            <section class="bg-white border-2 border-slate-300 rounded-3xl p-6 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-6 divide-y sm:divide-y-0 sm:divide-x divide-slate-200">
+                <div class="space-y-1">
+                    <span class="text-xs font-black uppercase tracking-wider text-slate-400 block">Draft Estimates</span>
+                    <div class="text-4xl font-black text-slate-900 font-mono">{{ $draftCount }}</div>
+                    <span class="text-xs text-slate-500 block font-bold">Quotes currently built in progress</span>
+                </div>
+                <div class="pt-4 sm:pt-0 sm:pl-6 space-y-1">
+                    <span class="text-xs font-black uppercase tracking-wider text-slate-400 block">Sent Estimates</span>
+                    <div class="text-4xl font-black text-[#f58613] font-mono">{{ $sentCount }}</div>
+                    <span class="text-xs text-slate-500 block font-bold">Dispatched customer link files</span>
+                </div>
+                <div class="pt-4 sm:pt-0 sm:pl-6 space-y-1">
+                    <span class="text-xs font-black uppercase tracking-wider text-slate-400 block">Booked Revenue</span>
+                    <div class="text-4xl font-black text-emerald-600 font-mono">${{ number_format($bookedRevenue, 2) }}</div>
+                    <span class="text-xs text-slate-500 block font-bold">Total approved production values</span>
+                </div>
+            </section>
 
-                session(['onboarding_active_step' => 2]);
-                return redirect()->route('onboarding.view')->with('status', 'Core dispatch vitals committed.');
-            }
+            <section class="bg-white border-2 border-slate-300 rounded-3xl p-6 shadow-sm space-y-4">
+                <div class="border-b border-slate-200 pb-3">
+                    <h3 class="font-black text-lg text-slate-900 uppercase tracking-wider">Production Dispatch Calendar</h3>
+                    <p class="text-xs text-slate-400 font-bold">Tap any highlighted weekday node to review scheduled route stops and unroll field instructions.</p>
+                </div>
 
-            if ($currentStep === 2) {
-                $validated = $request->validate([
-                    'years_experience'  => 'required|integer|min:0',
-                    'license_number'    => 'nullable|string|max:100',
-                    'is_insured'        => 'required|boolean',
-                    'company_bio_short' => 'required|string|max:255',
-                    'company_bio_long'  => 'required|string|max:2000',
-                    'logo'              => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-                ]);
+                <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+                    @foreach($daysOfWeek as $day)
+                        <div @click="selectedDayJobs = {{ json_encode($day['appointments']) }}; selectedDayName = '{{ $day['full_date'] }}'; showApptModal = true;"
+                             class="p-3 rounded-2xl border-2 flex flex-col justify-between h-28 transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] group select-none
+                            {{ $day['status'] === 'today' ? 'bg-[#f58613] border-[#f58613] text-white shadow-md ring-4 ring-[#f58613]/10' : '' }}
+                            {{ $day['status'] === 'past' ? 'bg-slate-50 border-slate-200 opacity-50 text-slate-400' : '' }}
+                            {{ $day['status'] === 'active' ? 'bg-slate-50 border-slate-300 text-slate-900 hover:border-slate-900' : '' }}
+                            {{ $day['status'] === 'weekend' ? 'bg-slate-100/60 border-slate-200 text-slate-400 border-dashed' : '' }}
+                        ">
+                            <div class="flex justify-between items-baseline">
+                                <span class="text-xs font-black uppercase tracking-wider {{ $day['status'] === 'today' ? 'text-white' : 'text-slate-500' }}">{{ $day['name'] }}</span>
+                                <span class="text-xl font-mono font-black">{{ $day['num'] }}</span>
+                            </div>
+                            <div>
+                                @if($day['jobs_count'] > 0)
+                                    <span class="text-[9px] font-black uppercase px-1.5 py-1 rounded-lg block text-center truncate
+                                        {{ $day['status'] === 'today' ? 'bg-black text-white' : 'bg-slate-900 text-white' }}
+                                    ">
+                                        {{ $day['jobs_count'] }} {{ $day['jobs_count'] === 1 ? 'Stop' : 'Stops' }}
+                                    </span>
+                                @else
+                                    <span class="text-[10px] font-bold text-slate-400 block text-center italic group-hover:text-slate-600">No Runs</span>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </section>
 
-                $updatePayload = [
-                    'years_experience'  => $validated['years_experience'],
-                    'license_number'    => $validated['license_number'],
-                    'is_insured'        => $validated['is_insured'],
-                    'company_bio_short' => $validated['company_bio_short'],
-                    'company_bio_long'  => $validated['company_bio_long'],
-                    'updated_at'        => now(),
-                ];
+            <section class="bg-white border-2 border-slate-300 rounded-3xl p-6 shadow-sm space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-slate-900 text-white p-4 rounded-2xl shadow-md border-b-4 border-slate-950">
+                    <div>
+                        <h3 class="font-black text-sm uppercase tracking-wider text-slate-100">📋 Proposal Pipeline Kanban Board</h3>
+                        <p class="text-slate-400 text-[11px] font-bold">Track and update bid parameters from draft generation down through archive completion states.</p>
+                    </div>
+                    <span class="text-[10px] bg-slate-800 text-emerald-400 font-mono font-black px-3 py-1 rounded-xl uppercase border border-slate-700">
+                        Active Bids Tracked: {{ $estimates->count() }}
+                    </span>
+                </div>
 
-                if ($request->hasFile('logo')) {
-                    $file = $request->file('logo');
-                    $name = 'logo_' . $user->company_id . '_' . time() . '.' . $file->getClientOriginalExtension();
-                    if (!file_exists(public_path('uploads/logos'))) {
-                        mkdir(public_path('uploads/logos'), 0755, true);
-                    }
-                    $file->move(public_path('uploads/logos'), $name);
-                    $updatePayload['logo_path'] = 'uploads/logos/' . $name;
-                }
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
 
-                DB::table($prefix . 'companies')->where('id', $user->company_id)->update($updatePayload);
+                    <div class="bg-slate-100 border-2 border-slate-300 rounded-2xl p-3 space-y-3 shadow-inner">
+                        <div class="flex justify-between items-center bg-white px-3 py-2 rounded-xl border-2 border-slate-200 shadow-sm">
+                            <span class="text-xs font-black uppercase tracking-wider text-slate-600"> 🛠️ 1. Drafts</span>
+                            <span class="font-mono text-xs font-black text-slate-900 bg-slate-200 px-2 py-0.5 rounded-md">{{ count($kanbanBids['draft']) }}</span>
+                        </div>
+                        <div class="space-y-3 max-h-[600px] overflow-y-auto pr-0.5">
+                            @forelse($kanbanBids['draft'] as $bid)
+                                <div class="bg-white border-2 border-slate-300 rounded-2xl p-4 shadow-sm space-y-3 hover:border-slate-900 transition-all relative group">
+                                    <a href="/estimates/{{ $bid->id }}" class="block space-y-2 text-decoration-none">
+                                        <div class="flex justify-between items-start">
+                                            <span class="text-[10px] font-mono font-black text-slate-400 block tracking-tight group-hover:text-[#f58613] transition-colors">{{ $bid->estimate_number }} 🔗</span>
+                                            <span class="text-sm font-mono font-black text-slate-900">${{ number_format($bid->grand_total, 2) }}</span>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-black text-sm text-slate-950 uppercase truncate mt-1">{{ $bid->customer->name ?? 'Unmapped Client' }}</h4>
+                                            <p class="text-[10px] text-slate-400 font-bold truncate mt-0.5">Compiled {{ $bid->created_at->format('M j, Y') }}</p>
+                                        </div>
+                                    </a>
+                                    <div class="pt-2.5 border-t border-slate-200 flex items-center justify-between gap-2">
+                                        <form action="/estimates/{{ $bid->id }}/status" method="POST" class="inline-block flex-1">
+                                            @csrf
+                                            <input type=\"hidden\" name=\"status\" value=\"sent\">
+                                            <button type="submit" class="w-full bg-slate-50 border-2 border-slate-300 hover:bg-[#f58613] hover:text-white text-slate-800 text-[10px] font-black uppercase py-2 px-2 rounded-xl transition-colors cursor-pointer text-center outline-none">
+                                                Send Out &rarr;
+                                            </button>
+                                        </form>
+                                        <form action="/estimates/{{ $bid->id }}" method="POST" class="inline-block" onsubmit="return confirm('🛑 Permanently scrub this quote draft record?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="bg-red-50 hover:bg-red-600 border-2 border-red-200 text-red-600 hover:text-white font-black text-xs p-2 rounded-xl transition-colors cursor-pointer outline-none">
+                                                🗑️
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="text-center py-8 text-[11px] text-slate-400 font-bold italic bg-white/50 border-2 border-dashed border-slate-200 rounded-xl">No active drafts</div>
+                            @endforelse
+                        </div>
+                    </div>
 
-                session(['onboarding_active_step' => 3]);
-                return redirect()->route('onboarding.view')->with('status', 'Compliance profiles structural layer compiled.');
-            }
+                    <div class="bg-slate-100 border-2 border-slate-300 rounded-2xl p-3 space-y-3 shadow-inner">
+                        <div class="flex justify-between items-center bg-white px-3 py-2 rounded-xl border-2 border-slate-200 shadow-sm">
+                            <span class="text-xs font-black uppercase tracking-wider text-[#f58613]">📡 2. Dispatched</span>
+                            <span class="font-mono text-xs font-black text-white bg-[#f58613] px-2 py-0.5 rounded-md">{{ count($kanbanBids['sent']) }}</span>
+                        </div>
+                        <div class="space-y-3 max-h-[600px] overflow-y-auto pr-0.5">
+                            @forelse($kanbanBids['sent'] as $bid)
+                                <div class="bg-white border-2 border-slate-300 rounded-2xl p-4 shadow-sm space-y-3 hover:border-[#f58613] transition-all group">
+                                    <a href="/estimates/{{ $bid->id }}" class="block space-y-2 text-decoration-none">
+                                        <div class="flex justify-between items-start">
+                                            <span class="text-[10px] font-mono font-black text-slate-400 block tracking-tight">{{ $bid->estimate_number }} 🔗</span>
+                                            <span class="text-sm font-mono font-black text-slate-900">${{ number_format($bid->grand_total, 2) }}</span>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-black text-sm text-slate-950 uppercase truncate mt-1">{{ $bid->customer->name ?? 'Unmapped Client' }}</h4>
+                                            <p class="text-[10px] text-slate-400 font-bold truncate mt-0.5">Awaiting signature approval</p>
+                                        </div>
+                                    </a>
+                                    <div class="pt-2.5 border-t border-slate-200 flex gap-2">
+                                        <form action="/estimates/{{ $bid->id }}/status" method="POST" class="inline-block flex-1">
+                                            @csrf
+                                            <input type="hidden" name="status" value="approved">
+                                            <button type="submit" class="w-full bg-emerald-50 border-2 border-emerald-300 hover:bg-emerald-600 text-emerald-700 hover:text-white text-[10px] font-black uppercase py-2 px-2 rounded-xl transition-colors cursor-pointer text-center outline-none">
+                                                ✓ Force Approve
+                                            </button>
+                                        </form>
+                                        <form action="/estimates/{{ $bid->id }}/status" method="POST" class="inline-block">
+                                            @csrf
+                                            <input type="hidden" name="status" value="draft">
+                                            <button type="submit" class="bg-slate-50 hover:bg-slate-200 border-2 border-slate-300 text-slate-600 font-black text-xs py-2 px-2.5 rounded-xl transition-colors cursor-pointer outline-none" title="Pull Back to Draft">
+                                                &larr;
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="text-center py-8 text-[11px] text-slate-400 font-bold italic bg-white/50 border-2 border-dashed border-slate-200 rounded-xl">No proposals outstanding</div>
+                            @endforelse
+                        </div>
+                    </div>
 
-            if ($currentStep === 3) {
-                $validated = $request->validate([
-                    'service_tags'           => 'required|array|min:1',
-                    'emergency_availability' => 'required|boolean',
-                    'portfolio_img'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
-                ]);
+                    <div class="bg-slate-100 border-2 border-slate-300 rounded-2xl p-3 space-y-3 shadow-inner">
+                        <div class="flex justify-between items-center bg-white px-3 py-2 rounded-xl border-2 border-slate-200 shadow-sm">
+                            <span class="text-xs font-black uppercase tracking-wider text-emerald-700">🏗️ 3. Approved</span>
+                            <span class="font-mono text-xs font-black text-white bg-emerald-600 px-2 py-0.5 rounded-md">{{ count($kanbanBids['approved']) }}</span>
+                        </div>
+                        <div class="space-y-3 max-h-[600px] overflow-y-auto pr-0.5">
+                            @forelse($kanbanBids['approved'] as $bid)
+                                <div class="bg-white border-2 border-emerald-300 rounded-2xl p-4 shadow-sm space-y-3 hover:border-emerald-600 transition-all group">
+                                    <a href="/estimates/{{ $bid->id }}" class="block space-y-2 text-decoration-none">
+                                        <div class="flex justify-between items-start">
+                                            <span class="text-[10px] font-mono font-black text-slate-400 block tracking-tight">{{ $bid->estimate_number }} 🔗</span>
+                                            <span class="text-sm font-mono font-black text-emerald-600">${{ number_format($bid->grand_total, 2) }}</span>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-black text-sm text-slate-950 uppercase truncate mt-1">{{ $bid->customer->name ?? 'Unmapped Client' }}</h4>
+                                            <p class="text-[10px] text-emerald-600 font-black tracking-tight uppercase text-[8px] mt-1 bg-emerald-50 border border-emerald-100 inline-block px-1.5 py-0.5 rounded shadow-sm">⚡ Active Production Order</p>
+                                        </div>
+                                    </a>
+                                    <div class="pt-2.5 border-t border-slate-200">
+                                        <form action="/estimates/{{ $bid->id }}/status" method="POST" class="w-full">
+                                            @csrf
+                                            <input type="hidden" name="status" value="closed">
+                                            <button type="submit" class="w-full bg-slate-900 border-2 border-slate-950 hover:bg-black text-white text-[10px] font-black uppercase py-2 px-2 rounded-xl transition-colors cursor-pointer text-center outline-none">
+                                                📦 Close & Archive Run
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="text-center py-8 text-[11px] text-slate-400 font-bold italic bg-white/50 border-2 border-dashed border-slate-200 rounded-xl">No active crew setups</div>
+                            @endforelse
+                        </div>
+                    </div>
 
-                $updatePayload = [
-                    'service_tags'           => json_encode($validated['service_tags']),
-                    'emergency_availability' => $validated['emergency_availability'],
-                    'updated_at'             => now(),
-                ];
+                    <div class="bg-slate-100 border-2 border-slate-300 rounded-2xl p-3 space-y-3 shadow-inner">
+                        <div class="flex justify-between items-center bg-white px-3 py-2 rounded-xl border-2 border-slate-200 shadow-sm">
+                            <span class="text-xs font-black uppercase tracking-wider text-slate-400">🔒 4. Archived</span>
+                            <span class="font-mono text-xs font-black text-slate-500 bg-slate-200 px-2 py-0.5 rounded-md">{{ count($kanbanBids['closed']) }}</span>
+                        </div>
+                        <div class="space-y-3 max-h-[600px] overflow-y-auto pr-0.5">
+                            @forelse($kanbanBids['closed'] as $bid)
+                                <div class="bg-white/80 border-2 border-slate-200 opacity-70 rounded-2xl p-4 shadow-sm space-y-3 hover:opacity-100 transition-all">
+                                    <a href="/estimates/{{ $bid->id }}" class="block space-y-2 text-decoration-none">
+                                        <div class="flex justify-between items-start">
+                                            <span class="text-[10px] font-mono font-black text-slate-400 block tracking-tight">{{ $bid->estimate_number }} 🔗</span>
+                                            <span class="text-sm font-mono font-bold text-slate-500">${{ number_format($bid->grand_total, 2) }}</span>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-black text-sm text-slate-700 uppercase truncate mt-1">{{ $bid->customer->name ?? 'Unmapped Client' }}</h4>
+                                            <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">Fulfillment run finalized</p>
+                                        </div>
+                                    </a>
+                                    <div class="pt-2 border-t border-slate-200">
+                                        <form action="/estimates/{{ $bid->id }}/status" method="POST" class="w-full">
+                                            @csrf
+                                            <input type="hidden" name="status" value="approved">
+                                            <button type="submit" class="w-full bg-white border-2 border-slate-300 text-slate-500 text-[9px] font-black uppercase py-1.5 px-2 rounded-xl hover:bg-slate-100 transition-all cursor-pointer text-center outline-none">
+                                                &larr; Return to Active
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="text-center py-8 text-[11px] text-slate-400 font-bold italic bg-white/50 border-2 border-dashed border-slate-200 rounded-xl">No historical records closed</div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-                if ($request->hasFile('portfolio_img')) {
-                    $file = $request->file('portfolio_img');
-                    $name = 'showcase_' . $user->company_id . '_' . time() . '.' . $file->getClientOriginalExtension();
-                    if (!file_exists(public_path('uploads/portfolio'))) {
-                        mkdir(public_path('uploads/portfolio'), 0755, true);
-                    }
-                    $file->move(public_path('uploads/portfolio'), $name);
-                    $updatePayload['portfolio_image_path'] = 'uploads/portfolio/' . $name;
-                }
+            <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                DB::table($prefix . 'companies')->where('id', $user->company_id)->update($updatePayload);
+                <div class="lg:col-span-2 bg-white border-2 border-slate-300 rounded-3xl p-6 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+                        <h3 class="font-black text-base tracking-tight text-slate-900 uppercase flex items-center gap-2">
+                            🗂️ Recent Clients Logged
+                        </h3>
+                        <a href="/workspace/crm" class="text-xs font-black text-[#f58613] hover:text-orange-600 uppercase tracking-wider text-decoration-none">Open CRM Desk &rarr;</a>
+                    </div>
 
-                session(['onboarding_active_step' => 4]);
-                return redirect()->route('onboarding.view')->with('status', 'Functional capability checkboxes logged.');
-            }
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead>
+                                <tr class="text-xs uppercase text-slate-400 border-b border-slate-200 font-mono font-black tracking-wider">
+                                    <th class="pb-3">Client Parameters</th>
+                                    <th class="pb-3">Contact Metrics</th>
+                                    <th class="pb-3 text-right">Lifetime Invoice Total</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 font-bold text-sm">
+                                @forelse($recentCustomers as $customer)
+                                    <tr class="hover:bg-slate-50/80 transition-colors">
+                                        <td class="py-4 font-black text-slate-950 text-base uppercase tracking-tight">
+                                            {{ $customer->name }}
+                                        </td>
+                                        <td class="py-4 text-xs text-slate-600 font-medium space-y-1">
+                                            <div class="truncate max-w-[220px]">📧 {{ $customer->email }}</div>
+                                            <div>📱 {{ $customer->phone }}</div>
+                                        </td>
+                                        <td class="py-4 text-right font-mono font-black text-slate-950 text-base">
+                                            ${{ number_format($customer->lifetime_value, 2) }}
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3" class="py-8 text-center text-slate-400 font-bold italic text-xs">
+                                            No active customer profiles logged inside company directory networks yet.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
-            if ($currentStep === 4) {
-                $validated = $request->validate([
-                    'google_review_link' => 'nullable|url|max:255',
-                    'facebook_link'      => 'nullable|url|max:255',
-                    'yelp_link'          => 'nullable|url|max:255',
-                ]);
+                <div class="space-y-6">
+                    <div class="bg-white border-2 border-slate-300 rounded-3xl p-6 shadow-sm space-y-4">
+                        <div class="border-b border-slate-200 pb-3">
+                            <h3 class="font-black text-sm tracking-tight text-slate-900 uppercase">
+                                🔒 Carrier Secure Entry (2FA)
+                            </h3>
+                            <p class="text-[11px] text-slate-400 font-bold mt-0.5">Configure your phone number to receive secure login verification tokens instantly.</p>
+                        </div>
 
-                DB::table($prefix . 'companies')->where('id', $user->company_id)->update([
-                    'social_links' => json_encode([
-                        'google'   => $validated['google_review_link'],
-                        'facebook' => $validated['facebook_link'],
-                        'yelp'     => $validated['yelp_link'],
-                    ]),
-                    'updated_at'   => now(),
-                ]);
+                        <form action="/user/security-phone" method="POST" class="space-y-3">
+                            @csrf
+                            <div>
+                                <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-wide">Secure Mobile Line</label>
+                                <input type="text" name="phone_2fa" placeholder="e.g. (919) 555-1234" value="{{ auth()->user()->phone_2fa ?? '' }}" required class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3 px-4 text-base font-mono font-bold focus:outline-none focus:border-slate-900 text-slate-900">
+                            </div>
 
-                session(['onboarding_active_step' => 5]);
-                return redirect()->route('onboarding.view')->with('status', 'External trust signal nodes mapped.');
-            }
+                            <button type="submit" class="w-full bg-slate-900 hover:bg-black text-white font-black text-xs py-3.5 px-4 rounded-xl uppercase tracking-wider shadow transition-all active:scale-[0.99] cursor-pointer border-0 outline-none">
+                                Save Secure Channel ⚡
+                            </button>
+                        </form>
 
-            if ($currentStep === 5) {
-                $validated = $request->validate([
-                    'crew_structure'          => 'required|string|max:50',
-                    'invoice_preferences'     => 'required|string|max:50',
-                    'default_tax_rate'        => 'required|numeric|min:0',
-                    'starting_invoice_number' => 'required|integer|min:1',
-                    'deposit_rules'           => 'nullable|string|max:1000',
-                ]);
+                        <div class="text-[9px] text-slate-400 font-bold text-center pt-1 italic">
+                            Status: {{ auth()->user()->phone_2fa ? '🟢 Direct 2FA Security Channel Enabled' : '局 Security Warning: Fallback Routing Active' }}
+                        </div>
+                    </div>
 
-                // Phase 5 Final Deployment Trigger Commit
-                DB::beginTransaction();
+                    <div class="bg-white border-2 border-slate-300 rounded-3xl p-6 shadow-sm space-y-4">
+                        <div class="border-b border-slate-200 pb-3">
+                            <h3 class="font-black text-sm tracking-tight text-slate-900 uppercase">
+                                🔄 Active Route Agreements
+                            </h3>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl flex justify-between items-center group">
+                                <div>
+                                    <div class="text-base font-black text-slate-950 uppercase tracking-tight">Bi-Weekly Lawn Run</div>
+                                    <div class="text-xs text-slate-500 font-bold mt-0.5">Miller Estate • Visit 4 of 12</div>
+                                </div>
+                                <div class="text-xs font-mono font-black text-slate-800 bg-white border border-slate-200 px-2 py-1 rounded shadow-sm shrink-0">$140/run</div>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-slate-100 border border-slate-200 rounded-2xl text-center text-xs font-bold text-slate-500 leading-normal italic">
+                            Pipeline indices update automatically as work flows are closed out.
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
 
-                DB::table($prefix . 'companies')->where('id', $user->company_id)->update([
-                    'crew_structure'          => $validated['crew_structure'],
-                    'invoice_preferences'     => $validated['invoice_preferences'],
-                    'default_tax_rate'        => $validated['default_tax_rate'],
-                    'starting_invoice_number' => $validated['starting_invoice_number'],
-                    'deposit_rules'           => $validated['deposit_rules'],
-                    'onboarding_completed_at' => now(),
-                    'updated_at'              => now(),
-                ]);
+        <div x-show="showApptModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity" @click="showApptModal = false"></div>
 
-                $user->onboarding_completed_at = now();
-                $user->save();
+            <div class="bg-white border-4 border-slate-900 rounded-3xl max-w-xl w-full p-6 shadow-2xl relative z-10 max-h-[90vh] overflow-y-auto" x-transition>
+                <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+                    <div>
+                        <span class="text-[10px] bg-slate-950 text-slate-300 font-mono font-black px-2 py-0.5 rounded uppercase tracking-wider">Master Production Schedule</span>
+                        <h3 class="text-xl font-black text-slate-950 mt-1" x-text="selectedDayName"></h3>
+                    </div>
+                    <button type="button" @click="showApptModal = false" class="text-slate-400 hover:text-slate-900 font-bold text-lg bg-transparent border-0 cursor-pointer outline-none">✕</button>
+                </div>
 
-                DB::commit();
+                <div class="space-y-4">
+                    <div class="contents">
+                        <template x-for="job in selectedDayJobs" :key="job.id">
+                            <div class="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl space-y-3 hover:border-slate-900 transition-all text-left">
+                                <div class="flex justify-between items-start gap-4">
+                                    <div>
+                                        <h4 class="font-black text-slate-950 text-base uppercase tracking-tight" x-text="job.title"></h4>
+                                        <p class="text-xs font-bold text-slate-500 mt-1">
+                                            👤 Client File: <span class="text-slate-900 font-black" x-text="job.customer_name"></span>
+                                        </p>
+                                    </div>
+                                    <span class="font-mono font-black text-xs text-white bg-slate-900 px-2.5 py-1 rounded-xl shadow-sm shrink-0" x-text="job.time"></span>
+                                </div>
 
-                // Clear progressive setup step tracker tags out of session memory space
-                session()->forget('onboarding_active_step');
+                                <template x-if="job.notes">
+                                    <div class="p-3 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-600 italic">
+                                        <span class="font-black text-slate-400 block not-italic uppercase text-[9px] tracking-wider mb-1">Field Dispatch Scope Notes:</span>
+                                        <span x-text="job.notes" class="whitespace-pre-line"></span>
+                                    </div>
+                                </template>
 
-                Log::info("🚀 Onboarding funnel verified complete. Workspace ID: {$user->company_id} launched into active state layout.");
+                                <div class="flex justify-between items-center pt-2.5 border-t border-slate-200 text-xs">
+                                    <span class="inline-block px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider border bg-emerald-50 text-emerald-700 border-emerald-200" x-text="job.status"></span>
+                                    <template x-if="job.estimate_id">
+                                        <a :href="'/estimates/' + job.estimate_id" class="text-[#f58613] hover:text-orange-600 font-black uppercase text-[10px] tracking-widest flex items-center gap-1 text-decoration-none">
+                                            Open Contract File &rarr;
+                                        </a>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
 
-                return redirect()->route('dashboard')->with('status', '⚡ Workspace fully calibrated and deployed live!');
-            }
+                    <div x-show="selectedDayJobs.length === 0" class="text-center py-10 text-slate-400 font-bold italic text-sm bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl">
+                        No operational route stops scheduled for this calendar date.
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        } catch (\Exception $e) {
-            if ($currentStep === 5) {
-                DB::rollBack();
-            }
-            Log::error("🚨 Onboarding pipeline checkpoint engine fault at Step {$currentStep}: " . $e->getMessage());
-            return back()->withInput()->withErrors(['error' => 'An operational parameters fault occurred. Verify inputs and retry.']);
-        }
+        <div x-show="showInstallModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity" @click="showInstallModal = false"></div>
+            <div class="bg-white border-4 border-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl relative z-10" x-transition>
+                <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+                    <h3 class="text-lg font-black uppercase tracking-tight text-slate-950 flex items-center gap-1.5 font-mono"><span>📱</span> Device App Shortcut</h3>
+                    <button type="button" @click="showInstallModal = false" class="text-slate-400 hover:text-slate-900 font-bold text-base bg-transparent border-0 cursor-pointer outline-none">✕</button>
+                </div>
+                <div class="space-y-4 text-sm font-bold text-slate-700 leading-relaxed">
+                    <p>To drop a rapid-launch dashboard launcher onto your field phone's home view layout, tap the browser actions option on your screen bottom:</p>
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2 text-xs font-medium text-slate-600">
+                        <div class="flex items-start gap-2"><span>•</span> <p><span class="font-black text-slate-950">Apple iOS Safari:</span> Hit the native <span class="bg-slate-200 font-bold px-1.5 py-0.5 rounded">Share Sheet Card 📤</span> icon panel and select <span class="font-black text-slate-950">"Add to Home Screen"</span>.</p></div>
+                        <div class="flex items-start gap-2 pt-2 border-t border-slate-100"><span>•</span> <p><span class="font-black text-slate-950">Google Android Chrome:</span> Hit the browser options icon <span class="bg-slate-200 font-bold px-1.5 py-0.5 rounded">⋮ More Parameters</span> and tap <span class="font-black text-slate-950">"Install App / Add shortcut"</span>.</p></div>
+                    </div>
+                    <button type="button" @click="showInstallModal = false" class="w-full bg-slate-900 hover:bg-black text-white font-black text-xs py-3.5 px-4 rounded-xl uppercase tracking-wider text-center transition-colors shadow border-0 cursor-pointer outline-none">Got it, thanks</button>
+                </div>
+            </div>
+        </div>
 
-        return redirect()->route('onboarding.view');
-    }
-}
+        <footer class="border-t border-slate-900 bg-black text-slate-400 py-12">
+            <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+                <div class="md:col-span-5 flex flex-col items-center md:items-start gap-4">
+                    <div class="w-[400px] max-w-[full] aspect-square bg-slate-950 border border-slate-900 rounded-2xl overflow-hidden shadow-lg flex items-center justify-center">
+                        <img src="/images/footer-logo.webp" alt="Corporate Brand Mark" class="w-full h-full object-contain p-4">
+                    </div>
+                    <div class="text-xs font-medium text-slate-500 text-center md:text-left mt-1">
+                        &copy; 2026 ContractorSpecialties.<br>
+                        ContractorSpecialties is owned and operated by Contractor Service Pros LLC.<br>
+                        All company databases and communication networks secure.
+                    </div>
+                </div>
+
+                <div class="md:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-6 text-xs font-bold uppercase tracking-wider md:pt-4">
+                    <div class="flex flex-col gap-2.5">
+                        <span class="text-[10px] text-slate-600 tracking-widest font-black">Tools & System</span>
+                        <a href="/estimates" class="text-slate-400 hover:text-[#f58613] transition-colors text-decoration-none">Estimate Creator</a>
+                        <a href="/pricebook" class="text-slate-400 hover:text-[#f58613] transition-colors text-decoration-none">Pricebook Matrix</a>
+                        <a href="{{ route('workspace.billing.quick') }}" class="text-slate-400 hover:text-[#f58613] transition-colors text-decoration-none">Text-to-Pay Rails</a>
+                    </div>
+                    <div class="flex flex-col gap-2.5">
+                        <span class="text-[10px] text-slate-600 tracking-widest font-black">Directories</span>
+                        <a href="/advertise" class="text-slate-400 hover:text-[#f58613] transition-colors text-decoration-none">Advertise With Us</a>
+                        <a href="/contractor-directory" class="text-slate-400 hover:text-[#f58613] transition-colors text-decoration-none">Public Directory</a>
+                        <a href="/leads" class="text-slate-400 hover:text-[#f58613] transition-colors text-decoration-none">Resource Funnels</a>
+                    </div>
+                    <div class="flex flex-col gap-2.5">
+                        <span class="text-[10px] text-slate-600 tracking-widest font-black">Legal & Policy</span>
+                        <a href="/privacy" class="text-slate-400 hover:text-[#f58613] transition-colors normal-case text-decoration-none">Privacy Policy</a>
+                        <a href="/terms" class="text-slate-400 hover:text-[#f58613] transition-colors normal-case text-decoration-none">Terms of Use</a>
+                    </div>
+                    <div class="flex flex-col gap-2.5">
+                        <span class="text-[10px] text-slate-600 tracking-widest font-black">Secure Entry</span>
+                        <a href="/login/partner" class="text-slate-500 hover:text-white transition-colors bg-slate-900 border border-slate-800 px-3 py-2 rounded-lg text-center truncate text-decoration-none">General Contractor</a>
+                        <a href="/login/subcontractor" class="text-slate-500 hover:text-white transition-colors bg-slate-900 border border-slate-800 px-3 py-2 rounded-lg text-center truncate mt-1 text-decoration-none">Sub-Portal</a>
+                        <a href="/tutorial" class="text-[#f58613] hover:text-orange-500 transition-colors normal-case mt-1.5 font-black tracking-wide italic text-decoration-none">How-To Manual 📺</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+    </div>
+</body>
+</html>
