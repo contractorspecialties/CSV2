@@ -96,8 +96,7 @@
                                         {{ $row->company->name ?? 'Unprovisioned Organization' }}
                                     </div>
                                     <div class="text-xs text-slate-400 font-mono mt-0.5">
-                                        静态 Endpoint ID: <span class="text-slate-600 font-bold">#{{ $row->company->id ?? 'N/A' }}</span> • 📧 {{ $row->email }} • 🗓️ Registered {{ $row->created_at->format('M j, Y') }}
-                                    </div>
+                                        Workspace ID: <span class="text-slate-600 font-bold">#{{ $row->company->id ?? 'N/A' }}</span></div>
                                 </td>
 
                                 <td class="p-3.5 text-center">
