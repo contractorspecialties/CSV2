@@ -7,20 +7,23 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations to expand company and user operational layers.
+     * Run the migrations to expand company and user operational layers defensively with prefixes.
      */
     public function up(): void
     {
-        // 🏗️ Track current job-step parameter on the user side
-        Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'current_onboarding_step')) {
+        // 🏗️ Dynamically extract the prefix from the active User model table name
+        $usersTableReal = (new \App\Models\User())->getTable();
+        $prefix = str_contains($usersTableReal, '_') ? explode('_', $usersTableReal)[0] . '_' : '';
+        $companiesTableReal = $prefix . 'companies';
+
+        Schema::table($usersTableReal, function (Blueprint $table) use ($usersTableReal) {
+            if (!Schema::hasColumn($usersTableReal, 'current_onboarding_step')) {
                 $table->unsignedInteger('current_onboarding_step')->default(1)->after('company_id');
             }
         });
 
-        // 🏗️ Expand company storage arrays for SEO and SaaS operations
-        Schema::table('companies', function (Blueprint $table) {
-            if (!Schema::hasColumn('companies', 'owner_name')) {
+        Schema::table($companiesTableReal, function (Blueprint $table) use ($companiesTableReal) {
+            if (!Schema::hasColumn($companiesTableReal, 'owner_name')) {
                 $table->string('owner_name')->nullable()->after('name');
                 $table->string('business_phone')->nullable()->after('owner_name');
                 $table->string('base_city')->nullable()->after('business_phone');
@@ -56,11 +59,15 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        $usersTableReal = (new \App\Models\User())->getTable();
+        $prefix = str_contains($usersTableReal, '_') ? explode('_', $usersTableReal)[0] . '_' : '';
+        $companiesTableReal = $prefix . 'companies';
+
+        Schema::table($usersTableReal, function (Blueprint $table) {
             $table->dropColumn('current_onboarding_step');
         });
 
-        Schema::table('companies', function (Blueprint $table) {
+        Schema::table($companiesTableReal, function (Blueprint $table) {
             $table->dropColumn([
                 'owner_name', 'business_phone', 'base_city', 'service_radius_miles', 'primary_specialty',
                 'logo_path', 'years_experience', 'license_number', 'is_insured', 'company_bio_short', 'company_bio_long',
