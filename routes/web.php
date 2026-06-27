@@ -129,6 +129,68 @@ Route::middleware(['auth'])->group(function () {
 
 // Homeowner Viewport Portal Frames
 Route::get('/portal', function () { return view('portal'); })->name('portal');
+
+// 🛡️ CARRIER VETTING COMPLIANCE PORT: Static fallback for Telnyx campaign inspectors
+Route::get('/portal/checkout/tkn_829104', function() {
+    return response("
+        <!DOCTYPE html>
+        <html lang=\"en\" class=\"h-full bg-slate-50\">
+        <head>
+            <meta charset=\"UTF-8\">
+            <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+            <title>Project Estimate #1024 | Apex Roofing LLC</title>
+            <script src=\"https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4\"></script>
+        </head>
+        <body class=\"bg-slate-50 text-slate-900 font-sans antialiased p-4 md:p-12\">
+            <div class=\"max-w-2xl mx-auto bg-white border border-slate-200 rounded-2xl shadow-xl p-6 md:p-8 space-y-6\">
+
+                <div class=\"p-3 bg-blue-50 text-blue-800 border border-blue-200 rounded-xl text-xs font-bold text-center shadow-sm\">
+                    ℹ️ SAMPLE INSPECTION VIEW — This page is rendered exclusively for A2P 10DLC carrier compliance verification.
+                </div>
+
+                <div class=\"flex justify-between items-start border-b border-slate-100 pb-6\">
+                    <div>
+                        <h1 class=\"text-xl font-black text-slate-950 uppercase tracking-tight text-left\">Apex Roofing LLC</h1>
+                        <p class=\"text-xs text-slate-500 font-semibold text-left\">Commercial & Residential Services</p>
+                    </div>
+                    <div class=\"text-right\">
+                        <span class=\"inline-flex items-center px-2.5 py-1 rounded-md text-xs font-black bg-orange-50 text-[#f58613] tracking-wider uppercase shadow-sm\">Estimate Pending</span>
+                        <p class=\"text-[10px] text-slate-400 font-bold mt-1.5 font-mono\">EST-1024</p>
+                    </div>
+                </div>
+
+                <div class=\"space-y-3\">
+                    <h3 class=\"text-xs font-black uppercase text-slate-400 tracking-wider text-left\">Scope of Work</h3>
+                    <div class=\"border border-slate-200 rounded-xl overflow-hidden font-medium text-xs text-left\">
+                        <div class=\"bg-slate-50 p-3 border-b border-slate-200 flex justify-between font-black uppercase text-[10px] text-slate-400 tracking-wide\">
+                            <span>Description</span>
+                            <span class=\"text-right\">Total</span>
+                        </div>
+                        <div class=\"p-3 flex justify-between items-center\">
+                            <div>
+                                <p class=\"font-bold text-slate-950\">Architectural Shingle Roof Replacement</p>
+                                <p class=\"text-[11px] text-slate-400 mt-0.5\">Tear-off, underlayment installation, ice/water shield, and flashing integration.</p>
+                            </div>
+                            <span class=\"font-mono font-bold text-slate-950 text-right shrink-0 ml-4\">$8,450.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class=\"flex justify-between items-center bg-slate-950 text-white rounded-xl p-4 font-bold shadow-md\">
+                    <span class=\"text-xs uppercase tracking-wider text-slate-400 font-black\">Proposed Project Total</span>
+                    <span class=\"text-lg font-mono text-[#f58613] font-black\">$8,450.00</span>
+                </div>
+
+                <div class=\"grid grid-cols-2 gap-4 pt-2\">
+                    <button class=\"bg-slate-100 text-slate-400 font-black text-xs py-3 rounded-xl tracking-wider uppercase text-center border border-slate-200 cursor-not-allowed\">Decline Scope</button>
+                    <button class=\"bg-[#f58613] text-white font-black text-xs py-3 rounded-xl tracking-wider uppercase text-center shadow-md cursor-not-allowed\">Approve & Sign &rarr;</button>
+                </div>
+            </div>
+        </body>
+        </html>
+    ");
+});
+
 Route::get('/portal/checkout/{token}', [EstimateController::class, 'checkout'])->name('portal.checkout');
 Route::post('/portal/action/{id}', [EstimateController::class, 'handlePortalAction'])->name('portal.action');
 Route::get('/portal/success/{token}', [EstimateController::class, 'paymentSuccess'])->name('quotes.payment.success');
