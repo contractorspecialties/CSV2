@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -15,13 +16,11 @@ class AdminDashboardController extends Controller
      */
     public function index()
     {
-        // 1. Sniff table structures and customized database prefix layouts cleanly
         $userTable = (new User())->getTable();
         $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
         $companyTable = $prefix . 'companies';
         $estimatesTable = $prefix . 'estimates';
 
-        // 2. Compute Global Platform Telemetry Cross-Tenant Arrays
         $totalWorkspaces = Schema::hasTable($companyTable) ? DB::table($companyTable)->count() : 0;
         $totalEstimates = Schema::hasTable($estimatesTable) ? DB::table($estimatesTable)->count() : 0;
         $globalBookedRevenue = Schema::hasTable($estimatesTable) ? DB::table($estimatesTable)->where('status', 'approved')->sum('grand_total') : 0.00;
@@ -34,7 +33,6 @@ class AdminDashboardController extends Controller
             'sent_bids'        => $globalSentBids,
         ];
 
-        // 3. Gather Contractor Workspace Rows
         $users = User::latest()->get();
         $companyIds = $users->pluck('company_id')->filter()->unique();
 
@@ -42,7 +40,6 @@ class AdminDashboardController extends Controller
             ? DB::table($companyTable)->whereIn('id', $companyIds)->get()->keyBy('id')
             : collect();
 
-        // 4. Gather Financial Pipeline Totals Breakdown Per Tenant Node
         $pipelineMetrics = collect();
         if (Schema::hasTable($estimatesTable)) {
             $pipelineMetrics = DB::table($estimatesTable)
@@ -56,23 +53,19 @@ class AdminDashboardController extends Controller
                 ->keyBy('company_id');
         }
 
-        // 5. Hydrate Memory Matrix and Calculate Trust Profile Progress Scores
         foreach ($users as $user) {
             $company = $companies->get($user->company_id);
             $user->company = $company;
 
-            // Initialize default baseline tracking metrics
             $user->estimates_count = 0;
             $user->booked_revenue = 0.00;
             $user->profile_completion = 0;
 
             if ($company) {
-                // Attach individual tenant financial logs
                 $metrics = $pipelineMetrics->get($company->id);
                 $user->estimates_count = $metrics->estimates_count ?? 0;
                 $user->booked_revenue = $metrics->booked_revenue ?? 0.00;
 
-                // Programmatically parse our upgraded onboarding fields to measure configuration quality
                 $points = 0;
                 if (!empty($company->name)) $points += 20;
                 if (!empty($company->logo_path)) $points += 15;
@@ -107,8 +100,7 @@ class AdminDashboardController extends Controller
             'is_publicly_listed'   => 'required|boolean',
         ]);
 
-        $exists = DB::table($companyTable)->where('id', $id)->exists();
-        if (!$exists) {
+        if (!DB::table($companyTable)->where('id', $id)->exists()) {
             return back()->withErrors(['error' => '🛑 Targeting mismatch: Designated company workspace tracking record not found.']);
         }
 
@@ -123,8 +115,46 @@ class AdminDashboardController extends Controller
         ]);
 
         Log::warning("⚠️ Master Admin Override applied on Company Partition ID: {$id} by User ID: " . auth()->id());
-
         return back()->with('status', '🔒 Corporate workspace parameters adjusted successfully.');
+    }
+
+    /**
+     * Intercept a contractor session node and safely shift auth perspectives.
+     */
+    public function impersonate($id)
+    {
+        $targetUser = User::findOrFail($id);
+
+        if ($targetUser->id === auth()->id()) {
+            return back()->withErrors(['error' => '🛑 Loop error: Interception loop targeted at active profile node rejected.']);
+        }
+
+        // Lock your genuine admin signature credentials down into persistent session space
+        session(['admin_impersonator_id' => auth()->id()]);
+
+        // Shift security tokens over to the contractor
+        Auth::loginUsingId($targetUser->id);
+
+        Log::info("🔑 Platform Override Activated: Admin ID " . session('admin_impersonator_id') . " shifted perspectives into Contractor Account ID: {$id}");
+
+        return redirect()->route('dashboard')->with('status', "💼 Terminal bridge connected. Operating as Principal Operator: {$targetUser->email}");
+    }
+
+    /**
+     * Disconnect active interception loops and revert session signatures.
+     */
+    public function stopImpersonating()
+    {
+        if (!session()->has('admin_impersonator_id')) {
+            return redirect()->route('dashboard');
+        }
+
+        $adminId = session()->pull('admin_impersonator_id');
+        Auth::loginUsingId($adminId);
+
+        Log::info("🧹 Platform Override Terminated: Reverted session credentials back to Admin Profile ID: {$adminId}");
+
+        return redirect()->route('admin.index')->with('status', '🔒 Terminal hook disconnected. Safely returned to Platform Over-Watch Console.');
     }
 
     /**
@@ -133,8 +163,6 @@ class AdminDashboardController extends Controller
     public function toggleAdminStatus($id)
     {
         $user = User::findOrFail($id);
-
-        // Security Guardrail: Prevent modifying your own active operational profile
         if ($user->id === auth()->id()) {
             return back()->withErrors(['error' => '🛑 Core safety violation: Cannot strip administrative parameters from your active terminal session.']);
         }
@@ -155,21 +183,17 @@ class AdminDashboardController extends Controller
     public function destroyWorkspace($id)
     {
         $targetUser = User::findOrFail($id);
-
-        // Security Guardrail: Prevent administrative suicide maneuvers
         if ($targetUser->id === auth()->id()) {
             return back()->withErrors(['error' => '🛑 Core safety violation: Purge request rejected. Cannot drop your own active identity account.']);
         }
 
         $userTable = (new User())->getTable();
         $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
-
         $companyId = $targetUser->company_id;
 
         try {
             DB::beginTransaction();
 
-            // 1. Deconstruct all multi-tenant tables associated with this workspace partition
             $tenantTables = ['estimates', 'clients', 'pricebook', 'estimates_blueprint'];
             foreach ($tenantTables as $tableBase) {
                 $tableName = $prefix . $tableBase;
@@ -178,21 +202,17 @@ class AdminDashboardController extends Controller
                 }
             }
 
-            // 2. Erase user entries linked under the company partition boundary
             User::where('company_id', $companyId)->delete();
 
-            // 3. Drop primary company envelope record
             $companyTable = $prefix . 'companies';
             if (Schema::hasTable($companyTable)) {
                 DB::table($companyTable)->where('id', $companyId)->delete();
             }
 
             DB::commit();
-
-            Log::alert("🚨 CASCADING PURGE EXECUTED: Workspace ID {$companyId} and all associated operational data maps wiped by Admin ID: " . auth()->id());
+            Log::alert("🚨 CASCADING PURGE EXECUTED: Workspace ID {$companyId} wiped by Admin ID: " . auth()->id());
 
             return back()->with('status', '🧹 Workspace partition and all nested tracking records completely dropped from storage.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("🚨 Administrative purge routine failure on Workspace ID {$companyId}: " . $e->getMessage());

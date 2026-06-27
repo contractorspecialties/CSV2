@@ -96,7 +96,8 @@
                                         {{ $row->company->name ?? 'Unprovisioned Organization' }}
                                     </div>
                                     <div class="text-xs text-slate-400 font-mono mt-0.5">
-                                        Workspace ID: <span class="text-slate-600 font-bold">#{{ $row->company->id ?? 'N/A' }}</span></div>
+                                        Workspace ID: <span class="text-slate-600 font-bold">#{{ $row->company->id ?? 'N/A' }}</span> • 📧 {{ $row->email }} • 🗓️ Registered {{ $row->created_at->format('M j, Y') }}
+                                    </div>
                                 </td>
 
                                 <td class="p-3.5 text-center">
@@ -128,6 +129,16 @@
 
                                 <td class="p-3.5 text-right">
                                     <div class="flex items-center justify-end gap-1.5">
+                                        @if($row->id !== auth()->id())
+                                            <!-- Interactive Auth Session Intercept Trigger Form -->
+                                            <form action="{{ route('admin.impersonate', ['id' => $row->id]) }}" method="POST" class="inline-block">
+                                                @csrf
+                                                <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white font-black text-[9px] py-1.5 px-2.5 rounded-lg transition-all uppercase tracking-wider cursor-pointer shadow-sm border border-amber-600">
+                                                    Login As
+                                                </button>
+                                            </form>
+                                        @endif
+
                                         @if($row->company)
                                             <button type="button" @click="openPanel = (openPanel === 'edit' ? null : 'edit')" class="bg-slate-900 text-amber-400 font-black text-[9px] py-1.5 px-2.5 rounded-lg border border-slate-800 hover:bg-slate-800 transition-all uppercase tracking-wider cursor-pointer shadow-sm">
                                                 Calibrate
@@ -156,7 +167,7 @@
                                             <div class="text-xs font-black text-white uppercase tracking-wider border-b border-slate-800 pb-2">
                                                 🔧 Manual Override Parameters: {{ $row->company->name }}
                                             </div>
-                                            <form action="{{ url('/admin/management/company/' . $row->company->id) }}" method="POST" class="space-y-4">
+                                            <form action="{{ route('admin.company.update', ['id' => $row->company->id]) }}" method="POST" class="space-y-4">
                                                 @csrf
                                                 <div class="grid grid-cols-2 gap-3">
                                                     <div>
@@ -204,14 +215,14 @@
 
                                     <!-- EXPANDABLE PURGE PANEL -->
                                     @if($row->id !== auth()->id())
-                                        <div x-show="openPanel === 'purge'" x-cloak x-transition class="mt-4 p-4 bg-red-950/20 border border-red-900/40 rounded-xl text-left space-y-3 shadow-inner" x-data="{ confirmWord: '' }">
+                                        <div x-show="openPanel === 'purge'" x-cloak x-transition class="mt-4 p-4 bg-red-950/20 border border-red-900/40 rounded-xl text-left space-y-3 shadow-inner" x-data TYPE_UNSPECIFIED="{ confirmWord: '' }">
                                             <div class="text-xs font-black text-red-400 uppercase tracking-wider flex items-center gap-1">
                                                 ⚠️ CRITICAL MANEUVER: Cascading Clean-Sweep Purge
                                             </div>
                                             <p class="text-[11px] text-slate-400 leading-normal">
                                                 This will completely delete user <span class="font-bold text-slate-900">"{{ $row->email }}"</span>, their associated corporate workspace record, and erase all child logs (estimates, clients, blueprints, pricebooks) cross-tenant. <span class="text-red-500 font-bold">This cannot be undone.</span>
                                             </p>
-                                            <form action="{{ url('/admin/management/purge/' . $row->id) }}" method="POST" class="space-y-3">
+                                            <form action="{{ route('admin.workspace.purge', ['id' => $row->id]) }}" method="POST" class="space-y-3">
                                                 @csrf
                                                 <div>
                                                     <label class="block text-[9px] font-black uppercase text-slate-500 tracking-wider mb-1">Type <span class="text-red-500 font-mono font-black">DELETE</span> to confirm terminal wipe</label>

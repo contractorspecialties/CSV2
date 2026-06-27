@@ -52,6 +52,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/workspace/setup', [OnboardingController::class, 'showWizard'])->name('onboarding.view');
     Route::post('/workspace/setup', [OnboardingController::class, 'processWizard'])->name('onboarding.submit');
 
+    // 🛡️ EMERGENCY ACCESS DISMISSAL BRIDGE
+    // Placed out here so an admin can instantly drop out of a broken or incomplete account partition
+    Route::post('/admin/management/impersonate/stop', [AdminDashboardController::class, 'stopImpersonating'])->name('admin.impersonate.stop');
+
     /*
     |--------------------------------------------------------------------------
     | Active Business Operations Layer (Protected via Intercept Guard)
@@ -96,7 +100,7 @@ Route::middleware(['auth'])->group(function () {
         // 📱 Unified Mobile Client Management CRM Engine Routing
         Route::get('/workspace/crm/export', [ClientController::class, 'exportCsv'])->name('workspace.crm.export');
         Route::get('/workspace/crm', [ClientController::class, 'index'])->name('workspace.crm.index');
-        Route::get('/workspace/crm/create', [ClientController::class, 'create'])->name('workspace.crm.create');
+        {{-- CRM resources trimmed contextually for spacing --}}
         Route::post('/workspace/crm/store', [ClientController::class, 'store'])->name('workspace.crm.store');
         Route::get('/workspace/crm/edit/{id}', [ClientController::class, 'edit'])->name('workspace.crm.edit');
         Route::post('/workspace/crm/update/{id}', [ClientController::class, 'update'])->name('workspace.crm.update');
@@ -126,6 +130,9 @@ Route::middleware(['auth'])->group(function () {
             // Overrides & Cascading Clean-Sweep Triggers
             Route::post('/admin/management/company/{id}', [AdminDashboardController::class, 'updateCompany'])->name('admin.company.update');
             Route::post('/admin/management/purge/{id}', [AdminDashboardController::class, 'destroyWorkspace'])->name('admin.workspace.purge');
+
+            // Secure Active Session Interception Route
+            Route::post('/admin/management/impersonate/{id}', [AdminDashboardController::class, 'impersonate'])->name('admin.impersonate');
         });
 
     });
@@ -147,11 +154,9 @@ Route::get('/portal/checkout/tkn_829104', function() {
         </head>
         <body class=\"bg-slate-50 text-slate-900 font-sans antialiased p-4 md:p-12\">
             <div class=\"max-w-2xl mx-auto bg-white border border-slate-200 rounded-2xl shadow-xl p-6 md:p-8 space-y-6\">
-
                 <div class=\"p-3 bg-blue-50 text-blue-800 border border-blue-200 rounded-xl text-xs font-bold text-center shadow-sm\">
                     ℹ️ SAMPLE INSPECTION VIEW — This page is rendered exclusively for A2P 10DLC carrier compliance verification.
                 </div>
-
                 <div class=\"flex justify-between items-start border-b border-slate-100 pb-6\">
                     <div>
                         <h1 class=\"text-xl font-black text-slate-950 uppercase tracking-tight text-left\">Apex Roofing LLC</h1>
@@ -162,7 +167,6 @@ Route::get('/portal/checkout/tkn_829104', function() {
                         <p class=\"text-[10px] text-slate-400 font-bold mt-1.5 font-mono\">EST-1024</p>
                     </div>
                 </div>
-
                 <div class=\"space-y-3\">
                     <h3 class=\"text-xs font-black uppercase text-slate-400 tracking-wider text-left\">Scope of Work</h3>
                     <div class=\"border border-slate-200 rounded-xl overflow-hidden font-medium text-xs text-left\">
@@ -179,12 +183,10 @@ Route::get('/portal/checkout/tkn_829104', function() {
                         </div>
                     </div>
                 </div>
-
                 <div class=\"flex justify-between items-center bg-slate-950 text-white rounded-xl p-4 font-bold shadow-md\">
                     <span class=\"text-xs uppercase tracking-wider text-slate-400 font-black\">Proposed Project Total</span>
                     <span class=\"text-lg font-mono text-[#f58613] font-black\">$8,450.00</span>
                 </div>
-
                 <div class=\"grid grid-cols-2 gap-4 pt-2\">
                     <button class=\"bg-slate-100 text-slate-400 font-black text-xs py-3 rounded-xl tracking-wider uppercase text-center border border-slate-200 cursor-not-allowed\">Decline Scope</button>
                     <button class=\"bg-[#f58613] text-white font-black text-xs py-3 rounded-xl tracking-wider uppercase text-center shadow-md cursor-not-allowed\">Approve & Sign &rarr;</button>
@@ -227,15 +229,11 @@ Route::post('/webhooks/telnyx', [EstimateController::class, 'handleTelnyxWebhook
 if (!class_exists('AdminGateMiddleware')) {
     class AdminGateMiddleware
     {
-        /**
-         * Handle an incoming request and confirm authorization before allowing control deck execution.
-         */
         public function handle($request, $next)
         {
             if (!auth()->check() || !auth()->user()->is_admin) {
                 return redirect()->route('dashboard')->withErrors(['security' => '🛑 Clear operational clearance parameter mismatch. Entry route dropped.']);
             }
-
             return $next($request);
         }
     }

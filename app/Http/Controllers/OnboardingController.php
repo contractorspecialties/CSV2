@@ -49,7 +49,22 @@ class OnboardingController extends Controller
                     [x-cloak] { display: none !important; }
                 </style>
             </head>
-            <body class=\"min-h-full font-sans antialiased text-slate-200 bg-slate-950 flex flex-col justify-center px-4 py-12 selection:bg-[#f58613] selection:text-white\">
+            <body class=\"min-h-full font-sans antialiased text-slate-200 bg-slate-950 flex flex-col justify-center px-4 py-20 selection:bg-[#f58613] selection:text-white relative\">
+
+                <!-- 🛡️ FIXED EMERGENCY ACCESS DISMISSAL BANNER -->
+                " . (session()->has('admin_impersonator_id') ? "
+                    <div class=\"fixed top-0 inset-x-0 bg-amber-600 border-b border-amber-700 text-white font-sans text-center py-3.5 px-4 flex justify-between items-center z-[9999] shadow-lg shrink-0 text-left\">
+                        <div class=\"flex items-center gap-2 text-xs font-black uppercase tracking-wider\">
+                            🚨 INTERCEPT ACTIVE: Calibrating setup metrics for un-onboarded profile partition
+                        </div>
+                        <form action=\"" . route('admin.impersonate.stop') . "\" method=\"POST\" class=\"m-0\">
+                            <input type=\"hidden\" name=\"_token\" value=\"" . csrf_token() . "\">
+                            <button type=\"submit\" class=\"bg-slate-950 hover:bg-slate-900 border border-slate-900 text-amber-400 font-black text-[10px] py-1.5 px-3.5 rounded-lg uppercase tracking-widest transition-all cursor-pointer shadow-md\">
+                                Disconnect Bridge & Return &rarr;
+                            </button>
+                        </form>
+                    </div>
+                " : "") . "
 
                 <div class=\"w-full max-w-xl mx-auto bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 md:p-8 space-y-6\">
 
@@ -402,14 +417,12 @@ class OnboardingController extends Controller
         $currentStep = (int)$request->input('current_step', 1);
         $direction = $request->input('direction', 'next');
 
-        // Handle navigation step adjustments instantly if rolling backwards
         if ($direction === 'back') {
             $prev = max(1, $currentStep - 1);
             session(['onboarding_active_step' => $prev]);
             return redirect()->route('onboarding.view')->withInput();
         }
 
-        // Process Phase Specific Validations and Database Commits
         try {
             if ($currentStep === 1) {
                 $validated = $request->validate([
@@ -550,7 +563,6 @@ class OnboardingController extends Controller
                     'deposit_rules'           => 'nullable|string|max:1000',
                 ]);
 
-                // Phase 5 Final Deployment Trigger Commit
                 DB::beginTransaction();
 
                 DB::table($prefix . 'companies')->where('id', $user->company_id)->update([
@@ -568,9 +580,7 @@ class OnboardingController extends Controller
 
                 DB::commit();
 
-                // Clear progressive setup step tracker tags out of session memory space
                 session()->forget('onboarding_active_step');
-
                 Log::info("🚀 Onboarding funnel verified complete. Workspace ID: {$user->company_id} launched into active state layout.");
 
                 return redirect()->route('dashboard')->with('status', '⚡ Workspace fully calibrated and deployed live!');
