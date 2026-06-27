@@ -100,7 +100,8 @@ Route::middleware(['auth'])->group(function () {
         // 📱 Unified Mobile Client Management CRM Engine Routing
         Route::get('/workspace/crm/export', [ClientController::class, 'exportCsv'])->name('workspace.crm.export');
         Route::get('/workspace/crm', [ClientController::class, 'index'])->name('workspace.crm.index');
-        {{-- CRM resources trimmed contextually for spacing --}}
+
+        // CRM manual routing paths mapped clearly
         Route::post('/workspace/crm/store', [ClientController::class, 'store'])->name('workspace.crm.store');
         Route::get('/workspace/crm/edit/{id}', [ClientController::class, 'edit'])->name('workspace.crm.edit');
         Route::post('/workspace/crm/update/{id}', [ClientController::class, 'update'])->name('workspace.crm.update');
