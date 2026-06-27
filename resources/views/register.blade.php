@@ -37,6 +37,11 @@
         <form action="{{ route('register.submit') }}" method="POST" class="space-y-4">
             @csrf
 
+            {{-- 🛡️ INVISIBLE HONEYPOT SHIELD: Bots fill this out automatically, triggering a silent reject filter --}}
+            <div class="hidden" aria-hidden="true">
+                <input type="text" name="system_verification_token" autocomplete="off" tabindex="-1">
+            </div>
+
             <div>
                 <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="company_name">Business / Company Name</label>
                 <input type="text" id="company_name" name="company_name" value="{{ old('company_name') }}" required placeholder="e.g., Apex Roofing LLC" autocomplete="organization"
@@ -49,11 +54,17 @@
                        class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-sm font-bold text-slate-950 placeholder:text-slate-400 focus:outline-none focus:border-[#f58613] focus:ring-1 focus:ring-[#f58613] shadow-inner">
             </div>
 
+            <div>
+                <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="phone_2fa">Mobile Phone Number (For Verification)</label>
+                <input type="tel" id="phone_2fa" name="phone_2fa" value="{{ old('phone_2fa') }}" required placeholder="e.g., (555) 000-0000" autocomplete="tel"
+                       class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-sm font-bold text-slate-950 placeholder:text-slate-400 focus:outline-none focus:border-[#f58613] focus:ring-1 focus:ring-[#f58613] shadow-inner">
+            </div>
+
             <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-start gap-3 text-[11px] text-slate-500 font-medium leading-normal shadow-inner">
-                <span class="text-base select-none">⚡</span>
+                <span class="text-base select-none">📱</span>
                 <div>
-                    <span class="font-black text-slate-950 uppercase text-[9px] block tracking-wide mb-0.5">Passwordless Device Authentication</span>
-                    Zero passwords to remember, manage, or lose. Our engine sends a secure single-use access route straight to your email to authorize your browser environment instantly.
+                    <span class="font-black text-slate-950 uppercase text-[9px] block tracking-wide mb-0.5">Secure 6-Digit Text Verification</span>
+                    Zero passwords to remember, manage, or lose. Our system sends an instant single-use security code straight to your phone to confirm your identity and launch your terminal environment securely.
                 </div>
             </div>
 
