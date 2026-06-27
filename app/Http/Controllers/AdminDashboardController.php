@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 class AdminDashboardController extends Controller
@@ -71,21 +72,59 @@ class AdminDashboardController extends Controller
                 $user->estimates_count = $metrics->estimates_count ?? 0;
                 $user->booked_revenue = $metrics->booked_revenue ?? 0.00;
 
-                // Programmatically parse our 8 Trust Signal fields to measure registration quality
+                // Programmatically parse our upgraded onboarding fields to measure configuration quality
                 $points = 0;
                 if (!empty($company->name)) $points += 20;
                 if (!empty($company->logo_path)) $points += 15;
-                if (!empty($company->company_bio)) $points += 15;
-                if (!empty($company->work_philosophy)) $points += 15;
+                if (!empty($company->company_bio_short) || !empty($company->company_bio_long)) $points += 15;
+                if (!empty($company->primary_specialty) || !empty($company->trade)) $points += 15;
                 if (!empty($company->license_number)) $points += 15;
-                if (!empty($company->insurance_badge) && $company->insurance_badge == 1) $points += 10;
-                if (!empty($company->gallery_paths) && count(json_decode($company->gallery_paths, true) ?? []) > 0) $points += 10;
+                if (isset($company->is_insured) && $company->is_insured == 1) $points += 10;
+                if (!empty($company->service_tags) && count(json_decode($company->service_tags, true) ?? []) > 0) $points += 10;
 
-                $user->profile_completion = $points;
+                $user->profile_completion = min(100, $points);
             }
         }
 
         return view('admin.index', compact('users', 'globalTelemetry'));
+    }
+
+    /**
+     * Override company profile fields straight from the master cockpit desk.
+     */
+    public function updateCompany(Request $request, $id)
+    {
+        $userTable = (new User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+        $companyTable = $prefix . 'companies';
+
+        $validated = $request->validate([
+            'name'                 => 'required|string|max:255',
+            'trade'                => 'required|string|max:255',
+            'city'                 => 'required|string|max:255',
+            'state'                => 'required|string|size:2',
+            'service_radius_miles' => 'required|integer|min:1',
+            'is_publicly_listed'   => 'required|boolean',
+        ]);
+
+        $exists = DB::table($companyTable)->where('id', $id)->exists();
+        if (!$exists) {
+            return back()->withErrors(['error' => '🛑 Targeting mismatch: Designated company workspace tracking record not found.']);
+        }
+
+        DB::table($companyTable)->where('id', $id)->update([
+            'name'                 => $validated['name'],
+            'trade'                => $validated['trade'],
+            'city'                 => $validated['city'],
+            'state'                => strtoupper($validated['state']),
+            'service_radius_miles' => $validated['service_radius_miles'],
+            'is_publicly_listed'   => $validated['is_publicly_listed'],
+            'updated_at'           => now(),
+        ]);
+
+        Log::warning("⚠️ Master Admin Override applied on Company Partition ID: {$id} by User ID: " . auth()->id());
+
+        return back()->with('status', '🔒 Corporate workspace parameters adjusted successfully.');
     }
 
     /**
@@ -108,5 +147,56 @@ class AdminDashboardController extends Controller
             : "⚠️ System privileges retracted for {$user->email}.";
 
         return back()->with('status', $statusMessage);
+    }
+
+    /**
+     * Execute a cascading clean-sweep purge on an operational workspace.
+     */
+    public function destroyWorkspace($id)
+    {
+        $targetUser = User::findOrFail($id);
+
+        // Security Guardrail: Prevent administrative suicide maneuvers
+        if ($targetUser->id === auth()->id()) {
+            return back()->withErrors(['error' => '🛑 Core safety violation: Purge request rejected. Cannot drop your own active identity account.']);
+        }
+
+        $userTable = (new User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+
+        $companyId = $targetUser->company_id;
+
+        try {
+            DB::beginTransaction();
+
+            // 1. Deconstruct all multi-tenant tables associated with this workspace partition
+            $tenantTables = ['estimates', 'clients', 'pricebook', 'estimates_blueprint'];
+            foreach ($tenantTables as $tableBase) {
+                $tableName = $prefix . $tableBase;
+                if (Schema::hasTable($tableName)) {
+                    DB::table($tableName)->where('company_id', $companyId)->delete();
+                }
+            }
+
+            // 2. Erase user entries linked under the company partition boundary
+            User::where('company_id', $companyId)->delete();
+
+            // 3. Drop primary company envelope record
+            $companyTable = $prefix . 'companies';
+            if (Schema::hasTable($companyTable)) {
+                DB::table($companyTable)->where('id', $companyId)->delete();
+            }
+
+            DB::commit();
+
+            Log::alert("🚨 CASCADING PURGE EXECUTED: Workspace ID {$companyId} and all associated operational data maps wiped by Admin ID: " . auth()->id());
+
+            return back()->with('status', '🧹 Workspace partition and all nested tracking records completely dropped from storage.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("🚨 Administrative purge routine failure on Workspace ID {$companyId}: " . $e->getMessage());
+            return back()->withErrors(['error' => 'An operational fault occurred during the cascading deletion run. Workspace drop aborted.']);
+        }
     }
 }
