@@ -19,12 +19,33 @@ class MagicAuthController extends Controller
      */
     public function register(Request $request)
     {
+        // 🛡️ INVISIBLE HONEYPOT SHIELD: Intercept bots before running database queries
+        if ($request->filled('system_verification_token')) {
+            Log::warning("🤖 Spambot intercepted via honeypot field at registration entry node.");
+            return redirect()->route('welcome')->with('status', '🏗️ Your company workspace has been successfully provisioned! Check your mobile line for your active validation code.');
+        }
+
         $validated = $request->validate([
             'company_name' => 'required|string|max:255',
             'email'        => 'required|email|max:255|unique:users,email',
+            'phone_2fa'    => 'required|string|max:50',
         ], [
             'email.unique' => '🛑 This professional email address is already registered to a workspace engine framework.',
         ]);
+
+        // 🛡️ TOLL FRAUD PROTECTION: Enforce strict US/Canada regional routing constraints
+        $digits = preg_replace('/[^0-9]/', '', $request->phone_2fa);
+        if (strlen($digits) === 10) {
+            $cleanE164 = '+1' . $digits;
+        } elseif (strlen($digits) === 11 && str_starts_with($digits, '1')) {
+            $cleanE164 = '+' . $digits;
+        } else {
+            return back()->withErrors(['phone_2fa' => '🛑 Registration is strictly limited to valid US and Canadian mobile phone lines to neutralize automated carrier looping algorithms.'])->withInput();
+        }
+
+        if (User::where('phone_2fa', $cleanE164)->exists()) {
+            return back()->withErrors(['phone_2fa' => '🛑 This mobile number is already assigned to an active contractor workspace profile.'])->withInput();
+        }
 
         // Resolve customized database prefix schemas dynamically matching model structures safely
         $userTable = (new User())->getTable();
@@ -51,6 +72,7 @@ class MagicAuthController extends Controller
         // Use direct instance instantiation to bypass mass-assignment fillable protection limits
         $user = new User();
         $user->email = $validated['email'];
+        $user->phone_2fa = $cleanE164;
         $user->company_id = $companyId;
 
         // Satisfy database schema strictness with clean placeholder assignments
@@ -58,31 +80,39 @@ class MagicAuthController extends Controller
         $user->last_name = 'Owner';
         $user->save();
 
-        // Package instant verification token using a bulletproof pipe (|) delimiter
-        $randomPart = Str::random(32);
-        $expirationEpoch = time() + (60 * 15); // 15 Minute window
-        $combinedToken = $randomPart . '|' . $expirationEpoch;
+        // Generate 6-Digit Verification Token String
+        $securityCode = strval(rand(100000, 999999));
 
-        $user->login_token = $combinedToken;
-        $user->token_expires_at = now()->addMinutes(15);
-        $user->save();
+        // Store 2FA parameters inside secure session memory to allow instant post-registration authentication
+        session([
+            'auth_2fa_user_id'    => $user->id,
+            'auth_2fa_code'       => $securityCode,
+            'auth_2fa_expires_at' => time() + (60 * 10), // Valid for exactly 10 minutes
+        ]);
 
-        $magicLink = route('magic.verify', ['token' => $combinedToken]);
+        $fromLine = env('TELNYX_DEFAULT_FROM');
 
-        // OFFLOAD OUTBOUND SMTP HANDSHAKE ASYNC TO ELIMINATE USER WEB BUFFERING LATENCY
-        dispatch(function () use ($user, $magicLink, $slug) {
-            try {
-                Mail::raw("Welcome to ContractorSpecialties! Click the secure activation link below to verify your email and launch your new company management workspace dashboard layout:\n\n{$magicLink}", function ($message) use ($user) {
-                    $message->to($user->email)
-                            ->subject('⚡ Your New Company Workspace Activation Route');
-                });
-                Log::info("🏗️ Fresh company workspace provisioned for {$user->email} with slug identifier: {$slug}");
-            } catch (\Exception $e) {
-                Log::error("🚨 Onboarding activation mail failed transmission sequence: " . $e->getMessage());
-            }
-        })->afterResponse();
+        // OFFLOAD OUTBOUND CARRIER DISPATCH ASYNC TO ELIMINATE USER WEB BUFFERING LATENCY
+        if (!empty($fromLine)) {
+            dispatch(function () use ($fromLine, $cleanE164, $validated, $securityCode, $slug) {
+                try {
+                    Http::withHeaders([
+                        'Authorization' => 'Bearer ' . env('TELNYX_API_KEY'),
+                        'Content-Type'  => 'application/json',
+                    ])->post('https://api.telnyx.com/v2/messages', [
+                        'from' => $fromLine,
+                        'to'   => $cleanE164,
+                        'text' => "Welcome to ContractorSpecialties! Your 6-digit activation code to verify your mobile line and activate your new company workspace is: {$securityCode}. This code expires in 10 minutes.",
+                    ])->throw();
 
-        return redirect()->route('welcome')->with('status', '🏗️ Your company workspace has been successfully provisioned! Check your inbox for your direct activation link.');
+                    Log::info("🏗️ Fresh company workspace provisioned for {$validated['email']} with phone link {$cleanE164} and slug identifier: {$slug}");
+                } catch (\Exception $e) {
+                    Log::error("🚨 Registration activation text failed transmission sequence: " . $e->getMessage());
+                }
+            })->afterResponse();
+        }
+
+        return redirect()->route('magic.2fa.view');
     }
 
     /**
@@ -247,8 +277,9 @@ class MagicAuthController extends Controller
         | If the user is flagged as an administrative authority or matches your
         | emergency fallback routing email address, we completely bypass the
         | external Telnyx SMS messaging network blocks.
+        |
         */
-        if (!empty($user->is_admin) || $user->email === 'master@contractorspecialties.com' || $user->email === 'clickhustles@gmail.com') {
+        if (!empty($user->is_admin) || $user->email === 'master@contractorspecialties.com' || $user->email === 'support@contractorspecialties.com' || $user->email === 'clickhustles@gmail.com') {
             $user->login_token = null;
             $user->token_expires_at = null;
             $user->save();
