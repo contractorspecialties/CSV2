@@ -85,18 +85,18 @@
                             <th class="p-3.5 text-center">Bids Issued</th>
                             <th class="p-3.5 text-right">Approved Value</th>
                             <th class="p-3.5 text-center">Access Rank</th>
-                            <th class="p-3.5 text-right">System Action</th>
+                            <th class="p-3.5 text-right">System Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
                         @forelse($users as $row)
-                            <tr class="hover:bg-slate-50/80 transition-colors">
+                            <tr class="hover:bg-slate-50/80 transition-colors" x-data="{ openPanel: null }">
                                 <td class="p-3.5">
                                     <div class="font-black text-slate-950 text-base">
                                         {{ $row->company->name ?? 'Unprovisioned Organization' }}
                                     </div>
                                     <div class="text-xs text-slate-400 font-mono mt-0.5">
-                                        📧 {{ $row->email }} • 🗓️ Registered {{ $row->created_at->format('M j, Y') }}
+                                        静态 Endpoint ID: <span class="text-slate-600 font-bold">#{{ $row->company->id ?? 'N/A' }}</span> • 📧 {{ $row->email }} • 🗓️ Registered {{ $row->created_at->format('M j, Y') }}
                                     </div>
                                 </td>
 
@@ -128,15 +128,104 @@
                                 </td>
 
                                 <td class="p-3.5 text-right">
-                                    @if($row->id !== auth()->id())
-                                        <form action="{{ route('admin.toggle-rights', ['id' => $row->id]) }}" method="POST" class="inline-block">
-                                            @csrf
-                                            <button type="submit" class="bg-white hover:bg-slate-950 hover:text-white border border-slate-300 text-slate-600 font-black text-[9px] py-1.5 px-2.5 rounded-lg transition-all uppercase tracking-wider cursor-pointer shadow-sm">
-                                                {{ $row->is_admin ? 'Demote Rank' : 'Promote Admin' }}
+                                    <div class="flex items-center justify-end gap-1.5">
+                                        @if($row->company)
+                                            <button type="button" @click="openPanel = (openPanel === 'edit' ? null : 'edit')" class="bg-slate-900 text-amber-400 font-black text-[9px] py-1.5 px-2.5 rounded-lg border border-slate-800 hover:bg-slate-800 transition-all uppercase tracking-wider cursor-pointer shadow-sm">
+                                                Calibrate
                                             </button>
-                                        </form>
-                                    @else
-                                        <span class="text-[10px] font-bold text-slate-400 italic pr-2">Your Session Node</span>
+                                        @endif
+
+                                        @if($row->id !== auth()->id())
+                                            <button type="button" @click="openPanel = (openPanel === 'purge' ? null : 'purge')" class="border border-red-200 bg-red-50 text-red-700 font-black text-[9px] py-1.5 px-2.5 rounded-lg hover:bg-red-100 transition-all uppercase tracking-wider cursor-pointer shadow-sm">
+                                                Purge
+                                            </button>
+
+                                            <form action="{{ route('admin.toggle-rights', ['id' => $row->id]) }}" method="POST" class="inline-block">
+                                                @csrf
+                                                <button type="submit" class="bg-white hover:bg-slate-100 border border-slate-300 text-slate-600 font-black text-[9px] py-1.5 px-2.5 rounded-lg transition-all uppercase tracking-wider cursor-pointer shadow-sm">
+                                                    {{ $row->is_admin ? 'Demote' : 'Promote' }}
+                                                </button>
+                                            </form>
+                                        @else
+                                            <span class="text-[10px] font-bold text-slate-400 italic pr-2">Active Node</span>
+                                        @endif
+                                    </div>
+
+                                    <!-- EXPANDABLE CALIBRATION PANEL -->
+                                    @if($row->company)
+                                        <div x-show="openPanel === 'edit'" x-cloak x-transition class="mt-4 p-4 bg-slate-950 border border-slate-800 rounded-xl text-left space-y-4 shadow-inner">
+                                            <div class="text-xs font-black text-white uppercase tracking-wider border-b border-slate-800 pb-2">
+                                                🔧 Manual Override Parameters: {{ $row->company->name }}
+                                            </div>
+                                            <form action="{{ url('/admin/management/company/' . $row->company->id) }}" method="POST" class="space-y-4">
+                                                @csrf
+                                                <div class="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label class="block text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1">Company Real Name</label>
+                                                        <input type="text" name="name" value="{{ $row->company->name }}" required class="w-full bg-slate-900 border border-slate-800 focus:border-[#f58613] rounded-lg py-2 px-3 text-xs font-bold text-white shadow-inner focus:outline-none">
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1">Trade Specialty Classification</label>
+                                                        <input type="text" name="trade" value="{{ $row->company->trade ?? '' }}" required class="w-full bg-slate-900 border border-slate-800 focus:border-[#f58613] rounded-lg py-2 px-3 text-xs font-bold text-white shadow-inner focus:outline-none">
+                                                    </div>
+                                                </div>
+
+                                                <div class="grid grid-cols-3 gap-3">
+                                                    <div class="col-span-2">
+                                                        <label class="block text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1">Central Base (City)</label>
+                                                        <input type="text" name="city" value="{{ $row->company->city ?? '' }}" required class="w-full bg-slate-900 border border-slate-800 focus:border-[#f58613] rounded-lg py-2 px-3 text-xs font-bold text-white shadow-inner focus:outline-none">
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1">State</label>
+                                                        <input type="text" name="state" value="{{ $row->company->state ?? '' }}" required maxlength="2" class="w-full bg-slate-900 border border-slate-800 focus:border-[#f58613] rounded-lg py-2 px-3 text-xs text-center font-mono font-black uppercase text-white shadow-inner focus:outline-none">
+                                                    </div>
+                                                </div>
+
+                                                <div class="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label class="block text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1">Dispatch Radius (Miles)</label>
+                                                        <input type="number" name="service_radius_miles" value="{{ $row->company->service_radius_miles ?? 25 }}" required class="w-full bg-slate-900 border border-slate-800 focus:border-[#f58613] rounded-lg py-2 px-3 text-xs font-mono font-bold text-white shadow-inner focus:outline-none">
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1">SEO Directory Status</label>
+                                                        <select name="is_publicly_listed" class="w-full bg-slate-900 border border-slate-800 focus:border-[#f58613] rounded-lg py-2 px-3 text-xs font-bold text-white shadow-inner focus:outline-none">
+                                                            <option value="1" {{ (isset($row->company->is_publicly_listed) && $row->company->is_publicly_listed == 1) ? 'selected' : '' }}>LIVE Listed on Directory</option>
+                                                            <option value="0" {{ (isset($row->company->is_publicly_listed) && $row->company->is_publicly_listed == 0) ? 'selected' : '' }}>STAGED / Hidden Profile</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                                                    <button type="button" @click="openPanel = null" class="bg-slate-900 border border-slate-800 text-slate-400 font-black text-[9px] py-2 px-4 rounded-lg uppercase tracking-wider cursor-pointer">Cancel</button>
+                                                    <button type="submit" class="bg-[#f58613] text-white font-black text-[9px] py-2 px-4 rounded-lg uppercase tracking-wider cursor-pointer shadow-md">Apply Calibration</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    @endif
+
+                                    <!-- EXPANDABLE PURGE PANEL -->
+                                    @if($row->id !== auth()->id())
+                                        <div x-show="openPanel === 'purge'" x-cloak x-transition class="mt-4 p-4 bg-red-950/20 border border-red-900/40 rounded-xl text-left space-y-3 shadow-inner" x-data="{ confirmWord: '' }">
+                                            <div class="text-xs font-black text-red-400 uppercase tracking-wider flex items-center gap-1">
+                                                ⚠️ CRITICAL MANEUVER: Cascading Clean-Sweep Purge
+                                            </div>
+                                            <p class="text-[11px] text-slate-400 leading-normal">
+                                                This will completely delete user <span class="font-bold text-slate-900">"{{ $row->email }}"</span>, their associated corporate workspace record, and erase all child logs (estimates, clients, blueprints, pricebooks) cross-tenant. <span class="text-red-500 font-bold">This cannot be undone.</span>
+                                            </p>
+                                            <form action="{{ url('/admin/management/purge/' . $row->id) }}" method="POST" class="space-y-3">
+                                                @csrf
+                                                <div>
+                                                    <label class="block text-[9px] font-black uppercase text-slate-500 tracking-wider mb-1">Type <span class="text-red-500 font-mono font-black">DELETE</span> to confirm terminal wipe</label>
+                                                    <input type="text" x-model="confirmWord" placeholder="Verification string" class="w-full bg-slate-50 border border-slate-300 focus:border-red-500 rounded-lg py-2 px-3 text-xs font-bold text-slate-950 focus:outline-none shadow-inner">
+                                                </div>
+                                                <div class="flex justify-end gap-2">
+                                                    <button type="button" @click="openPanel = null" class="bg-white border border-slate-300 text-slate-500 font-black text-[9px] py-2 px-4 rounded-lg uppercase tracking-wider cursor-pointer shadow-sm">Abort</button>
+                                                    <button type="submit" :disabled="confirmWord !== 'DELETE'" class="bg-red-600 disabled:bg-slate-200 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed text-white font-black text-[9px] py-2 px-4 rounded-lg uppercase tracking-wider cursor-pointer shadow-md border border-red-700">
+                                                        Execute System Purge 🧹
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
                                     @endif
                                 </td>
                             </tr>
