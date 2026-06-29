@@ -13,34 +13,39 @@
 <body class="min-h-full font-sans antialiased text-slate-800 bg-slate-50 flex flex-col justify-between selection:bg-[#f58613] selection:text-white">
 
     <!-- 🌐 TOP GLOBAL HEADER NAV RAIL -->
-    <header class="bg-white/80 border-b border-slate-200 backdrop-blur-md sticky top-0 z-50 shadow-xs">
-    <div class="max-w-7xl mx-auto px-4 h-22 flex items-center justify-between">
+    <header class="bg-white/90 border-b border-slate-200 backdrop-blur-md sticky top-0 z-50 shadow-xs transition-all">
+    <div class="max-w-7xl mx-auto px-4 h-24 flex items-center justify-between">
 
-        <!-- Logo -->
+        <!-- Logo Frame -->
         <div class="w-[280px] max-w-[50%] h-[60px] flex items-center">
-            <img src="/images/header-logo.webp" alt="ContractorSpecialties Logo" class="w-full h-auto max-h-[55px] object-contain object-left">
+            <a href="{{ route('welcome') }}" class="inline-block border-0 outline-none">
+                <img src="/images/header-logo.webp" alt="ContractorSpecialties Logo" class="w-full h-auto max-h-[55px] object-contain object-left">
+            </a>
         </div>
 
-        <!-- Navigation -->
-        <nav class="flex items-center gap-6">
-            <a href="#tools" class="text-sm font-black uppercase text-slate-600 hover:text-slate-950 tracking-wider transition-colors hidden md:inline-block">
-                Tools
+        <!-- Beefed-Up Navigation Interface -->
+        <nav class="flex items-center gap-2 md:gap-4">
+            <a href="/capabilities" class="text-sm font-black uppercase text-slate-700 hover:text-slate-950 tracking-widest px-3 py-2.5 rounded-lg border-b-2 border-transparent hover:border-[#f58613] hover:bg-slate-50 transition-all hidden md:inline-block">
+                Tools & Features
             </a>
 
-            <a href="#pricing" class="text-sm font-black uppercase text-slate-600 hover:text-slate-950 tracking-wider transition-colors hidden md:inline-block">
-                Pricing
+            <a href="/pricing-matrix" class="text-sm font-black uppercase text-slate-700 hover:text-slate-950 tracking-widest px-3 py-2.5 rounded-lg border-b-2 border-transparent hover:border-[#f58613] hover:bg-slate-50 transition-all hidden md:inline-block">
+                Pricing Tier Matrix
             </a>
 
-            <a href="#why-us" class="text-sm font-black uppercase text-slate-600 hover:text-slate-950 tracking-wider transition-colors hidden md:inline-block">
+            <a href="/about-framework" class="text-sm font-black uppercase text-slate-700 hover:text-slate-950 tracking-widest px-3 py-2.5 rounded-lg border-b-2 border-transparent hover:border-[#f58613] hover:bg-slate-50 transition-all hidden md:inline-block">
                 Why ContractorSpecialties
             </a>
 
-            <!-- Status Pulse -->
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <!-- System Operational Status Pulse -->
+            <div class="flex items-center gap-1.5 px-2 hidden lg:flex select-none">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+                <span class="text-[9px] font-black uppercase text-slate-400 tracking-wider">Live</span>
+            </div>
 
-            <!-- Login Button -->
-            <a href="#login-anchor" class="bg-slate-950 hover:bg-slate-800 text-white font-black text-xs py-3 px-5 rounded-xl uppercase tracking-wider transition-all shadow-md">
-                Command Console Login →
+            <!-- Heavy Action Login Button Frame -->
+            <a href="/#login-anchor" class="bg-slate-950 hover:bg-slate-800 text-white font-black text-xs py-3.5 px-5 sm:px-6 rounded-xl uppercase tracking-widest transition-all shadow-md active:scale-[0.99] border border-slate-900 ml-1">
+                Contractor Login →
             </a>
         </nav>
 

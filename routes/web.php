@@ -48,7 +48,7 @@ Route::middleware(['auth'])->group(function () {
     | These routes remain exempt from the onboarding intercept gate middleware
     | to eliminate cascading infinite loop execution sequences.
     |
-    */
+    | */
     Route::get('/workspace/setup', [OnboardingController::class, 'showWizard'])->name('onboarding.view');
     Route::post('/workspace/setup', [OnboardingController::class, 'processWizard'])->name('onboarding.submit');
 
@@ -64,7 +64,7 @@ Route::middleware(['auth'])->group(function () {
     | inside database memory to pierce this boundary layer. If incomplete,
     | they are gracefully rerouted back to the workspace configurator.
     |
-    */
+    | */
     Route::middleware([EnsureOnboardingIsCompleted::class])->group(function () {
 
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -210,6 +210,10 @@ Route::view('/privacy', 'privacy')->name('legal.privacy');
 Route::view('/terms', 'terms')->name('legal.terms');
 
 // Front-Facing Marketing Pages & Local Lead Funnels
+Route::view('/capabilities', 'capabilities')->name('marketing.capabilities');
+Route::view('/pricing-matrix', 'pricing-matrix')->name('marketing.pricing');
+Route::view('/about-framework', 'about-framework')->name('marketing.about');
+
 Route::view('/advertise', 'advertise')->name('marketing.advertise');
 Route::view('/contractor-directory', 'contractor-directory')->name('marketing.directory');
 Route::view('/leads', 'leads')->name('marketing.leads');
