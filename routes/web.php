@@ -38,7 +38,7 @@ Route::post('/login/two-factor-verify', [MagicAuthController::class, 'verifyTwoF
 
 Route::match(['get', 'post'], '/logout', [MagicAuthController::class, 'logout'])->name('logout');
 
-// Authenticated Contractor Workspace Workspace Framework
+// Authenticated Contractor Workspace Framework
 Route::middleware(['auth'])->group(function () {
 
     /*
@@ -53,7 +53,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/workspace/setup', [OnboardingController::class, 'processWizard'])->name('onboarding.submit');
 
     // 🛡️ EMERGENCY ACCESS DISMISSAL BRIDGE
-    // Placed out here so an admin can instantly drop out of a broken or incomplete account partition
     Route::post('/admin/management/impersonate/stop', [AdminDashboardController::class, 'stopImpersonating'])->name('admin.impersonate.stop');
 
     /*
@@ -123,21 +122,49 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/estimates/{id}/close-job', [EstimateController::class, 'closeJob'])->name('estimates.close-job');
         Route::resource('estimates', EstimateController::class);
 
-        // 🛡️ ADMINISTRATIVE COCKPIT GATING
-        // Declaring an inline closure variable allows assigning it directly to fluid route chains
-        // without passing it to Route::middleware(), avoiding the framework string conversion crash.
-        $adminGuard = function ($request, $next) {
+        /*
+        |--------------------------------------------------------------------------
+        | 🛡️ SECURE ADMINISTRATIVE INLINE PROXIES
+        |--------------------------------------------------------------------------
+        | Using closures to handle security validation allows us to intercept the
+        | pipeline cleanly without running into framework string casting issues.
+        | app()->call() ensures deep dependency injection maps successfully.
+        |
+        */
+        Route::get('/admin/management', function () {
             if (!auth()->check() || !auth()->user()->is_admin) {
                 return redirect()->route('dashboard')->withErrors(['security' => '🛑 Clear operational clearance parameter mismatch. Entry route dropped.']);
             }
-            return $next($request);
-        };
+            return app()->call([AdminDashboardController::class, 'index']);
+        })->name('admin.index');
 
-        Route::get('/admin/management', [AdminDashboardController::class, 'index'])->name('admin.index')->middleware($adminGuard);
-        Route::post('/admin/management/{id}/toggle', [AdminDashboardController::class, 'toggleAdminStatus'])->name('admin.toggle-rights')->middleware($adminGuard);
-        Route::post('/admin/management/company/{id}', [AdminDashboardController::class, 'updateCompany'])->name('admin.company.update')->middleware($adminGuard);
-        Route::post('/admin/management/purge/{id}', [AdminDashboardController::class, 'destroyWorkspace'])->name('admin.workspace.purge')->middleware($adminGuard);
-        Route::post('/admin/management/impersonate/{id}', [AdminDashboardController::class, 'impersonate'])->name('admin.impersonate')->middleware($adminGuard);
+        Route::post('/admin/management/{id}/toggle', function ($id) {
+            if (!auth()->check() || !auth()->user()->is_admin) {
+                return redirect()->route('dashboard')->withErrors(['security' => '🛑 Clear operational clearance parameter mismatch. Entry route dropped.']);
+            }
+            return app()->call([AdminDashboardController::class, 'toggleAdminStatus'], ['id' => $id]);
+        })->name('admin.toggle-rights');
+
+        Route::post('/admin/management/company/{id}', function ($id) {
+            if (!auth()->check() || !auth()->user()->is_admin) {
+                return redirect()->route('dashboard')->withErrors(['security' => '🛑 Clear operational clearance parameter mismatch. Entry route dropped.']);
+            }
+            return app()->call([AdminDashboardController::class, 'updateCompany'], ['id' => $id]);
+        })->name('admin.company.update');
+
+        Route::post('/admin/management/purge/{id}', function ($id) {
+            if (!auth()->check() || !auth()->user()->is_admin) {
+                return redirect()->route('dashboard')->withErrors(['security' => '🛑 Clear operational clearance parameter mismatch. Entry route dropped.']);
+            }
+            return app()->call([AdminDashboardController::class, 'destroyWorkspace'], ['id' => $id]);
+        })->name('admin.workspace.purge');
+
+        Route::post('/admin/management/impersonate/{id}', function ($id) {
+            if (!auth()->check() || !auth()->user()->is_admin) {
+                return redirect()->route('dashboard')->withErrors(['security' => '🛑 Clear operational clearance parameter mismatch. Entry route dropped.']);
+            }
+            return app()->call([AdminDashboardController::class, 'impersonate'], ['id' => $id]);
+        })->name('admin.impersonate');
 
     });
 });
