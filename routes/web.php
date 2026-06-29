@@ -123,23 +123,21 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/estimates/{id}/close-job', [EstimateController::class, 'closeJob'])->name('estimates.close-job');
         Route::resource('estimates', EstimateController::class);
 
-        // 🛡️ ADMINISTRATIVE COCKPIT GATING (Container Closure Implementation)
-        Route::middleware([function ($request, $next) {
+        // 🛡️ ADMINISTRATIVE COCKPIT GATING
+        // Declaring an inline closure variable allows assigning it directly to fluid route chains
+        // without passing it to Route::middleware(), avoiding the framework string conversion crash.
+        $adminGuard = function ($request, $next) {
             if (!auth()->check() || !auth()->user()->is_admin) {
                 return redirect()->route('dashboard')->withErrors(['security' => '🛑 Clear operational clearance parameter mismatch. Entry route dropped.']);
             }
             return $next($request);
-        }])->group(function () {
-            Route::get('/admin/management', [AdminDashboardController::class, 'index'])->name('admin.index');
-            Route::post('/admin/management/{id}/toggle', [AdminDashboardController::class, 'toggleAdminStatus'])->name('admin.toggle-rights');
+        };
 
-            // Overrides & Cascading Clean-Sweep Triggers
-            Route::post('/admin/management/company/{id}', [AdminDashboardController::class, 'updateCompany'])->name('admin.company.update');
-            Route::post('/admin/management/purge/{id}', [AdminDashboardController::class, 'destroyWorkspace'])->name('admin.workspace.purge');
-
-            // Secure Active Session Interception Route
-            Route::post('/admin/management/impersonate/{id}', [AdminDashboardController::class, 'impersonate'])->name('admin.impersonate');
-        });
+        Route::get('/admin/management', [AdminDashboardController::class, 'index'])->name('admin.index')->middleware($adminGuard);
+        Route::post('/admin/management/{id}/toggle', [AdminDashboardController::class, 'toggleAdminStatus'])->name('admin.toggle-rights')->middleware($adminGuard);
+        Route::post('/admin/management/company/{id}', [AdminDashboardController::class, 'updateCompany'])->name('admin.company.update')->middleware($adminGuard);
+        Route::post('/admin/management/purge/{id}', [AdminDashboardController::class, 'destroyWorkspace'])->name('admin.workspace.purge')->middleware($adminGuard);
+        Route::post('/admin/management/impersonate/{id}', [AdminDashboardController::class, 'impersonate'])->name('admin.impersonate')->middleware($adminGuard);
 
     });
 });
