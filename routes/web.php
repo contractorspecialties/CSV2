@@ -48,7 +48,7 @@ Route::middleware(['auth'])->group(function () {
     | These routes remain exempt from the onboarding intercept gate middleware
     | to eliminate cascading infinite loop execution sequences.
     |
-    | */
+    */
     Route::get('/workspace/setup', [OnboardingController::class, 'showWizard'])->name('onboarding.view');
     Route::post('/workspace/setup', [OnboardingController::class, 'processWizard'])->name('onboarding.submit');
 
@@ -64,7 +64,7 @@ Route::middleware(['auth'])->group(function () {
     | inside database memory to pierce this boundary layer. If incomplete,
     | they are gracefully rerouted back to the workspace configurator.
     |
-    | */
+    */
     Route::middleware([EnsureOnboardingIsCompleted::class])->group(function () {
 
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -123,8 +123,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/estimates/{id}/close-job', [EstimateController::class, 'closeJob'])->name('estimates.close-job');
         Route::resource('estimates', EstimateController::class);
 
-        // Administrative System Cockpit Control Deck
-        Route::middleware([\AdminGateMiddleware::class])->group(function () {
+        // 🛡️ ADMINISTRATIVE COCKPIT GATING (Container Closure Implementation)
+        Route::middleware([function ($request, $next) {
+            if (!auth()->check() || !auth()->user()->is_admin) {
+                return redirect()->route('dashboard')->withErrors(['security' => '🛑 Clear operational clearance parameter mismatch. Entry route dropped.']);
+            }
+            return $next($request);
+        }])->group(function () {
             Route::get('/admin/management', [AdminDashboardController::class, 'index'])->name('admin.index');
             Route::post('/admin/management/{id}/toggle', [AdminDashboardController::class, 'toggleAdminStatus'])->name('admin.toggle-rights');
 
@@ -223,23 +228,3 @@ Route::view('/tutorial', 'tutorial')->name('platform.tutorial');
 
 // Inbound Telephony Carrier Webhooks
 Route::post('/webhooks/telnyx', [EstimateController::class, 'handleTelnyxWebhook'])->name('webhooks.telnyx');
-
-
-/*
-|--------------------------------------------------------------------------
-| Runtime Class Extensions (Maintains Single File Swap Integration)
-|--------------------------------------------------------------------------
-*/
-
-if (!class_exists('AdminGateMiddleware')) {
-    class AdminGateMiddleware
-    {
-        public function handle($request, $next)
-        {
-            if (!auth()->check() || !auth()->user()->is_admin) {
-                return redirect()->route('dashboard')->withErrors(['security' => '🛑 Clear operational clearance parameter mismatch. Entry route dropped.']);
-            }
-            return $next($request);
-        }
-    }
-}
