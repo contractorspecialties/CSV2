@@ -14,20 +14,39 @@
 
     <!-- 🌐 TOP GLOBAL HEADER NAV RAIL -->
     <header class="bg-white/80 border-b border-slate-200 backdrop-blur-md sticky top-0 z-50 shadow-xs">
-        <div class="max-w-7xl mx-auto px-4 h-22 flex items-center justify-between">
-            <div class="w-[280px] max-w-[50%] h-[60px] flex items-center">
-                <img src="/images/header-logo.webp" alt="ContractorSpecialties Logo" class="w-full h-auto max-h-[55px] object-contain object-left">
-            </div>
-            <div class="flex items-center gap-5">
-                <a href="#features" class="text-sm font-black uppercase text-slate-600 hover:text-slate-950 tracking-wider transition-colors text-decoration-none hidden md:inline-block">Capabilities</a>
-                <a href="#pricing" class="text-sm font-black uppercase text-slate-600 hover:text-slate-950 tracking-wider transition-colors text-decoration-none hidden md:inline-block">Pricing Matrix</a>
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <a href="#login-anchor" class="bg-slate-950 hover:bg-slate-800 text-white font-black text-xs py-3 px-5 rounded-xl uppercase tracking-wider transition-all shadow-md text-decoration-none">
-                    Command Console Login →
-                </a>
-            </div>
+    <div class="max-w-7xl mx-auto px-4 h-22 flex items-center justify-between">
+
+        <!-- Logo -->
+        <div class="w-[280px] max-w-[50%] h-[60px] flex items-center">
+            <img src="/images/header-logo.webp" alt="ContractorSpecialties Logo" class="w-full h-auto max-h-[55px] object-contain object-left">
         </div>
-    </header>
+
+        <!-- Navigation -->
+        <nav class="flex items-center gap-6">
+            <a href="#tools" class="text-sm font-black uppercase text-slate-600 hover:text-slate-950 tracking-wider transition-colors hidden md:inline-block">
+                Tools
+            </a>
+
+            <a href="#pricing" class="text-sm font-black uppercase text-slate-600 hover:text-slate-950 tracking-wider transition-colors hidden md:inline-block">
+                Pricing
+            </a>
+
+            <a href="#why-us" class="text-sm font-black uppercase text-slate-600 hover:text-slate-950 tracking-wider transition-colors hidden md:inline-block">
+                Why ContractorSpecialties
+            </a>
+
+            <!-- Status Pulse -->
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+
+            <!-- Login Button -->
+            <a href="#login-anchor" class="bg-slate-950 hover:bg-slate-800 text-white font-black text-xs py-3 px-5 rounded-xl uppercase tracking-wider transition-all shadow-md">
+                Command Console Login →
+            </a>
+        </nav>
+
+    </div>
+</header>
+
 
     <!-- 🚀 HERO & ACCESS ROUTING CONTAINER -->
     <section class="relative bg-gradient-to-b from-slate-100 via-white to-slate-50 pt-16 pb-24 border-b border-slate-200 px-4">
