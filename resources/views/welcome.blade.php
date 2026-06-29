@@ -19,7 +19,7 @@
             <!-- Logo Block (Beefed up for Desktop viewports) -->
             <div class="w-[240px] md:w-[380px] max-w-[45%] h-[60px] md:h-[80px] flex items-center">
                 <a href="{{ route('welcome') }}" class="inline-block border-0 outline-none w-full">
-                    <img src="/images/header-logo.webp" alt="ContractorSpecialties Logo" class="w-full h-auto max-h-[55px] object-contain object-left">
+                    <img src="/images/header-logo.webp" alt="ContractorSpecialties Logo" class="w-full h-auto max-h-[50px] md:max-h-[75px] object-contain object-left">
                 </a>
             </div>
 
@@ -148,17 +148,17 @@
                     Run Your Field Business Like a Pro — <span class="text-[#f58613]">Without Paying Enterprise Prices</span>
                 </h1>
 
-                <p class="text-sm md:text-base text-slate-400 font-medium leading-relaxed max-w-xl">
+                <p class="text-base md:text-lg text-slate-600 font-semibold leading-relaxed max-w-xl">
                     Estimate, invoice, message customers, track jobs, and get paid — all from one simple tool built for the owner who still answers the phone.
                 </p>
 
                 <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-2">
-                    <a href="{{ route('register') }}" class="w-full sm:w-auto bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-4 px-8 rounded-xl tracking-widest uppercase shadow-lg transition-all active:scale-[0.99] text-center text-decoration-none border-0 cursor-pointer">
+                    <a href="{{ route('register') }}" class="w-full sm:w-auto bg-[#f58613] hover:bg-orange-600 text-white font-black text-sm py-4 px-8 rounded-xl tracking-widest uppercase shadow-lg transition-all active:scale-[0.99] text-center text-decoration-none border-0 cursor-pointer">
                         Get Started →
                     </a>
                     <div class="text-left">
-                        <div class="text-xs font-black text-white uppercase tracking-wide">It's a lot cheaper than you think.</div>
-                        <div class="text-[10px] text-slate-500 font-semibold mt-0.5">No credit card required to build workspace. No nonsense.</div>
+                        <div class="text-sm font-black text-slate-950 uppercase tracking-wide">It's a lot cheaper than you think.</div>
+                        <div class="text-[11px] text-slate-500 font-bold mt-0.5">No credit card required to build workspace. No nonsense.</div>
                     </div>
                 </div>
             </div>
@@ -168,9 +168,9 @@
                 <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#f58613]/5 to-transparent rounded-bl-full pointer-events-none"></div>
 
                 <div class="space-y-1">
-                    <span class="text-[9px] font-black text-[#f58613] uppercase tracking-widest block font-mono">Secure Token Dispatch</span>
-                    <h2 class="text-lg font-black text-white uppercase tracking-tight">Operator Dashboard Access</h2>
-                    <p class="text-[11px] text-slate-400 leading-normal font-medium">
+                    <span class="text-xs font-black text-[#f58613] uppercase tracking-widest block font-mono">Secure Token Dispatch</span>
+                    <h2 class="text-xl font-black text-slate-950 uppercase tracking-tight">Operator Dashboard Access</h2>
+                    <p class="text-xs text-slate-600 leading-normal font-bold">
                         Enter your business email. We’ll send a secure token link that drops you straight into your command center.
                     </p>
                 </div>
@@ -189,10 +189,10 @@
                     </div>
                 @endif
 
-                <form action="{{ route('magic.send') }}" method="POST" class="space-y-3.5">
+                <form action="{{ route('magic.send') }}" method="POST" class="space-y-4">
                     @csrf
                     <div>
-                        <label for="login_email" class="block text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1.5">Business Registration Email</label>
+                        <label for="login_email" class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Business Registration Email</label>
                         <input type="email" id="login_email" name="email" required placeholder="name@yourcompany.com" value="{{ old('email') }}" autocomplete="email"
                                class="w-full bg-slate-50 border-2 border-slate-300 focus:border-slate-950 rounded-xl py-4 px-4 text-base font-bold text-slate-950 shadow-inner focus:outline-none placeholder:text-slate-400">
                     </div>
@@ -202,12 +202,12 @@
                     </button>
                 </form>
 
-                <p class="text-[9px] text-slate-500 font-medium leading-normal text-left pt-1 border-t border-slate-200">
-                    <span class="font-black uppercase block tracking-wide text-slate-400 mb-0.5">SMS Disclosure notice:</span>
+                <p class="text-[10px] text-slate-500 font-bold leading-normal text-left pt-1 border-t border-slate-200">
+                    <span class="font-black uppercase block tracking-wide text-slate-700 mb-0.5">SMS Disclosure notice:</span>
                     By requesting an access link, you agree to receive transactional account confirmations and system alerts from ContractorSpecialties. Msg/data rates may apply. Reply STOP to opt out.
                 </p>
 
-                <div class="pt-2 text-center text-xs font-bold text-slate-400 border-t border-slate-200">
+                <div class="pt-2 text-center text-sm font-black text-slate-600 border-t border-slate-200">
                     New partner? <a href="{{ route('register') }}" class="text-[#f58613] font-black underline hover:text-orange-500 transition-colors">Provision your workspace →</a>
                 </div>
             </div>
@@ -218,73 +218,73 @@
     <!-- 🛠️ HIGH-UTILITY FUNCTIONAL VALUE MATRIX SECTION -->
     <section id="features" class="max-w-7xl w-full mx-auto px-4 py-20 space-y-10 text-center">
         <div class="space-y-2 max-w-2xl mx-auto">
-            <span class="text-[10px] font-black uppercase text-[#f58613] tracking-widest font-mono block">Engine Core Features Matrix</span>
-            <h2 class="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">Everything You Need to Run the Field — Without the Friction</h2>
-            <div class="h-1 w-12 bg-[#f58613] mx-auto rounded-full mt-3"></div>
+            <span class="text-xs font-black uppercase text-[#f58613] tracking-widest font-mono block">Engine Core Features Matrix</span>
+            <h2 class="text-3xl font-black text-slate-950 uppercase tracking-tight">Everything You Need to Run the Field — Without the Friction</h2>
+            <div class="h-1.5 w-16 bg-[#f58613] mx-auto rounded-full mt-4"></div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6">
 
-            <div class="bg-white border-2 border-slate-200 rounded-2xl p-6 text-left space-y-2.5 transition-all duration-300 hover:-translate-y-1 hover:border-slate-400 shadow-md">
+            <div class="bg-white border-2 border-slate-200 rounded-2xl p-6 text-left space-y-3 transition-all duration-300 hover:-translate-y-1 hover:border-slate-400 shadow-md">
                 <span class="text-2xl block select-none">📖</span>
-                <h3 class="text-sm font-black text-white uppercase tracking-wide">Build Estimates in Minutes</h3>
-                <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                <h3 class="text-base font-black text-slate-950 uppercase tracking-wide">Build Estimates in Minutes</h3>
+                <p class="text-sm text-slate-600 leading-relaxed font-semibold">
                     No spreadsheets. No guesswork. No “I’ll get that to you tonight.” Just clean, consistent estimates built from your pricebook matrix.
                 </p>
             </div>
 
-            <div class="bg-white border-2 border-slate-200 rounded-2xl p-6 text-left space-y-2.5 transition-all duration-300 hover:-translate-y-1 hover:border-slate-400 shadow-md">
+            <div class="bg-white border-2 border-slate-200 rounded-2xl p-6 text-left space-y-3 transition-all duration-300 hover:-translate-y-1 hover:border-slate-400 shadow-md">
                 <span class="text-2xl block select-none">⚡</span>
-                <h3 class="text-sm font-black text-white uppercase tracking-wide">Convert Estimates to Invoices Instantly</h3>
-                <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                <h3 class="text-base font-black text-slate-950 uppercase tracking-wide">Convert Estimates to Invoices Instantly</h3>
+                <p class="text-sm text-slate-600 leading-relaxed font-semibold">
                     One tap. No retyping. No double entry. Push active dispatch metrics directly down the production payment track immediately.
                 </p>
             </div>
 
-            <div class="bg-white border-2 border-slate-200 rounded-2xl p-6 text-left space-y-2.5 transition-all duration-300 hover:-translate-y-1 hover:border-slate-400 shadow-md">
+            <div class="bg-white border-2 border-slate-200 rounded-2xl p-6 text-left space-y-3 transition-all duration-300 hover:-translate-y-1 hover:border-slate-400 shadow-md">
                 <span class="text-2xl block select-none">💬</span>
-                <h3 class="text-sm font-black text-white uppercase tracking-wide">Quick Messaging to Customers</h3>
-                <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                <h3 class="text-base font-black text-slate-950 uppercase tracking-wide">Quick Messaging to Customers</h3>
+                <p class="text-sm text-slate-600 leading-relaxed font-semibold">
                     Send updates, reminders, approvals, and secure payment links right from the field terminal straight to client devices.
                 </p>
             </div>
 
-            <div class="bg-white border-2 border-slate-200 rounded-2xl p-6 text-left space-y-2.5 transition-all duration-300 hover:-translate-y-1 hover:border-slate-400 shadow-md">
+            <div class="bg-white border-2 border-slate-200 rounded-2xl p-6 text-left space-y-3 transition-all duration-300 hover:-translate-y-1 hover:border-slate-400 shadow-md">
                 <span class="text-2xl block select-none">📸</span>
-                <h3 class="text-sm font-black text-white uppercase tracking-wide">Capture & Send Job Photos</h3>
-                <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                <h3 class="text-base font-black text-slate-950 uppercase tracking-wide">Capture & Send Job Photos</h3>
+                <p class="text-sm text-slate-600 leading-relaxed font-semibold">
                     Snap photos, mark them up, attach them to estimates or invoices — protect your margins and your operational sanity.
                 </p>
             </div>
 
-            <div class="bg-white border-2 border-slate-200 rounded-2xl p-6 text-left space-y-2.5 transition-all duration-300 hover:-translate-y-1 hover:border-slate-400 shadow-md">
+            <div class="bg-white border-2 border-slate-200 rounded-2xl p-6 text-left space-y-3 transition-all duration-300 hover:-translate-y-1 hover:border-slate-400 shadow-md">
                 <span class="text-2xl block select-none">📅</span>
-                <h3 class="text-sm font-black text-white uppercase tracking-wide">Calendar Reminders & Job Tracking</h3>
-                <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                <h3 class="text-base font-black text-slate-950 uppercase tracking-wide">Calendar Reminders & Job Tracking</h3>
+                <p class="text-sm text-slate-600 leading-relaxed font-semibold">
                     Never forget a follow-up or route stop appointment again. Lock your daily dispatch layout density down into precise visual nodes.
                 </p>
             </div>
 
-            <div class="bg-white border-2 border-slate-200 rounded-2xl p-6 text-left space-y-2.5 transition-all duration-300 hover:-translate-y-1 hover:border-slate-400 shadow-md">
+            <div class="bg-white border-2 border-slate-200 rounded-2xl p-6 text-left space-y-3 transition-all duration-300 hover:-translate-y-1 hover:border-slate-400 shadow-md">
                 <span class="text-2xl block select-none">➕</span>
-                <h3 class="text-sm font-black text-white uppercase tracking-wide">On-the-Spot Add-On Invoices</h3>
-                <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                <h3 class="text-base font-black text-slate-950 uppercase tracking-wide">On-the-Spot Add-On Invoices</h3>
+                <p class="text-sm text-slate-600 leading-relaxed font-semibold">
                     Customer wants “one more thing”? Tap, add, send — capture those field changes and get paid before you leave the work site.
                 </p>
             </div>
 
-            <div class="bg-white border-2 border-slate-200 rounded-2xl p-6 text-left space-y-2.5 transition-all duration-300 hover:-translate-y-1 hover:border-slate-400 shadow-md">
+            <div class="bg-white border-2 border-slate-200 rounded-2xl p-6 text-left space-y-3 transition-all duration-300 hover:-translate-y-1 hover:border-slate-400 shadow-md">
                 <span class="text-2xl block select-none">💸</span>
-                <h3 class="text-sm font-black text-white uppercase tracking-wide">Text-to-Pay for Faster Cashflow</h3>
-                <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                <h3 class="text-sm font-black text-slate-950 uppercase tracking-wide">Text-to-Pay for Faster Cashflow</h3>
+                <p class="text-sm text-slate-600 leading-relaxed font-semibold">
                     Your customer taps, signs, pays. No complicated consumer portals. No chasing bad paper checks around town.
                 </p>
             </div>
 
-            <div class="bg-white border-2 border-slate-200 rounded-2xl p-6 text-left space-y-2.5 transition-all duration-300 hover:-translate-y-1 hover:border-slate-400 shadow-md lg:col-span-2">
+            <div class="bg-white border-2 border-slate-200 rounded-2xl p-6 text-left space-y-3 transition-all duration-300 hover:-translate-y-1 hover:border-slate-400 shadow-md lg:col-span-2">
                 <span class="text-2xl block select-none">📈</span>
-                <h3 class="text-sm font-black text-white uppercase tracking-wide">Automated Review Collection</h3>
-                <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                <h3 class="text-base font-black text-slate-950 uppercase tracking-wide">Automated Review Collection</h3>
+                <p class="text-sm text-slate-600 leading-relaxed font-semibold">
                     Timed review requests boost your local Google Map footprint automatically without begging, linking social verification nodes right on completion.
                 </p>
             </div>
@@ -461,7 +461,7 @@
                 <div class="flex flex-col gap-2.5 col-span-2 sm:col-span-1">
                     <span class="text-[10px] text-slate-700 tracking-widest font-black">Secure Terminals</span>
                     <a href="/login/partner" class="text-slate-500 hover:text-white transition-colors bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg text-center truncate text-decoration-none">General Contractor</a>
-                    <a href="/login/subcontractor" class="text-slate-500 hover:text-white transition-colors bg-slate-950 border border-slate-900 px-3 py-1.5 rounded-lg text-center truncate mt-1 text-decoration-none">Sub-Portal Access</a>
+                    <a href="/login/subcontractor" class="text-slate-500 hover:text-white transition-colors bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-lg text-center truncate mt-1 text-decoration-none">Sub-Portal Access</a>
                 </div>
             </div>
 
