@@ -60,6 +60,17 @@
                        class="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-sm font-bold text-slate-950 placeholder:text-slate-400 focus:outline-none focus:border-[#f58613] focus:ring-1 focus:ring-[#f58613] shadow-inner">
             </div>
 
+            {{-- 🛡️ COMPLIANT SMS OPT-IN DISCLOSURE MODIFIER (Clears Rejection Reasons 2 & 3) --}}
+            <div class="flex items-start gap-3 p-1">
+                <input type="checkbox" id="sms_consent" name="sms_consent" value="1" {{ old('sms_consent') ? 'checked' : '' }}
+                       class="accent-[#f58613] w-4 h-4 rounded border-slate-300 text-[#f58613] focus:ring-[#f58613] mt-0.5 shrink-0 cursor-pointer">
+                <label for="sms_consent" class="text-[10px] text-slate-500 font-medium leading-normal select-none cursor-pointer">
+                    I authorize <span class="font-bold text-slate-900">ContractorSpecialties</span> to send automated operational text messages (such as secure 6-digit login codes and account status notifications) to the mobile number provided above. Consent is optional and not a requirement of purchase. Message frequency varies. Msg & data rates may apply. Text STOP to halt alerts at any time.
+                    <span class="block font-black text-slate-950 mt-1.5 uppercase tracking-wide text-[9px]">🔒 Absolute Privacy Guarantee:</span>
+                    Your mobile information will not be sold or shared with third parties for promotional or marketing purposes. Review our active <a href="{{ route('legal.privacy') }}" class="text-[#f58613] font-black underline hover:text-orange-600 transition-colors">Privacy Policy</a>.
+                </label>
+            </div>
+
             <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-start gap-3 text-[11px] text-slate-500 font-medium leading-normal shadow-inner">
                 <span class="text-base select-none">📱</span>
                 <div>
