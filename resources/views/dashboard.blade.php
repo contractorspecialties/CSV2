@@ -209,7 +209,7 @@
                                     <div class="pt-2.5 border-t border-slate-200 flex items-center justify-between gap-2">
                                         <form action="/estimates/{{ $bid->id }}/status" method="POST" class="inline-block flex-1">
                                             @csrf
-                                            <input type=\"hidden\" name=\"status\" value=\"sent\">
+                                            <input type="hidden" name="status" value="sent">
                                             <button type="submit" class="w-full bg-slate-50 border-2 border-slate-300 hover:bg-[#f58613] hover:text-white text-slate-800 text-[10px] font-black uppercase py-2 px-2 rounded-xl transition-colors cursor-pointer text-center outline-none">
                                                 Send Out &rarr;
                                             </button>
