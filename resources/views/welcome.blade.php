@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-950 text-slate-200">
+<html lang="en" class="h-full bg-slate-100 text-slate-900">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -80,7 +80,8 @@
                     </div>
                 @endif
 
-                <form action="{{ route('login.magic') }}" method="POST" class="space-y-3.5">
+                <!-- 🛠️ ROUTE NAME SYNCHRONIZED FROM WEB.PHP ROUTING MANIFEST -->
+                <form action="{{ route('magic.send') }}" method="POST" class="space-y-3.5">
                     @csrf
                     <div>
                         <label for="login_email" class="block text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1.5">Business Registration Email</label>
@@ -104,7 +105,7 @@
             </div>
 
         </div>
-    </section>
+    </section>Target File Configuration Target File Update Strategy Value Strategy Matrix
 
     <!-- 🛠️ HIGH-UTILITY FUNCTIONAL VALUE MATRIX SECTION -->
     <section id="features" class="max-w-7xl w-full mx-auto px-4 py-20 space-y-10 text-center">
@@ -191,7 +192,7 @@
         </div>
     </section>
 
-    <!-- 🌐 SEMANTIC HTMl PUBLIC DIRECTORY REPUTATION MODULE -->
+    <!-- 🌐 SEMANTIC HTML PUBLIC DIRECTORY REPUTATION MODULE -->
     <section class="border-t border-b border-slate-900 bg-slate-950 px-4 py-20 text-center relative overflow-hidden">
         <div class="absolute inset-0 bg-[radial-gradient(#f58613/4%_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none"></div>
         <div class="max-w-4xl mx-auto space-y-8 relative z-10">
@@ -254,7 +255,7 @@
         <!-- Mission Section Panel -->
         <div class="space-y-6 text-left md:pt-2">
             <div class="space-y-2">
-                <span class="text-[10px] font-black uppercase text-[#f58613] tracking-widest font-mono block">Our Core Core Framework</span>
+                <span class="text-[10px] font-black uppercase text-[#f58613] tracking-widest font-mono block">Our Core Framework</span>
                 <h3 class="text-2xl font-black text-white uppercase tracking-tight">We’re Here to Make Contractors More Profitable — Period</h3>
                 <div class="h-1 w-12 bg-[#f58613] rounded-full mt-3"></div>
             </div>
