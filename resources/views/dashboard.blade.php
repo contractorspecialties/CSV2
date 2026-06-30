@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-100 text-slate-900">
+<html lang="en" class="h-full bg-slate-50 text-slate-900">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Command Cockpit | ContractorSpecialties</title>
+    <title>Master Command Engine | ContractorSpecialties</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="flex flex-col min-h-full font-sans antialiased bg-slate-50 text-slate-900 selection:bg-[#f58613] selection:text-white">
+<body x-data="{ openTools: false }" @click.outside="openTools = false" class="min-h-full font-sans antialiased text-slate-800 bg-slate-50 flex flex-col justify-between selection:bg-[#f58613] selection:text-white">
 
     <!-- 🛡️ SECURE INTERCEPT SYSTEM DISCONNECT TERMINAL BANNER -->
     @if(session()->has('admin_impersonator_id'))
@@ -92,7 +92,7 @@
 
             <section class="grid grid-cols-3 md:grid-cols-6 gap-4">
                 <a href="/estimates/create" class="relative flex flex-col items-center justify-center aspect-square bg-gradient-to-b from-[#f58613] to-orange-600 rounded-3xl shadow-md hover:shadow-xl active:scale-95 transition-all group overflow-hidden cursor-pointer text-decoration-none border-0">
-                    <span class="text-4xl mb-2 group-hover:scale-110 transition-transform">txt</span>
+                    <span class="text-4xl mb-2 group-hover:scale-110 transition-transform">📝</span>
                     <span class="text-xs font-black text-white uppercase tracking-wider text-center px-1">New Estimate</span>
                 </a>
 
@@ -150,7 +150,7 @@
                     @foreach($daysOfWeek as $day)
                         <div @click="selectedDayJobs = {{ json_encode($day['appointments']) }}; selectedDayName = '{{ $day['full_date'] }}'; showApptModal = true;"
                              class="p-3 rounded-2xl border-2 flex flex-col justify-between h-28 transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] group select-none
-                            {{ $day['status'] === 'today' ? 'bg-[#f58613] border-[#f58613] text-white shadow-md ring-4 ring-[#f58613]/10' : '' }}
+                            {{ $day['status'] === 'today' ? 'bg-gradient-to-b from-[#f58613] to-orange-600 border-[#f58613] text-white shadow-md ring-4 ring-[#f58613]/10' : '' }}
                             {{ $day['status'] === 'past' ? 'bg-slate-50 border-slate-200 opacity-50 text-slate-400' : '' }}
                             {{ $day['status'] === 'active' ? 'bg-slate-50 border-slate-300 text-slate-900 hover:border-slate-900' : '' }}
                             {{ $day['status'] === 'weekend' ? 'bg-slate-100/60 border-slate-200 text-slate-400 border-dashed' : '' }}
@@ -202,7 +202,7 @@
                                             <span class="text-sm font-mono font-black text-slate-900">${{ number_format($bid->grand_total, 2) }}</span>
                                         </div>
                                         <div>
-                                            <h4 class="font-black text-sm text-slate-950 uppercase truncate mt-1">{{ $bid->customer->name ?? 'Unmapped Client' }}</h4>
+                                            <h4 class="font-black text-sm text-slate-950 uppercase truncate mt-1">{{ $bid->customer->client_name ?? 'Unmapped Client' }}</h4>
                                             <p class="text-[10px] text-slate-400 font-bold truncate mt-0.5">Compiled {{ $bid->created_at->format('M j, Y') }}</p>
                                         </div>
                                     </a>
@@ -243,7 +243,7 @@
                                             <span class="text-sm font-mono font-black text-slate-900">${{ number_format($bid->grand_total, 2) }}</span>
                                         </div>
                                         <div>
-                                            <h4 class="font-black text-sm text-slate-950 uppercase truncate mt-1">{{ $bid->customer->name ?? 'Unmapped Client' }}</h4>
+                                            <h4 class="font-black text-sm text-slate-950 uppercase truncate mt-1">{{ $bid->customer->client_name ?? 'Unmapped Client' }}</h4>
                                             <p class="text-[10px] text-slate-400 font-bold truncate mt-0.5">Awaiting signature approval</p>
                                         </div>
                                     </a>
@@ -284,7 +284,7 @@
                                             <span class="text-sm font-mono font-black text-emerald-600">${{ number_format($bid->grand_total, 2) }}</span>
                                         </div>
                                         <div>
-                                            <h4 class="font-black text-sm text-slate-950 uppercase truncate mt-1">{{ $bid->customer->name ?? 'Unmapped Client' }}</h4>
+                                            <h4 class="font-black text-sm text-slate-950 uppercase truncate mt-1">{{ $bid->customer->client_name ?? 'Unmapped Client' }}</h4>
                                             <p class="text-[10px] text-emerald-600 font-black tracking-tight uppercase text-[8px] mt-1 bg-emerald-50 border border-emerald-100 inline-block px-1.5 py-0.5 rounded shadow-sm">⚡ Active Production Order</p>
                                         </div>
                                     </a>
@@ -318,7 +318,7 @@
                                             <span class="text-sm font-mono font-bold text-slate-500">${{ number_format($bid->grand_total, 2) }}</span>
                                         </div>
                                         <div>
-                                            <h4 class="font-black text-sm text-slate-700 uppercase truncate mt-1">{{ $bid->customer->name ?? 'Unmapped Client' }}</h4>
+                                            <h4 class="font-black text-sm text-slate-700 uppercase truncate mt-1">{{ $bid->customer->client_name ?? 'Unmapped Client' }}</h4>
                                             <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">Fulfillment run finalized</p>
                                         </div>
                                     </a>
@@ -345,7 +345,7 @@
                 <div class="lg:col-span-2 bg-white border-2 border-slate-300 rounded-3xl p-6 shadow-sm space-y-4">
                     <div class="flex items-center justify-between border-b border-slate-200 pb-3">
                         <h3 class="font-black text-base tracking-tight text-slate-900 uppercase flex items-center gap-2">
-                            🗂️ Recent Clients Logged
+                            🗂️ Recent Customers Logged
                         </h3>
                         <a href="/workspace/crm" class="text-xs font-black text-[#f58613] hover:text-orange-600 uppercase tracking-wider text-decoration-none">Open CRM Desk &rarr;</a>
                     </div>
@@ -354,7 +354,7 @@
                         <table class="w-full text-left text-sm">
                             <thead>
                                 <tr class="text-xs uppercase text-slate-400 border-b border-slate-200 font-mono font-black tracking-wider">
-                                    <th class="pb-3">Client Parameters</th>
+                                    <th class="pb-3">Customer Parameters</th>
                                     <th class="pb-3">Contact Metrics</th>
                                     <th class="pb-3 text-right">Lifetime Invoice Total</th>
                                 </tr>
@@ -363,11 +363,11 @@
                                 @forelse($recentCustomers as $customer)
                                     <tr class="hover:bg-slate-50/80 transition-colors">
                                         <td class="py-4 font-black text-slate-950 text-base uppercase tracking-tight">
-                                            {{ $customer->name }}
+                                            {{ $customer->client_name }}
                                         </td>
                                         <td class="py-4 text-xs text-slate-600 font-medium space-y-1">
                                             <div class="truncate max-w-[220px]">📧 {{ $customer->email }}</div>
-                                            <div>📱 {{ $customer->phone }}</div>
+                                            <div>📱 {{ $customer->phone_number }}</div>
                                         </td>
                                         <td class="py-4 text-right font-mono font-black text-slate-950 text-base">
                                             ${{ number_format($customer->lifetime_value, 2) }}
@@ -454,7 +454,7 @@
                                     <div>
                                         <h4 class="font-black text-slate-950 text-base uppercase tracking-tight" x-text="job.title"></h4>
                                         <p class="text-xs font-bold text-slate-500 mt-1">
-                                            👤 Client File: <span class="text-slate-900 font-black" x-text="job.customer_name"></span>
+                                            👤 Customer File: <span class="text-slate-900 font-black" x-text="job.customer_name"></span>
                                         </p>
                                     </div>
                                     <span class="font-mono font-black text-xs text-white bg-slate-900 px-2.5 py-1 rounded-xl shadow-sm shrink-0" x-text="job.time"></span>
