@@ -53,6 +53,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/workspace/setup', [OnboardingController::class, 'processWizard'])->name('onboarding.submit');
 
     // 🛡️ EMERGENCY ACCESS DISMISSAL BRIDGE
+    // Placed out here so an admin can instantly drop out of a broken or incomplete account partition
     Route::post('/admin/management/impersonate/stop', [AdminDashboardController::class, 'stopImpersonating'])->name('admin.impersonate.stop');
 
     /*
@@ -126,8 +127,9 @@ Route::middleware(['auth'])->group(function () {
         |--------------------------------------------------------------------------
         | 🛡️ SECURE ADMINISTRATIVE INLINE PROXIES
         |--------------------------------------------------------------------------
-        | app(Controller::class) resolves the instance dynamically from the container,
-        | allowing standard instance methods to be processed cleanly with zero conflicts.
+        | Resolving the controller instance out of the application container
+        | via app() forces PHP to evaluate the action route as an instance method.
+        | This approach bypasses string-casting arrays and handles dependency injection safely.
         |
         */
         Route::get('/admin/management', function () {
