@@ -29,14 +29,14 @@ class EstimateController extends Controller
     {
         $companyId = Auth::user()->company_id;
 
-        // Fetch company directory clients ordered cleanly by name properties
+        // Fetch company directory clients ordered cleanly by client_name properties
         $customers = Client::where('company_id', $companyId)
-            ->orderBy('name', 'asc')
+            ->orderBy('client_name', 'asc')
             ->get();
 
         // Inject first/last split properties into memory so legacy view variables evaluate cleanly
         $customers->each(function($client) {
-            $parts = explode(' ', trim($client->name ?? ''), 2);
+            $parts = explode(' ', trim($client->client_name ?? ''), 2);
             $client->first_name = $parts[0] ?? 'Client';
             $client->last_name = $parts[1] ?? ' ';
             $client->billing_address = $client->address;
@@ -122,7 +122,8 @@ class EstimateController extends Controller
                 $customer->company_id = $companyId;
             }
 
-            $customer->name = $fullName;
+            // Fixed property assignment constraint mapping cleanly to database schema field names
+            $customer->client_name = $fullName;
             $customer->email = $validated['customer_email'];
             $customer->phone = $validated['customer_phone'];
             $customer->address = $validated['customer_address'];
@@ -230,14 +231,14 @@ class EstimateController extends Controller
             ->findOrFail($id);
 
         if ($estimate->customer) {
-            $parts = explode(' ', trim($estimate->customer->name ?? ''), 2);
+            $parts = explode(' ', trim($estimate->customer->client_name ?? ''), 2);
             $estimate->customer->first_name = $parts[0] ?? 'Client';
             $estimate->customer->last_name = $parts[1] ?? ' ';
         }
 
         $attachments = JobAttachment::where('estimate_id', $estimate->id)->get();
-
-        // 🔒 Inject Temporary Signed Route Access Paths into view model references
+        
+        // Inject Temporary Signed Route Access Paths into view model references
         $attachments->each(function($asset) {
             $asset->secure_url = URL::temporarySignedRoute(
                 'estimates.attachments.stream',
@@ -339,7 +340,7 @@ class EstimateController extends Controller
                 'caption'     => $request->caption ?? 'Field status update log'
             ]);
 
-            return back()->with('status', '📸 Progress photo compressed to WebP and locked into isolated storage matrix successfully.');
+            return back()->with('status', '📸 Progress photo successfully bound to project history archive.');
         }
 
         return back()->with('error', 'Failed to read media asset configuration.');
@@ -377,7 +378,7 @@ class EstimateController extends Controller
             ->firstOrFail();
 
         if ($estimate->customer) {
-            $parts = explode(' ', trim($estimate->customer->name ?? ''), 2);
+            $parts = explode(' ', trim($estimate->customer->client_name ?? ''), 2);
             $estimate->customer->first_name = $parts[0] ?? 'Client';
             $estimate->customer->last_name = $parts[1] ?? ' ';
         }
@@ -388,7 +389,7 @@ class EstimateController extends Controller
         $estimate->company = DB::table($prefix . 'companies')->where('id', $estimate->company_id)->first();
         $attachments = JobAttachment::where('estimate_id', $estimate->id)->get();
 
-        // 🔒 Generate Secure URLs for Homeowner checkout tracking portals
+        // Generate Secure URLs for Homeowner checkout tracking portals
         $attachments->each(function($asset) {
             $asset->secure_url = URL::temporarySignedRoute(
                 'estimates.attachments.stream',
@@ -523,7 +524,6 @@ class EstimateController extends Controller
 
             $attachments = JobAttachment::where('estimate_id', $estimate->id)->get();
             foreach ($attachments as $fileAsset) {
-                // Securely strip file nodes out of the private storage local disk
                 if (Storage::disk('local')->exists($fileAsset->file_path)) {
                     Storage::disk('local')->delete($fileAsset->file_path);
                 }
@@ -545,7 +545,6 @@ class EstimateController extends Controller
         $rawBuffer = file_get_contents($file->getRealPath());
         $sourceImage = @imagecreatefromstring($rawBuffer);
 
-        // Fallback straight array pass if the host GD compilation layer fails on unusual encoding signatures
         if (!$sourceImage) {
             $fallbackName = 'attachments/' . $estimateId . '_' . Str::random(12) . '_' . time() . '.' . $file->getClientOriginalExtension();
             Storage::disk('local')->put($fallbackName, $rawBuffer);
@@ -556,7 +555,6 @@ class EstimateController extends Controller
         $height = imagesy($sourceImage);
         $maxDimension = 1200;
 
-        // Perform programmatic proportional downscaling if constraints exceed bounds
         if ($width > $maxDimension || $height > $maxDimension) {
             if ($width > $height) {
                 $targetWidth = $maxDimension;
@@ -568,7 +566,6 @@ class EstimateController extends Controller
 
             $canvasImage = imagecreatetruecolor($targetWidth, $targetHeight);
 
-            // Retain full alpha layer properties for translucent structures
             imagealphablending($canvasImage, false);
             imagesavealpha($canvasImage, true);
 
@@ -577,9 +574,8 @@ class EstimateController extends Controller
             $sourceImage = $canvasImage;
         }
 
-        // Buffer the stream inline to capture byte matrices cleanly for the local filesystem
         ob_start();
-        imagewebp($sourceImage, null, 80); // 80% compression ratio sweet spot for high crispness under reflection
+        imagewebp($sourceImage, null, 80);
         $compressedData = ob_get_clean();
         imagedestroy($sourceImage);
 
