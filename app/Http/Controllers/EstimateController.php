@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
 class EstimateController extends Controller
@@ -198,18 +199,14 @@ class EstimateController extends Controller
             $estimate->grand_total = $calculatedGrandTotal;
             $estimate->save();
 
+            // Handle file ingestion securely into isolated storage
             if ($request->hasFile('image') && $request->file('image')->isValid()) {
-                if (!file_exists(public_path('uploads/attachments'))) {
-                    mkdir(public_path('uploads/attachments'), 0755, true);
-                }
-
                 $file = $request->file('image');
-                $filename = 'attachment_' . $estimate->id . '_' . Str::random(6) . '_' . time() . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('uploads/attachments'), $filename);
+                $securedPath = $this->compressAndVaultFieldPhoto($file, $estimate->id);
 
                 $attachment = new JobAttachment();
                 $attachment->estimate_id = $estimate->id;
-                $attachment->file_path = 'uploads/attachments/' . $filename;
+                $attachment->file_path = $securedPath;
                 $attachment->file_type = 'image';
                 $attachment->caption = $request->caption ?? 'Initial project scope capture';
                 $attachment->save();
@@ -239,6 +236,15 @@ class EstimateController extends Controller
         }
 
         $attachments = JobAttachment::where('estimate_id', $estimate->id)->get();
+
+        // 🔒 Inject Temporary Signed Route Access Paths into view model references
+        $attachments->each(function($asset) {
+            $asset->secure_url = URL::temporarySignedRoute(
+                'estimates.attachments.stream',
+                now()->addMinutes(60),
+                ['id' => $asset->id]
+            );
+        });
 
         return view('estimates.show', compact('estimate', 'attachments'));
     }
@@ -295,7 +301,6 @@ class EstimateController extends Controller
 
             if (!empty($fromLine)) {
                 try {
-                    // Offload this synchronous API loop to our background queue terminal engine
                     \App\Jobs\SendPortalSms::dispatch(
                         $estimate->customer->phone,
                         "Hello " . ($estimate->customer->first_name ?? 'Client') . ", we have processed your feedback and adjusted your project proposal specifications package. Review revisions here: " . $portalLink,
@@ -311,12 +316,12 @@ class EstimateController extends Controller
     }
 
     /**
-     * Upload an estimate attachment card mapped safely to unconstrained public directories.
+     * Upload an estimate attachment card, compressing assets on-the-fly into isolated vaults.
      */
     public function uploadAttachment(Request $request, $id)
     {
         $request->validate([
-            'image'   => 'required|image|max:10240',
+            'image'   => 'required|image|max:12288', // Supports raw fields up to 12MB safely
             'caption' => 'nullable|string|max:255'
         ]);
 
@@ -324,25 +329,41 @@ class EstimateController extends Controller
         $estimate = Estimate::where('company_id', $companyId)->findOrFail($id);
 
         if ($request->file('image')->isValid()) {
-            if (!file_exists(public_path('uploads/attachments'))) {
-                mkdir(public_path('uploads/attachments'), 0755, true);
-            }
-
             $file = $request->file('image');
-            $filename = 'attachment_' . $estimate->id . '_' . Str::random(6) . '_' . time() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/attachments'), $filename);
+            $securedPath = $this->compressAndVaultFieldPhoto($file, $estimate->id);
 
             JobAttachment::create([
                 'estimate_id' => $estimate->id,
-                'file_path'   => 'uploads/attachments/' . $filename,
+                'file_path'   => $securedPath,
                 'file_type'   => 'image',
                 'caption'     => $request->caption ?? 'Field status update log'
             ]);
 
-            return back()->with('status', '📸 Progress photo successfully bound to project history archive.');
+            return back()->with('status', '📸 Progress photo compressed to WebP and locked into isolated storage matrix successfully.');
         }
 
         return back()->with('error', 'Failed to read media asset configuration.');
+    }
+
+    /**
+     * 🛡️ SECURE ASSET STREAM ENGINE
+     * Authenticates incoming temporary signatures before serving file stream vectors.
+     */
+    public function streamAttachment(Request $request, $id)
+    {
+        if (!$request->hasValidSignature()) {
+            abort(403, '🛑 Security access token expired or operational signature mismatch.');
+        }
+
+        $attachment = JobAttachment::findOrFail($id);
+
+        if (!Storage::disk('local')->exists($attachment->file_path)) {
+            abort(404, 'Requested project file asset does not exist.');
+        }
+
+        $fileContents = Storage::disk('local')->get($attachment->file_path);
+
+        return response($fileContents, 200)->header('Content-Type', 'image/webp');
     }
 
     /**
@@ -366,6 +387,15 @@ class EstimateController extends Controller
 
         $estimate->company = DB::table($prefix . 'companies')->where('id', $estimate->company_id)->first();
         $attachments = JobAttachment::where('estimate_id', $estimate->id)->get();
+
+        // 🔒 Generate Secure URLs for Homeowner checkout tracking portals
+        $attachments->each(function($asset) {
+            $asset->secure_url = URL::temporarySignedRoute(
+                'estimates.attachments.stream',
+                now()->addMinutes(60),
+                ['id' => $asset->id]
+            );
+        });
 
         return view('portal', compact('estimate', 'attachments'));
     }
@@ -443,7 +473,6 @@ class EstimateController extends Controller
 
             if ($company && !empty($company->sms_phone_number)) {
                 try {
-                    // Dispatch the notification task safely inside our database queue framework
                     \App\Jobs\SendPortalSms::dispatch(
                         $company->sms_phone_number,
                         "⚠️ Alert: Client has logged a change request on Estimate #{$estimate->estimate_number} (" . ($estimate->customer->first_name ?? 'Client') . "). Review details here: " . url("/estimates/{$estimate->id}")
@@ -494,9 +523,9 @@ class EstimateController extends Controller
 
             $attachments = JobAttachment::where('estimate_id', $estimate->id)->get();
             foreach ($attachments as $fileAsset) {
-                $cleanFilePath = public_path($fileAsset->file_path);
-                if (file_exists($cleanFilePath)) {
-                    @unlink($cleanFilePath);
+                // Securely strip file nodes out of the private storage local disk
+                if (Storage::disk('local')->exists($fileAsset->file_path)) {
+                    Storage::disk('local')->delete($fileAsset->file_path);
                 }
                 $fileAsset->delete();
             }
@@ -505,6 +534,59 @@ class EstimateController extends Controller
         });
 
         return redirect()->route('dashboard')->with('status', '🗑️ Old estimate record permanently purged.');
+    }
+
+    /**
+     * 🔮 INTERNAL NATIVE COMPACTION ENGINE
+     * Processes high-resolution files into WebP format down to a strict 1200px ceiling.
+     */
+    private function compressAndVaultFieldPhoto(UploadedFile $file, int $estimateId): string
+    {
+        $rawBuffer = file_get_contents($file->getRealPath());
+        $sourceImage = @imagecreatefromstring($rawBuffer);
+
+        // Fallback straight array pass if the host GD compilation layer fails on unusual encoding signatures
+        if (!$sourceImage) {
+            $fallbackName = 'attachments/' . $estimateId . '_' . Str::random(12) . '_' . time() . '.' . $file->getClientOriginalExtension();
+            Storage::disk('local')->put($fallbackName, $rawBuffer);
+            return $fallbackName;
+        }
+
+        $width = imagesx($sourceImage);
+        $height = imagesy($sourceImage);
+        $maxDimension = 1200;
+
+        // Perform programmatic proportional downscaling if constraints exceed bounds
+        if ($width > $maxDimension || $height > $maxDimension) {
+            if ($width > $height) {
+                $targetWidth = $maxDimension;
+                $targetHeight = (int) ($height * ($maxDimension / $width));
+            } else {
+                $targetHeight = $maxDimension;
+                $targetWidth = (int) ($width * ($maxDimension / $height));
+            }
+
+            $canvasImage = imagecreatetruecolor($targetWidth, $targetHeight);
+
+            // Retain full alpha layer properties for translucent structures
+            imagealphablending($canvasImage, false);
+            imagesavealpha($canvasImage, true);
+
+            imagecopyresampled($canvasImage, $sourceImage, 0, 0, 0, 0, $targetWidth, $targetHeight, $width, $height);
+            imagedestroy($sourceImage);
+            $sourceImage = $canvasImage;
+        }
+
+        // Buffer the stream inline to capture byte matrices cleanly for the local filesystem
+        ob_start();
+        imagewebp($sourceImage, null, 80); // 80% compression ratio sweet spot for high crispness under reflection
+        $compressedData = ob_get_clean();
+        imagedestroy($sourceImage);
+
+        $vaultName = 'attachments/' . $estimateId . '_' . Str::random(12) . '_' . time() . '.webp';
+        Storage::disk('local')->put($vaultName, $compressedData);
+
+        return $vaultName;
     }
 
     /**
