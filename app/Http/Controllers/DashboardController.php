@@ -33,9 +33,10 @@ class DashboardController extends Controller
         // Inject compatibility attributes onto the loaded client objects for the Kanban layout display names
         $estimates->each(function($estimate) {
             if ($estimate->customer) {
-                $parts = explode(' ', trim($estimate->customer->name ?? ''), 2);
+                $parts = explode(' ', trim($estimate->customer->client_name ?? ''), 2);
                 $estimate->customer->first_name = $parts[0] ?? 'Client';
                 $estimate->customer->last_name = $parts[1] ?? ' ';
+                $estimate->customer->billing_address = $estimate->customer->address;
             }
         });
 
@@ -59,7 +60,7 @@ class DashboardController extends Controller
                 $client->lifetime_value = $client->lifetime_value ?? 0.00;
 
                 // Provide split-name compatibility parameters for the right-hand dashboard card layout
-                $parts = explode(' ', trim($client->name ?? ''), 2);
+                $parts = explode(' ', trim($client->client_name ?? ''), 2);
                 $client->first_name = $parts[0] ?? 'Client';
                 $client->last_name = $parts[1] ?? ' ';
 
@@ -118,7 +119,7 @@ class DashboardController extends Controller
                         'time'            => $job->scheduled_at->format('g:i A'),
                         'status'          => $job->status,
                         'notes'           => $job->notes,
-                        'customer_name'   => $matchedClient ? $matchedClient->name : 'Unassigned Client',
+                        'customer_name'   => $matchedClient ? $matchedClient->client_name : 'Unassigned Client',
                         'estimate_id'     => $job->estimate_id,
                         'estimate_number' => $job->estimate ? $job->estimate->estimate_number : null,
                     ];
