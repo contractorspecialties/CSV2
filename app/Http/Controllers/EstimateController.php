@@ -122,10 +122,10 @@ class EstimateController extends Controller
                 $customer->company_id = $companyId;
             }
 
-            // Fixed property assignment constraint mapping cleanly to database schema field names
+            // Fixed field constraint mapping to prevent execution failures
             $customer->client_name = $fullName;
             $customer->email = $validated['customer_email'];
-            $customer->phone = $validated['customer_phone'];
+            $customer->phone_number = $validated['customer_phone'];
             $customer->address = $validated['customer_address'];
             $customer->save();
 
@@ -237,7 +237,7 @@ class EstimateController extends Controller
         }
 
         $attachments = JobAttachment::where('estimate_id', $estimate->id)->get();
-        
+
         // Inject Temporary Signed Route Access Paths into view model references
         $attachments->each(function($asset) {
             $asset->secure_url = URL::temporarySignedRoute(
@@ -292,7 +292,7 @@ class EstimateController extends Controller
             'status' => 'sent'
         ]);
 
-        if (!empty($estimate->customer->phone)) {
+        if (!empty($estimate->customer->phone_number)) {
             $portalLink = route('portal.checkout', ['token' => $estimate->estimate_number]);
 
             $userTable = (new \App\Models\User())->getTable();
@@ -303,7 +303,7 @@ class EstimateController extends Controller
             if (!empty($fromLine)) {
                 try {
                     \App\Jobs\SendPortalSms::dispatch(
-                        $estimate->customer->phone,
+                        $estimate->customer->phone_number,
                         "Hello " . ($estimate->customer->first_name ?? 'Client') . ", we have processed your feedback and adjusted your project proposal specifications package. Review revisions here: " . $portalLink,
                         $fromLine
                     );
