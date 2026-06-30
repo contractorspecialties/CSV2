@@ -41,10 +41,11 @@
 
         <div class="border-b border-slate-200 pb-4 mb-6">
             <h1 class="text-3xl font-black text-slate-950 uppercase tracking-tight">Compile New Job Estimate</h1>
-            <p class="text-base text-slate-500 font-bold mt-1">Select a client profile workspace, build service line items, and lock parameters.</p>
+            <p class="text-base text-slate-500 font-bold mt-1">Select a customer, build service line items, and lock parameters.</p>
         </div>
 
-        <form action="/estimates" method="POST" enctype="multipart/form-data" class="space-y-8">
+        <!-- Added local cache purge trigger hook to form submission event execution pipeline -->
+        <form action="/estimates" method="POST" enctype="multipart/form-data" @submit="clearLocalCache()" class="space-y-8">
             @csrf
 
             <input type="hidden" name="customer_id" x-model="customer_id">
@@ -52,8 +53,8 @@
             <div class="bg-white border-2 border-slate-300 rounded-3xl p-6 shadow-sm space-y-6">
                 <div class="border-b border-slate-200 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h3 class="font-black text-lg text-slate-900 uppercase tracking-wider">1. Customer Account Profile</h3>
-                        <p class="text-xs text-slate-400 font-bold mt-0.5">Link a historical client record or map a new lead entry right from the field.</p>
+                        <h3 class="font-black text-lg text-slate-900 uppercase tracking-wider">1. Customer Information</h3>
+                        <p class="text-xs text-slate-400 font-bold mt-0.5">Link an existing customer record or map a new lead entry right from the field.</p>
                     </div>
 
                     <div class="flex p-1.5 bg-slate-100 rounded-2xl max-w-xs border-2 border-slate-200 w-full sm:w-auto">
@@ -72,15 +73,16 @@
                     </div>
                 </div>
 
+                <!-- Changed select labels and fallback strings to non-technical Customer phrasing -->
                 <div class="space-y-2" x-show="customerSource === 'directory'" x-transition>
-                    <label Skinner for="customer_select" class="block text-xs font-black uppercase text-slate-500 tracking-wider">Choose Active Client Profile</label>
+                    <label for="customer_select" class="block text-xs font-black uppercase text-slate-500 tracking-wider">Choose Customer</label>
                     <select id="customer_select"
                             @change="loadDirectoryProfile($event.target.value)"
                             class="w-full bg-slate-50 border-4 border-slate-300 rounded-2xl py-4 px-5 text-lg font-bold text-slate-900 focus:outline-none focus:border-slate-900 cursor-pointer">
-                        <option value="">-- Select a client file profile --</option>
+                        <option value="">-- Choose an existing customer --</option>
                         @foreach($customers as $customer)
                             <option value="{{ $customer->id }}" {{ old('customer_select') == $customer->id ? 'selected' : '' }}>
-                                {{ $customer->last_name }}, {{ $customer->first_name }} ({{ $customer->phone ?? 'No Phone Contact Saved' }})
+                                {{ $customer->last_name }}, {{ $customer->first_name }} ({{ $customer->phone_number ?? 'No Phone Contact Saved' }})
                             </option>
                         @endforeach
                     </select>
@@ -313,6 +315,7 @@
                 </div>
             </div>
 
+            <!-- Clarified help text reference to read Homeowner -->
             <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-2">
                 <label for="notes" class="block text-xs font-black uppercase text-slate-500 tracking-wider">Proposal Terms / Homeowner Scope Notes</label>
                 <p class="text-xs font-bold text-slate-400 mb-2">Scope constraints, materials lists, or payment schedules. The customer WILL see these details on their phone portal layout.</p>
@@ -329,6 +332,10 @@
                     <div class="flex justify-between sm:justify-start gap-4" x-show="taxRate > 0" x-cloak>
                         <span class="w-36 font-bold uppercase tracking-wider text-slate-400">Tax Surcharges:</span>
                         <span class="font-black text-slate-900 text-sm" x-text="'+$' + taxTotal.toFixed(2)">+$0.00</span>
+                    </div>
+                    <div class="flex justify-between sm:justify-start gap-4" x-show="requireDeposit && depositAmount > 0" x-cloak>
+                        <span class="w-36 font-bold uppercase tracking-wider text-slate-400">Required Deposit:</span>
+                        <span class="font-black text-orange-600 text-sm" x-text="'$' + parseFloat(depositAmount).toFixed(2)">$0.00</span>
                     </div>
                     <div class="flex justify-between sm:justify-start gap-4 pt-2 border-t-2 border-slate-100">
                         <span class="w-36 font-black uppercase tracking-wider text-slate-800">Total Bid Amount:</span>
@@ -456,26 +463,90 @@
                 markupPreviewUrl: '',
 
                 init() {
-                    @if(old('items'))
-                        @foreach(old('items') as $idx => $oldItem)
-                            this.items.push({
-                                id: {{ microtime(true) * 1000 + $idx }},
-                                description: @js($oldItem['description'] ?? ''),
-                                quantity: parseFloat(@js($oldItem['quantity'] ?? 1)) || 1,
-                                unit_price: parseFloat(@js($oldItem['unit_price'] ?? 0.00)) || 0.00,
-                                is_taxable: @js(!isset($oldItem['is_taxable']) || $oldItem['is_taxable'] == 1 || $oldItem['is_taxable'] === 'true' || $oldItem['is_taxable'] === 'on'),
-                                save_to_pricebook: @js($oldItem['save_to_pricebook'] == 1 || $oldItem['save_to_pricebook'] === 'true' || $oldItem['save_to_pricebook'] === 'on')
-                            });
-                        @endforeach
-                    @else
-                        this.items.push({ id: Date.now(), description: '', quantity: 1, unit_price: 0.00, is_taxable: true, save_to_pricebook: false });
-                    @endif
+                    // 🛡️ DEAD-ZONE LOCAL CACHE EVALUATION HANDSHAKE
+                    const savedCache = localStorage.getItem('cs_estimate_draft_cache');
+                    if (savedCache) {
+                        try {
+                            const parsed = JSON.parse(savedCache);
+                            this.customerSource = parsed.customerSource ?? 'directory';
+                            this.customer_id = parsed.customer_id ?? '';
+                            this.customer_first_name = parsed.customer_first_name ?? '';
+                            this.customer_last_name = parsed.customer_last_name ?? '';
+                            this.customer_email = parsed.customer_email ?? '';
+                            this.customer_phone = parsed.customer_phone ?? '';
+                            this.customer_address = parsed.customer_address ?? '';
+                            this.taxRate = parsed.taxRate ?? 0;
+                            this.requireDeposit = parsed.requireDeposit ?? false;
+                            this.depositAmount = parsed.depositAmount ?? 0;
+                            this.isRecurring = parsed.isRecurring ?? false;
+
+                            if (parsed.items && parsed.items.length > 0) {
+                                this.items = parsed.items;
+                            }
+                        } catch (e) {
+                            console.error("Failed to parse dead-zone local storage cache string keys.", e);
+                        }
+                    }
+
+                    // Fallback to traditional Laravel validation state arrays if localStorage is unpopulated
+                    if (this.items.length === 0) {
+                        @if(old('items'))
+                            @foreach(old('items') as $idx => $oldItem)
+                                this.items.push({
+                                    id: {{ microtime(true) * 1000 + $idx }},
+                                    description: @js($oldItem['description'] ?? ''),
+                                    quantity: parseFloat(@js($oldItem['quantity'] ?? 1)) || 1,
+                                    unit_price: parseFloat(@js($oldItem['unit_price'] ?? 0.00)) || 0.00,
+                                    is_taxable: @js(!isset($oldItem['is_taxable']) || $oldItem['is_taxable'] == 1 || $oldItem['is_taxable'] === 'true' || $oldItem['is_taxable'] === 'on'),
+                                    save_to_pricebook: @js($oldItem['save_to_pricebook'] == 1 || $oldItem['save_to_pricebook'] === 'true' || $oldItem['save_to_pricebook'] === 'on')
+                                });
+                            @endforeach
+                        @else
+                            this.items.push({ id: Date.now(), description: '', quantity: 1, unit_price: 0.00, is_taxable: true, save_to_pricebook: false });
+                        @endif
+                    }
 
                     const preselectedId = '{{ $preselectedCustomerId ?? "" }}';
                     if (preselectedId && !this.customer_first_name) {
                         this.loadDirectoryProfile(preselectedId);
                     }
+
+                    // Register real-time field state watchers to seamlessly cache client variables
+                    this.$watch('items', () => this.persistToLocalCache(), { deep: true });
+                    this.$watch('customerSource', () => this.persistToLocalCache());
+                    this.$watch('customer_first_name', () => this.persistToLocalCache());
+                    this.$watch('customer_last_name', () => this.persistToLocalCache());
+                    this.$watch('customer_email', () => this.persistToLocalCache());
+                    this.$watch('customer_phone', () => this.persistToLocalCache());
+                    this.$watch('customer_address', () => this.persistToLocalCache());
+                    this.$watch('taxRate', () => this.persistToLocalCache());
+                    this.$watch('requireDeposit', () => this.persistToLocalCache());
+                    this.$watch('depositAmount', () => this.persistToLocalCache());
+                    this.$watch('isRecurring', () => this.persistToLocalCache());
                 },
+
+                persistToLocalCache() {
+                    const cacheMatrix = {
+                        customerSource: this.customerSource,
+                        customer_id: this.customer_id,
+                        customer_first_name: this.customer_first_name,
+                        customer_last_name: this.customer_last_name,
+                        customer_email: this.customer_email,
+                        customer_phone: this.customer_phone,
+                        customer_address: this.customer_address,
+                        taxRate: this.taxRate,
+                        requireDeposit: this.requireDeposit,
+                        depositAmount: this.depositAmount,
+                        isRecurring: this.isRecurring,
+                        items: this.items
+                    };
+                    localStorage.setItem('cs_estimate_draft_cache', JSON.stringify(cacheMatrix));
+                },
+
+                clearLocalCache() {
+                    localStorage.removeItem('cs_estimate_draft_cache');
+                },
+
                 addItem() {
                     this.items.push({ id: Date.now() + Math.random(), description: '', quantity: 1, unit_price: 0.00, is_taxable: true, save_to_pricebook: false });
                 },
@@ -497,7 +568,7 @@
                         this.customer_first_name = match.first_name;
                         this.customer_last_name = match.last_name;
                         this.customer_email = match.email;
-                        this.customer_phone = match.phone || '';
+                        this.customer_phone = match.phone_number || '';
                         this.customer_address = match.address || match.billing_address || '';
                     } else {
                         this.clearCustomerFields();
