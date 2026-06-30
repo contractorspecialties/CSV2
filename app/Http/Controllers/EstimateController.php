@@ -122,7 +122,6 @@ class EstimateController extends Controller
                 $customer->company_id = $companyId;
             }
 
-            // Fixed field constraint mapping to prevent execution failures
             $customer->client_name = $fullName;
             $customer->email = $validated['customer_email'];
             $customer->phone_number = $validated['customer_phone'];
@@ -322,7 +321,7 @@ class EstimateController extends Controller
     public function uploadAttachment(Request $request, $id)
     {
         $request->validate([
-            'image'   => 'required|image|max:12288', // Supports raw fields up to 12MB safely
+            'image'   => 'required|image|max:12288',
             'caption' => 'nullable|string|max:255'
         ]);
 
@@ -476,7 +475,7 @@ class EstimateController extends Controller
                 try {
                     \App\Jobs\SendPortalSms::dispatch(
                         $company->sms_phone_number,
-                        "⚠️ Alert: Client has logged a change request on Estimate #{$estimate->estimate_number} (" . ($estimate->customer->first_name ?? 'Client') . "). Review details here: " . url("/estimates/{$estimate->id}")
+                        "⚠️ Alert: Client has logged a change request on Estimate #{$estimate->estimate_number} (" . ($estimate->customer->client_name ?? 'Client') . "). Review details here: " . url("/estimates/{$estimate->id}")
                     );
                 } catch (\Exception $e) {
                     Log::error('Contractor instant revision SMS dispatch error: ' . $e->getMessage());
@@ -534,6 +533,19 @@ class EstimateController extends Controller
         });
 
         return redirect()->route('dashboard')->with('status', '🗑️ Old estimate record permanently purged.');
+    }
+
+    /**
+     * Close out an active production run and shift it cleanly to archived status.
+     */
+    public function closeJob(Request $request, $id)
+    {
+        $companyId = Auth::user()->company_id;
+        $estimate = Estimate::where('company_id', $companyId)->findOrFail($id);
+
+        $estimate->update(['status' => 'closed']);
+
+        return redirect()->route('dashboard')->with('status', '📦 Operational job run marked CLOSED and cleanly archived inside history logs.');
     }
 
     /**
