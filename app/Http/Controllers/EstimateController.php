@@ -237,7 +237,6 @@ class EstimateController extends Controller
 
         $attachments = JobAttachment::where('estimate_id', $estimate->id)->get();
 
-        // 🔒 Explicit key string resolution parameters matching custom parameter definitions
         $attachments->each(function($asset) {
             $asset->secure_url = URL::temporarySignedRoute(
                 'estimates.attachments.stream',
@@ -397,6 +396,19 @@ class EstimateController extends Controller
                 $fromLine
             );
 
+            // Record the outbound message into our historical data matrix cleanly
+            DB::table($prefix . 'sms_histories')->insert([
+                'company_id'   => $companyId,
+                'client_id'    => $estimate->customer_id,
+                'estimate_id'  => $estimate->id,
+                'direction'    => 'outbound',
+                'from_number'  => $fromLine,
+                'to_number'    => $estimate->customer->phone_number,
+                'message_body' => "View your customized proposal link here: " . $portalLink,
+                'created_at'   => now(),
+                'updated_at'   => now()
+            ]);
+
             $estimate->update(['status' => 'sent']);
 
             return back()->with('status', '⚡ Outbound transactional SMS dropped straight down the communication worker queue channel.');
@@ -478,7 +490,6 @@ class EstimateController extends Controller
         $estimate->company = DB::table($prefix . 'companies')->where('id', $estimate->company_id)->first();
         $attachments = JobAttachment::where('estimate_id', $estimate->id)->get();
 
-        // 🔒 Explicit key generation handling inside the public checkout dashboard view loop
         $attachments->each(function($asset) {
             $asset->secure_url = URL::temporarySignedRoute(
                 'estimates.attachments.stream',
@@ -579,25 +590,94 @@ class EstimateController extends Controller
     }
 
     /**
-     * Intercept and process unauthenticated inbound messaging webhooks from Telnyx.
+     * 👑 ITEM 10: BI-DIRECTIONAL INBOUND SMS TRANSACTION WEBHOOK INTERCEPTOR
+     * Listens to Telnyx message payloads, captures client logs, and parses response intent.
      */
     public function handleTelnyxWebhook(Request $request)
     {
         $incomingData = $request->all();
 
-        if (isset($incomingData['data']['event_type']) && $incomingData['data']['event_type'] === 'message.received') {
-            $messagePayload = $incomingData['data']['payload'];
-            $senderLine = $messagePayload['from']['phone_number'] ?? 'Unknown';
-            $incomingBody = trim($messagePayload['text'] ?? '');
+        // Ensure we are working exclusively with active message payloads
+        if (!isset($incomingData['data']['event_type']) || $incomingData['data']['event_type'] !== 'message.received') {
+            return response()->json(['status' => 'ignored'], 200);
+        }
 
-            if (strtoupper($incomingBody) === 'STOP') {
-                Log::info("SMS Opt-Out Flag Registered by Line: {$senderLine}");
-            } else {
-                Log::info("Inbound SMS Received from {$senderLine}: {$incomingBody}");
+        $messagePayload = $incomingData['data']['payload'];
+        $senderLine     = trim($messagePayload['from']['phone_number'] ?? '');
+        $receiverLine   = trim($messagePayload['to'][0]['phone_number'] ?? '');
+        $incomingBody   = trim($messagePayload['text'] ?? '');
+        $cleanKeyword   = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $incomingBody));
+
+        if (empty($senderLine) || empty($incomingBody)) {
+            return response()->json(['status' => 'empty_payload'], 200);
+        }
+
+        // Run schema self-healing inline to guarantee messaging logging columns exist on current prefix configurations
+        $this->healEstimateTablesSchema();
+
+        $userTable = (new \App\Models\User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+
+        // Attempt a reverse E.164 lookup index check to anchor this thread to a company client record
+        $customer = Client::where('phone_number', $senderLine)->first();
+
+        if (!$customer) {
+            Log::info("📨 Inbound SMS text from unmapped phone tracking line {$senderLine}: {$incomingBody}");
+            return response()->json(['status' => 'unmapped_sender_logged'], 200);
+        }
+
+        // Find the latest outstanding non-archived proposal envelope for context mapping operations
+        $latestEstimate = Estimate::where('customer_id', $customer->id)
+            ->where('status', '!=', 'closed')
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $estimateId = $latestEstimate ? $latestEstimate->id : null;
+
+        // Commit text payload ledger straight to history data matrix rows
+        DB::table($prefix . 'sms_histories')->insert([
+            'company_id'   => $customer->company_id,
+            'client_id'    => $customer->id,
+            'estimate_id'  => $estimateId,
+            'direction'    => 'inbound',
+            'from_number'  => $senderLine,
+            'to_number'    => $receiverLine,
+            'message_body' => $incomingBody,
+            'created_at'   => now(),
+            'updated_at'   => now()
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | OPTIONAL INTENT AUTOMATION ALGORITHMS
+        |--------------------------------------------------------------------------
+        | If a customer responds with clear textual intent parameters, we can
+        | trigger automated system tasks to accelerate fulfillment pipelines.
+        |
+        */
+        if ($latestEstimate && ($cleanKeyword === 'APPROVE' || $cleanKeyword === 'ACCEPT' || $cleanKeyword === 'YES')) {
+            if ($latestEstimate->status === 'draft' || $latestEstimate->status === 'sent') {
+
+                $latestEstimate->status = 'approved';
+                $latestEstimate->signature_name = "AUTHORIZED VIA MOBILE SMS TEXT";
+                $latestEstimate->signed_at = now();
+                $latestEstimate->save();
+
+                \App\Models\Appointment::create([
+                    'company_id'   => $latestEstimate->company_id,
+                    'customer_id'  => $latestEstimate->customer_id,
+                    'estimate_id'  => $latestEstimate->id,
+                    'title'        => "SMS Booking: " . $latestEstimate->estimate_number,
+                    'scheduled_at' => now()->addDays(2),
+                    'status'       => 'scheduled',
+                    'notes'        => "Automated workflow triggered via bi-directional keyword lookup: '{$incomingBody}'"
+                ]);
+
+                Log::info("🚀 Estimate {$latestEstimate->estimate_number} programmatically APPROVED via text authorization thread.");
             }
         }
 
-        return response()->json(['status' => 'received'], 200);
+        return response()->json(['status' => 'received_and_logged'], 200);
     }
 
     /**
@@ -622,7 +702,7 @@ class EstimateController extends Controller
             $estimate->delete();
         });
 
-        return redirect()->route('dashboard')->with('status', '🗑️ Old estimate record permanently purged.');
+        return redirect()->route('dashboard')->with('status', '🗑 Old estimate record permanently purged.');
     }
 
     /**
@@ -691,8 +771,26 @@ class EstimateController extends Controller
      */
     private function healEstimateTablesSchema(): void
     {
+        $userTable = (new \App\Models\User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+
         $estimateTable = (new Estimate())->getTable();
         $itemsTable = (new EstimateItem())->getTable();
+
+        // 🛡️ DYNAMIC SMS ARCHIVE ROW PROVISIONING VIA PLUGIN PARAMS
+        if (!Schema::hasTable($prefix . 'sms_histories')) {
+            Schema::create($prefix . 'sms_histories', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedInteger('company_id')->index();
+                $table->unsignedInteger('client_id')->nullable()->index();
+                $table->unsignedInteger('estimate_id')->nullable()->index();
+                $table->string('direction', 20); // inbound, outbound
+                $table->string('from_number', 50);
+                $table->string('to_number', 50);
+                $table->text('message_body');
+                $table->timestamps();
+            });
+        }
 
         if (Schema::hasTable($estimateTable)) {
             Schema::table($estimateTable, function (Blueprint $table) use ($estimateTable) {
