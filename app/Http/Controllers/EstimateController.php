@@ -396,7 +396,6 @@ class EstimateController extends Controller
                 $fromLine
             );
 
-            // Record the outbound message into our historical data matrix cleanly
             DB::table($prefix . 'sms_histories')->insert([
                 'company_id'   => $companyId,
                 'client_id'    => $estimate->customer_id,
@@ -590,14 +589,12 @@ class EstimateController extends Controller
     }
 
     /**
-     * 👑 ITEM 10: BI-DIRECTIONAL INBOUND SMS TRANSACTION WEBHOOK INTERCEPTOR
-     * Listens to Telnyx message payloads, captures client logs, and parses response intent.
+     * Intercept and process unauthenticated inbound messaging webhooks from Telnyx.
      */
     public function handleTelnyxWebhook(Request $request)
     {
         $incomingData = $request->all();
 
-        // Ensure we are working exclusively with active message payloads
         if (!isset($incomingData['data']['event_type']) || $incomingData['data']['event_type'] !== 'message.received') {
             return response()->json(['status' => 'ignored'], 200);
         }
@@ -612,13 +609,11 @@ class EstimateController extends Controller
             return response()->json(['status' => 'empty_payload'], 200);
         }
 
-        // Run schema self-healing inline to guarantee messaging logging columns exist on current prefix configurations
         $this->healEstimateTablesSchema();
 
         $userTable = (new \App\Models\User())->getTable();
         $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
 
-        // Attempt a reverse E.164 lookup index check to anchor this thread to a company client record
         $customer = Client::where('phone_number', $senderLine)->first();
 
         if (!$customer) {
@@ -626,7 +621,6 @@ class EstimateController extends Controller
             return response()->json(['status' => 'unmapped_sender_logged'], 200);
         }
 
-        // Find the latest outstanding non-archived proposal envelope for context mapping operations
         $latestEstimate = Estimate::where('customer_id', $customer->id)
             ->where('status', '!=', 'closed')
             ->orderBy('id', 'desc')
@@ -634,7 +628,6 @@ class EstimateController extends Controller
 
         $estimateId = $latestEstimate ? $latestEstimate->id : null;
 
-        // Commit text payload ledger straight to history data matrix rows
         DB::table($prefix . 'sms_histories')->insert([
             'company_id'   => $customer->company_id,
             'client_id'    => $customer->id,
@@ -647,14 +640,7 @@ class EstimateController extends Controller
             'updated_at'   => now()
         ]);
 
-        /*
-        |--------------------------------------------------------------------------
-        | OPTIONAL INTENT AUTOMATION ALGORITHMS
-        |--------------------------------------------------------------------------
-        | If a customer responds with clear textual intent parameters, we can
-        | trigger automated system tasks to accelerate fulfillment pipelines.
-        |
-        */
+        // Smart Bi-Directional SMS Automation Hooks
         if ($latestEstimate && ($cleanKeyword === 'APPROVE' || $cleanKeyword === 'ACCEPT' || $cleanKeyword === 'YES')) {
             if ($latestEstimate->status === 'draft' || $latestEstimate->status === 'sent') {
 
@@ -777,14 +763,32 @@ class EstimateController extends Controller
         $estimateTable = (new Estimate())->getTable();
         $itemsTable = (new EstimateItem())->getTable();
 
-        // 🛡️ DYNAMIC SMS ARCHIVE ROW PROVISIONING VIA PLUGIN PARAMS
+        // 💳 DECOUPLED CONTRACTOR MERCHANT RAILS PROVISIONING
+        $companiesTable = $prefix . 'companies';
+        if (Schema::hasTable($companiesTable)) {
+            Schema::table($companiesTable, function (Blueprint $table) use ($companiesTable) {
+                if (!Schema::hasColumn($companiesTable, 'stripe_link')) {
+                    $table->string('stripe_link', 500)->nullable();
+                }
+                if (!Schema::hasColumn($companiesTable, 'paypal_link', 500)) {
+                    $table->string('paypal_link')->nullable();
+                }
+                if (!Schema::hasColumn($companiesTable, 'zelle_handle')) {
+                    $table->string('zelle_handle', 255)->nullable();
+                }
+                if (!Schema::hasColumn($companiesTable, 'billing_instructions')) {
+                    $table->text('billing_instructions')->nullable();
+                }
+            });
+        }
+
         if (!Schema::hasTable($prefix . 'sms_histories')) {
             Schema::create($prefix . 'sms_histories', function (Blueprint $table) {
                 $table->id();
                 $table->unsignedInteger('company_id')->index();
                 $table->unsignedInteger('client_id')->nullable()->index();
                 $table->unsignedInteger('estimate_id')->nullable()->index();
-                $table->string('direction', 20); // inbound, outbound
+                $table->string('direction', 20);
                 $table->string('from_number', 50);
                 $table->string('to_number', 50);
                 $table->text('message_body');
