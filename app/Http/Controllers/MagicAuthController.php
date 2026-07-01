@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
 
@@ -23,6 +24,15 @@ class MagicAuthController extends Controller
         if ($request->filled('system_verification_token')) {
             Log::warning("🤖 Spambot intercepted via honeypot field at registration entry node.");
             return redirect()->route('welcome')->with('status', '🏗️ Your company workspace has been successfully provisioned! Check your mobile line for your active validation code.');
+        }
+
+        // 🛡️ API BILLING GUARD: Throttle registration traffic to protect third-party carrier costs
+        $throttleKey = 'register-attempt:' . $request->ip();
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            return back()->withErrors([
+                'phone_2fa' => "🛑 Security throttling active. Too many registration requests from this connection. Please wait {$seconds} seconds before retrying."
+            ])->withInput();
         }
 
         $validated = $request->validate([
@@ -46,6 +56,9 @@ class MagicAuthController extends Controller
         if (User::where('phone_2fa', $cleanE164)->exists()) {
             return back()->withErrors(['phone_2fa' => '🛑 This mobile number is already assigned to an active contractor workspace profile.'])->withInput();
         }
+
+        // Register a hit against the registration rate limiter decay timeline (15 Minute Window)
+        RateLimiter::hit($throttleKey, 900);
 
         // Resolve customized database prefix schemas dynamically matching model structures safely
         $userTable = (new User())->getTable();
@@ -124,7 +137,19 @@ class MagicAuthController extends Controller
             'email' => 'required|email|max:255',
         ]);
 
+        // 🛡️ API BILLING GUARD: Restrict signature dispatch loops (3 requests per 5 minutes per user scope)
+        $throttleKey = 'link-request:' . Str::slug($validated['email']) . ':' . $request->ip();
+        if (RateLimiter::tooManyAttempts($throttleKey, 3)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            return back()->withErrors([
+                'email' => "🛑 Delivery throttle active. Too many sign-in link requests. Please review your spam filters or try again in {$seconds} seconds."
+            ]);
+        }
+
         $user = User::where('email', $validated['email'])->first();
+
+        // Increment rate limit attempts bucket token (5 Minute Expiration Window)
+        RateLimiter::hit($throttleKey, 300);
 
         if (!$user) {
             return back()->with('status', '📨 If your business email is registered, your secure login link has been sent.');
@@ -214,7 +239,7 @@ class MagicAuthController extends Controller
                     <div class=\"space-y-2\">
                         <div class=\"inline-flex items-center justify-center w-12 h-12 rounded-xl bg-orange-50 text-[#f58613] text-xl font-bold mb-1 shadow-sm\">🏗️</div>
                         <h2 class=\"text-xl font-black text-slate-950 uppercase tracking-tight\">Contractor Specialties Portal</h2>
-                        <p class=\"text-xs text-slate-500 font-semibold max-w-[280px] mx-auto leading-normal\">Click below to confirm your identity and open your secure workspace dashboard manager.</p>
+                        <p class=\"text=\"xs text-slate-500 font-semibold max-w-[280px] mx-auto leading-normal\">Click below to confirm your identity and open your secure workspace dashboard manager.</p>
                     </div>
 
                     <form action=\"" . route('magic.verify.submit', ['token' => $token]) . "\" method=\"POST\">
