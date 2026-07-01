@@ -237,12 +237,12 @@ class EstimateController extends Controller
 
         $attachments = JobAttachment::where('estimate_id', $estimate->id)->get();
 
-        // Inject Temporary Signed Route Access Paths into view model references
+        // 🔒 Explicit key string resolution parameters matching custom parameter definitions
         $attachments->each(function($asset) {
             $asset->secure_url = URL::temporarySignedRoute(
                 'estimates.attachments.stream',
                 now()->addMinutes(60),
-                ['id' => $asset->id]
+                ['id' => (string) $asset->id]
             );
         });
 
@@ -316,7 +316,7 @@ class EstimateController extends Controller
     }
 
     /**
-     * 📧 RE-INSTATED: Dispatch HTML contract proposal framework to customer inbox.
+     * Dispatch HTML contract proposal framework to customer inbox.
      */
     public function sendEstimateEmail(Request $request, $id)
     {
@@ -368,7 +368,7 @@ class EstimateController extends Controller
     }
 
     /**
-     * 📡 RE-INSTATED: Dispatch transactional SMS alert link via background communication queues.
+     * Dispatch transactional SMS alert link via background communication queues.
      */
     public function sendEstimateSms(Request $request, $id)
     {
@@ -478,12 +478,12 @@ class EstimateController extends Controller
         $estimate->company = DB::table($prefix . 'companies')->where('id', $estimate->company_id)->first();
         $attachments = JobAttachment::where('estimate_id', $estimate->id)->get();
 
-        // Generate Secure URLs for Homeowner checkout tracking portals
+        // 🔒 Explicit key generation handling inside the public checkout dashboard view loop
         $attachments->each(function($asset) {
             $asset->secure_url = URL::temporarySignedRoute(
                 'estimates.attachments.stream',
                 now()->addMinutes(60),
-                ['id' => $asset->id]
+                ['id' => (string) $asset->id]
             );
         });
 
