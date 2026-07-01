@@ -236,7 +236,7 @@ class EstimateController extends Controller
         }
 
         $attachments = JobAttachment::where('estimate_id', $estimate->id)->get();
-        
+
         // Inject Temporary Signed Route Access Paths into view model references
         $attachments->each(function($asset) {
             $asset->secure_url = URL::temporarySignedRoute(
@@ -332,15 +332,28 @@ class EstimateController extends Controller
         try {
             Mail::send([], [], function ($message) use ($estimate, $portalLink) {
                 $message->to($estimate->customer->email)
-                    ->subject("Project Proposal Specifications: {$estimate->estimate_number}")
+                    ->subject("Project Estimate Revisions Available - Estimate #{$estimate->estimate_number}")
                     ->html("
-                        <div style=\"font-family: sans-serif; padding: 24px; max-width: 600px; margin: 0 auto; bg-color: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px;\">
-                            <h2 style=\"color: #0f172a; text-transform: uppercase; font-size: 20px; letter-spacing: -0.5px;\">Project Proposal Ready</h2>
-                            <p style=\"font-size: 15px; color: #334155; line-height: 1.6;\">Your custom digital project estimate is ready for your signature review and operational clearance authorization.</p>
-                            <div style=\"margin: 28px 0; text-align: left;\">
-                                <a href=\"{$portalLink}\" style=\"background-color: #f58613; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 10px; font-weight: bold; display: inline-block; text-transform: uppercase; font-size: 13px; tracking-wider: 1px;\">Review & Approve Proposal &rarr;</a>
+                        <div style=\"font-family: Arial, sans-serif; padding: 32px; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;\">
+                            <h2 style=\"color: #0f172a; font-size: 22px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: -0.5px;\">Project Proposal Update</h2>
+                            <p style=\"font-size: 14px; color: #64748b; margin-top: 0; margin-bottom: 24px;\">Sent via ContractorSpecialties Secure Portal Manager</p>
+
+                            <p style=\"font-size: 15px; color: #334155; line-height: 1.6;\">Hello,</p>
+                            <p style=\"font-size: 15px; color: #334155; line-height: 1.6;\">An updated digital project estimate has been compiled and uploaded to your secure client portal dashboard for review.</p>
+
+                            <div style=\"background-color: #f8fafc; border-left: 4px solid #f58613; padding: 16px; margin: 24px 0; border-radius: 4px;\">
+                                <strong style=\"display: block; font-size: 12px; text-transform: uppercase; color: #64748b; margin-bottom: 4px;\">Document Reference:</strong>
+                                <span style=\"font-family: monospace; font-size: 15px; font-weight: bold; color: #0f172a;\">Estimate #{$estimate->estimate_number}</span>
                             </div>
-                            <p style=\"font-size: 11px; color: #94a3b8; border-t: 1px solid #e2e8f0; pt: 12px;\">Msg & data rates may apply. Outbound text dispatches powered via ContractorSpecialties system gateways.</p>
+
+                            <p style=\"font-size: 15px; color: #334155; line-height: 1.6; margin-bottom: 28px;\">Please click the secure gateway link below to open the interactive blueprint ledger, review your service line rows, and sign off on the terms to clear your project for field mobilization scheduling.</p>
+
+                            <div style=\"margin: 32px 0; text-align: center;\">
+                                <a href=\"{$portalLink}\" style=\"background-color: #f58613; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; text-transform: uppercase; font-size: 13px; tracking-wider: 1px; box-shadow: 0 4px 6px -1px rgba(245, 134, 19, 0.2);\">Review & Sign Proposal</a>
+                            </div>
+
+                            <hr style=\"border: 0; border-top: 1px solid #e2e8f0; margin: 32px 0;\">
+                            <p style=\"font-size: 11px; color: #94a3b8; line-height: 1.5;\">This notification was dispatched automatically on behalf of your contracted professional. For technical assistance or security routing questions, please contact platform network operations. Reply to this message directly to reach your service manager.</p>
                         </div>
                     ");
             });
@@ -350,7 +363,7 @@ class EstimateController extends Controller
             return back()->with('status', '📧 Project proposal transaction successfully dispatched via your SendGrid gateway matrix.');
         } catch (\Exception $e) {
             Log::error('SendGrid SMTP Dispatch Failure: ' . $e->getMessage());
-            return back()->with('error', '🛑 SendGrid SMTP transport rejected transmission. Confirm your Dashboard Sender Authentication configuration rules.');
+            return back()->with('error', '🛑 SendGrid SMTP transport rejected transmission.');
         }
     }
 
