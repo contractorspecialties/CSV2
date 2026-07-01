@@ -111,7 +111,11 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('pricebook', PricebookController::class)->only(['index', 'store', 'destroy']);
 
         // 💵 Quick On-Site Mobile Billing Counter UI View Node
-        Route::get('/workspace/billing/quick', function () { return view('billing.quick'); })->name('workspace.billing.quick');
+Route::get('/workspace/billing/quick', function () { return view('billing.quick'); })->name('workspace.billing.quick');
+
+// 💳 Dedicated Decoupled Merchant Payout Configuration Gateways
+Route::get('/workspace/billing', [\App\Http\Controllers\WorkspaceBillingController::class, 'edit'])->name('workspace.billing.edit');
+Route::post('/workspace/billing', [\App\Http\Controllers\WorkspaceBillingController::class, 'update'])->name('workspace.billing.update');
 
         // Estimates & Job Operational Processing (Unified under EstimateController)
         Route::post('/estimates/{id}/blueprint', [EstimateController::class, 'saveBlueprint'])->name('estimates.blueprint');
