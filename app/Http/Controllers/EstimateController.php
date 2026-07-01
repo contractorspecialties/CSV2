@@ -236,7 +236,7 @@ class EstimateController extends Controller
         }
 
         $attachments = JobAttachment::where('estimate_id', $estimate->id)->get();
-
+        
         // Inject Temporary Signed Route Access Paths into view model references
         $attachments->each(function($asset) {
             $asset->secure_url = URL::temporarySignedRoute(
@@ -316,6 +316,84 @@ class EstimateController extends Controller
     }
 
     /**
+     * 📧 RE-INSTATED: Dispatch HTML contract proposal framework to customer inbox.
+     */
+    public function sendEstimateEmail(Request $request, $id)
+    {
+        $companyId = Auth::user()->company_id;
+        $estimate = Estimate::where('company_id', $companyId)->with('customer')->findOrFail($id);
+
+        if (empty($estimate->customer->email)) {
+            return back()->with('error', '🛑 Target customer profile does not contain a valid email coordinates path.');
+        }
+
+        $portalLink = route('portal.checkout', ['token' => $estimate->estimate_number]);
+
+        try {
+            Mail::send([], [], function ($message) use ($estimate, $portalLink) {
+                $message->to($estimate->customer->email)
+                    ->subject("Project Proposal Specifications: {$estimate->estimate_number}")
+                    ->html("
+                        <div style=\"font-family: sans-serif; padding: 24px; max-width: 600px; margin: 0 auto; bg-color: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px;\">
+                            <h2 style=\"color: #0f172a; text-transform: uppercase; font-size: 20px; letter-spacing: -0.5px;\">Project Proposal Ready</h2>
+                            <p style=\"font-size: 15px; color: #334155; line-height: 1.6;\">Your custom digital project estimate is ready for your signature review and operational clearance authorization.</p>
+                            <div style=\"margin: 28px 0; text-align: left;\">
+                                <a href=\"{$portalLink}\" style=\"background-color: #f58613; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 10px; font-weight: bold; display: inline-block; text-transform: uppercase; font-size: 13px; tracking-wider: 1px;\">Review & Approve Proposal &rarr;</a>
+                            </div>
+                            <p style=\"font-size: 11px; color: #94a3b8; border-t: 1px solid #e2e8f0; pt: 12px;\">Msg & data rates may apply. Outbound text dispatches powered via ContractorSpecialties system gateways.</p>
+                        </div>
+                    ");
+            });
+
+            $estimate->update(['status' => 'sent']);
+
+            return back()->with('status', '📧 Project proposal transaction successfully dispatched via your SendGrid gateway matrix.');
+        } catch (\Exception $e) {
+            Log::error('SendGrid SMTP Dispatch Failure: ' . $e->getMessage());
+            return back()->with('error', '🛑 SendGrid SMTP transport rejected transmission. Confirm your Dashboard Sender Authentication configuration rules.');
+        }
+    }
+
+    /**
+     * 📡 RE-INSTATED: Dispatch transactional SMS alert link via background communication queues.
+     */
+    public function sendEstimateSms(Request $request, $id)
+    {
+        $companyId = Auth::user()->company_id;
+        $estimate = Estimate::where('company_id', $companyId)->with('customer')->findOrFail($id);
+
+        if (empty($estimate->customer->phone_number)) {
+            return back()->with('error', '🛑 Target customer profile does not contain a valid mobile telephone coordinate line.');
+        }
+
+        $portalLink = route('portal.checkout', ['token' => $estimate->estimate_number]);
+
+        $userTable = (new \App\Models\User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+        $company = DB::table($prefix . 'companies')->where('id', $companyId)->first();
+        $fromLine = $company->sms_phone_number ?? env('TELNYX_DEFAULT_FROM');
+
+        if (empty($fromLine)) {
+            return back()->with('error', '🛑 Outbound SMS line configuration parameter missing from application settings file.');
+        }
+
+        try {
+            \App\Jobs\SendPortalSms::dispatch(
+                $estimate->customer->phone_number,
+                "Hello, your project estimate details are compiled. View your customized proposal link here: " . $portalLink . " Reply STOP to opt out.",
+                $fromLine
+            );
+
+            $estimate->update(['status' => 'sent']);
+
+            return back()->with('status', '⚡ Outbound transactional SMS dropped straight down the communication worker queue channel.');
+        } catch (\Exception $e) {
+            Log::error('SMS Dispatch Worker Injection Failure: ' . $e->getMessage());
+            return back()->with('error', '🛑 Failed to drop execution payload to local system daemons.');
+        }
+    }
+
+    /**
      * Upload an estimate attachment card, compressing assets on-the-fly into isolated vaults.
      */
     public function uploadAttachment(Request $request, $id)
@@ -346,7 +424,6 @@ class EstimateController extends Controller
     }
 
     /**
-     * 🛡️ SECURE ASSET STREAM ENGINE
      * Authenticates incoming temporary signatures before serving file stream vectors.
      */
     public function streamAttachment(Request $request, $id)
@@ -549,7 +626,6 @@ class EstimateController extends Controller
     }
 
     /**
-     * 🔮 INTERNAL NATIVE COMPACTION ENGINE
      * Processes high-resolution files into WebP format down to a strict 1200px ceiling.
      */
     private function compressAndVaultFieldPhoto(UploadedFile $file, int $estimateId): string
