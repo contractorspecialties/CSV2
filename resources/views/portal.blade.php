@@ -65,11 +65,73 @@
                 </div>
             </div>
             <div class="shrink-0 w-full sm:w-auto">
-                <a href="/brand/{{ !empty($estimate->company->slug) ? $estimate->company->slug : 'staged-profile' }}" target="_blank" class="block text-center bg-slate-950 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest py-3 px-5 rounded-xl border border-slate-900 shadow transition-colors">
+                <a href="/brand/{{ !empty($estimate->company->slug) ? $estimate->company->slug : 'staged-profile' }}" target="_blank" class="block text-center bg-slate-950 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest py-3 px-5 rounded-xl border border-slate-900 shadow transition-colors text-decoration-none">
                     🌐 View Credentials & Portfolio &rarr;
                 </a>
             </div>
         </div>
+
+        <!-- 💳 DECOUPLED INDEPENDENT MERCHANT PAYOUT MODULES -->
+        @if($estimate->status === 'pending_deposit' || $estimate->status === 'approved')
+            <section class="bg-white border-2 border-slate-900 rounded-3xl p-6 shadow-md space-y-4 ring-4 ring-emerald-500/5">
+                <div class="border-b border-slate-100 pb-3">
+                    <h3 class="font-black text-lg text-slate-950 uppercase tracking-tight">💳 Direct Settlement Merchant Options</h3>
+                    <p class="text-xs text-slate-500 font-medium mt-0.5">Please utilize the contractor's direct verified settlement options below to process outstanding balances.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                    <div class="md:col-span-4 bg-slate-50 border-2 border-slate-200 rounded-xl p-4 font-mono space-y-2">
+                        <div class="flex justify-between text-[11px] font-bold text-slate-400 uppercase">
+                            <span>Contract Total:</span>
+                            <span class="text-slate-900 font-black">${{ number_format($estimate->grand_total, 2) }}</span>
+                        </div>
+                        @if($estimate->deposit_amount > 0)
+                            <div class="flex justify-between text-[11px] font-bold text-slate-400 uppercase pt-2 border-t border-slate-200">
+                                <span class="text-orange-600 font-black">Upfront Deposit:</span>
+                                <span class="text-orange-600 font-black">${{ number_format($estimate->deposit_amount, 2) }}</span>
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="md:col-span-8 flex flex-col sm:flex-row gap-3 w-full justify-end">
+                        @if(!empty($estimate->company->stripe_link))
+                            <a href="{{ $estimate->company->stripe_link }}" target="_blank" class="flex-1 text-center bg-[#635bff] hover:bg-[#5249cf] text-white font-black text-xs py-4 px-4 rounded-xl uppercase tracking-wider shadow transition-all block text-decoration-none">
+                                💳 Pay via Stripe Card
+                            </a>
+                        @endif
+
+                        @if(!empty($estimate->company->paypal_link))
+                            <a href="{{ $estimate->company->paypal_link }}" target="_blank" class="flex-1 text-center bg-[#003087] hover:bg-[#00246b] text-white font-black text-xs py-4 px-4 rounded-xl uppercase tracking-wider shadow transition-all block text-decoration-none">
+                                🔵 Remit via PayPal.Me
+                            </a>
+                        @endif
+
+                        @if(!empty($estimate->company->zelle_handle))
+                            <div class="flex-1 bg-purple-50 border border-purple-200 rounded-xl p-3 flex flex-col justify-between items-center text-center gap-2">
+                                <div class="w-full">
+                                    <span class="block text-[8px] font-black text-purple-400 uppercase tracking-wide">Zelle Registration Line</span>
+                                    <span class="text-xs font-mono font-black text-purple-950 select-all block mt-0.5">{{ $estimate->company->zelle_handle }}</span>
+                                </div>
+                                <form action="/portal/action/{{ $estimate->id }}" method="POST" class="m-0 w-full">
+                                    @csrf
+                                    <input type="hidden" name="action" value="deposit_payment">
+                                    <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-black text-[9px] py-1.5 px-2 rounded-lg uppercase tracking-wider transition-colors cursor-pointer border-0 outline-none">
+                                        Confirm Sent Wire
+                                    </button>
+                                </form>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                @if(!empty($estimate->company->billing_instructions))
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs font-medium text-slate-600 leading-relaxed italic whitespace-pre-line">
+                        <span class="font-black text-slate-400 not-italic block uppercase text-[9px] tracking-wider mb-1">Additional Billing Instructions:</span>
+                        {{ $estimate->company->billing_instructions }}
+                    </div>
+                @endif
+            </section>
+        @endif
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -146,12 +208,13 @@
                         <h4 class="font-black text-xs text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
                             📋 Historical Execution Specifications & Notes
                         </h4>
-                        <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-4 text-xs font-medium text-slate-700 leading-relaxed max-h-48 overflow-y-auto font-sans whitespace-pre-wrap shadow-inner">
+                        <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-4 text-xs font-medium text-slate-700 Pemboking leading-relaxed max-h-48 overflow-y-auto font-sans whitespace-pre-wrap shadow-inner">
                             {{ $estimate->notes }}
                         </div>
                     </div>
                 @endif
 
+                <!-- Upgraded attachment images stack row elements to utilize expiring secure url hashes safely -->
                 @if($attachments->isNotEmpty())
                     <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                         <div class="border-b border-slate-100 pb-2">
@@ -162,7 +225,7 @@
                             @foreach($attachments as $media)
                                 <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50 shadow-sm group hover:border-slate-400 transition-all">
                                     <div class="w-full h-48 bg-black overflow-hidden relative">
-                                        <img src="{{ asset($media->file_path) }}" alt="Project Documentation" class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-[1.01]">
+                                        <img src="{{ $media->secure_url }}" alt="Project Documentation" class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-[1.01]">
                                     </div>
                                     <div class="p-3 bg-white text-[11px] font-bold text-slate-700 border-t border-slate-100/80 flex items-center gap-2">
                                         <span class="text-slate-400 shrink-0">📍 Tag:</span>
@@ -207,7 +270,7 @@
 
                         @if($estimate->status === 'approved' || $estimate->status === 'closed')
                             <div class="p-5 bg-emerald-50 border border-emerald-100 rounded-xl text-center space-y-2 flex-grow flex flex-col justify-center shadow-inner">
-                                <span class="text-3xl block animate-bounce">⚡</span>
+                                <span class="text-3xl block">⚡</span>
                                 <h4 class="font-black text-sm text-emerald-950 uppercase tracking-tight">Contract Active & Locked</h4>
                                 <p class="text-[11px] text-emerald-800 font-medium leading-relaxed">This production plan is formally approved. Material scheduling and mobilization assets have been safely allocated to the dispatch queue.</p>
                             </div>
@@ -257,7 +320,7 @@
 
                             <button type="submit" :disabled="sigName.trim().length < 3" class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-100 disabled:text-slate-400 text-white font-black text-xs py-4 px-4 rounded-xl uppercase tracking-widest transition-all shadow-md active:scale-[0.99] cursor-pointer text-center border-0 outline-none">
                                 @if($estimate->deposit_amount > 0)
-                                    Sign Contract & Pay Deposit 💳
+                                    Sign Contract & Review Deposit Rails 💳
                                 @else
                                     Sign Contract & Book Job ⚡
                                 @endif
