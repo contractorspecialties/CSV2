@@ -225,7 +225,6 @@ class EstimateController extends Controller
     {
         $companyId = Auth::user()->company_id;
 
-        // 🛡️ TYPE-SAFE CALCULATION GUARD: Isolate variable strings to bypass data-type conversion collisions
         $estimate = Estimate::where('company_id', $companyId)
             ->with(['customer', 'items'])
             ->where(function ($query) use ($id) {
@@ -480,8 +479,9 @@ class EstimateController extends Controller
      */
     public function checkout($token)
     {
-        // 🔒 TYPE-SAFE CALCULATION GUARD: Enforce explicit string checks to block SQL conversion 404 bugs completely
-        $estimate = Estimate::with(['customer', 'items'])
+        // 🛡️ CRITICAL TENANT SCOPE IMMUNITY: Public routes must bypass company_id isolation gates
+        $estimate = Estimate::withoutGlobalScopes()
+            ->with(['customer', 'items'])
             ->where(function ($query) use ($token) {
                 if (is_numeric($token)) {
                     $query->where('id', $token);
@@ -519,7 +519,8 @@ class EstimateController extends Controller
      */
     public function handlePortalAction(Request $request, $id)
     {
-        $estimate = Estimate::findOrFail($id);
+        // 🛡️ CRITICAL TENANT SCOPE IMMUNITY: Homeowner postback processing must bypass isolation gates
+        $estimate = Estimate::withoutGlobalScopes()->findOrFail($id);
         $action = $request->input('action');
 
         $this->healEstimateTablesSchema();
@@ -635,7 +636,8 @@ class EstimateController extends Controller
             return response()->json(['status' => 'unmapped_sender_logged'], 200);
         }
 
-        $latestEstimate = Estimate::where('customer_id', $customer->id)
+        $latestEstimate = Estimate::withoutGlobalScopes()
+            ->where('customer_id', $customer->id)
             ->where('status', '!=', 'closed')
             ->orderBy('id', 'desc')
             ->first();
@@ -688,6 +690,7 @@ class EstimateController extends Controller
         $companyId = Auth::user()->company_id;
         $estimate = Estimate::where('company_id', $companyId)->findOrFail($id);
 
+        // ... rest of method logic completely preserved ...
         DB::transaction(function () use ($estimate) {
             EstimateItem::where('estimate_id', $estimate->id)->delete();
 
