@@ -27,6 +27,14 @@
         </div>
     @endif
 
+    @php
+        // Dynamic Merchant Account Verification Check
+        $userTable = (new \App\Models\User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+        $currentCompany = \Illuminate\Support\Facades\DB::table($prefix . 'companies')->where('id', auth()->user()->company_id)->first();
+        $hasMerchantConfigured = !empty($currentCompany->stripe_link) || !empty($currentCompany->paypal_link) || !empty($currentCompany->zelle_handle);
+    @endphp
+
     <div x-data="{
         showInstallModal: false,
         showApptModal: false,
@@ -90,6 +98,22 @@
                 </div>
             @endif
 
+            <!-- ⚠️ DYNAMIC ONBOARDING MERCHANT CHECKLIST ALERT ROUTE MODULE -->
+            @if(!$hasMerchantConfigured)
+                <div class="bg-amber-50 border-4 border-amber-300 rounded-3xl p-5 flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm">
+                    <div class="flex items-start gap-3 text-center md:text-left flex-col md:flex-row">
+                        <span class="text-3xl block mx-auto md:mx-0">⚠️</span>
+                        <div>
+                            <h4 class="text-base font-black text-amber-950 uppercase tracking-tight">Direct Payout Merchant Channels Disconnected</h4>
+                            <p class="text-xs text-amber-800 font-bold mt-0.5 leading-normal">Your payment collection layout is defaulted to manual check rules. Link your individual Stripe links, PayPal strings, or Zelle handles to clear customers to fund upfront project deposits directly into your bank lines.</p>
+                        </div>
+                    </div>
+                    <a href="/workspace/billing" class="w-full md:w-auto text-center bg-amber-600 hover:bg-amber-700 text-white font-black text-xs py-3.5 px-6 rounded-xl uppercase tracking-wider text-decoration-none shadow-md shrink-0 transition-colors">
+                        Configure Merchant Channels &rarr;
+                    </a>
+                </div>
+            @endif
+
             <section class="grid grid-cols-3 md:grid-cols-6 gap-4">
                 <a href="/estimates/create" class="relative flex flex-col items-center justify-center aspect-square bg-gradient-to-b from-[#f58613] to-orange-600 rounded-3xl shadow-md hover:shadow-xl active:scale-95 transition-all group overflow-hidden cursor-pointer text-decoration-none border-0">
                     <span class="text-4xl mb-2 group-hover:scale-110 transition-transform">📝</span>
@@ -116,9 +140,9 @@
                     <span class="text-xs font-black uppercase tracking-wider text-center px-1 text-slate-200">App Shortcut</span>
                 </button>
 
-                <a href="{{ route('workspace.profile.edit') }}" class="relative flex flex-col items-center justify-center aspect-square bg-slate-900 border border-slate-950 hover:border-[#f58613] rounded-2xl shadow-sm text-[#f58613] active:scale-95 transition-all group overflow-hidden cursor-pointer text-decoration-none">
-                    <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">🌐</span>
-                    <span class="text-xs font-black uppercase tracking-wider text-center px-1 text-slate-200">Brand Hub</span>
+                <a href="/workspace/billing" class="relative flex flex-col items-center justify-center aspect-square bg-white border-2 border-slate-300 rounded-3xl shadow-md hover:border-slate-900 hover:shadow-xl active:scale-95 transition-all group overflow-hidden cursor-pointer text-decoration-none">
+                    <span class="text-3xl mb-1.5 group-hover:scale-110 transition-transform">💳</span>
+                    <span class="text-xs font-black uppercase tracking-wider text-center px-1 text-slate-800">Merchant Desk</span>
                 </a>
             </section>
 
@@ -289,9 +313,8 @@
                                         </div>
                                     </a>
                                     <div class="pt-2.5 border-t border-slate-200">
-                                        <form action="/estimates/{{ $bid->id }}/status" method="POST" class="w-full">
+                                        <form action="/estimates/{{ $bid->id }}/close-job" method="POST" class="w-full">
                                             @csrf
-                                            <input type="hidden" name="status" value="closed">
                                             <button type="submit" class="w-full bg-slate-900 border-2 border-slate-950 hover:bg-black text-white text-[10px] font-black uppercase py-2 px-2 rounded-xl transition-colors cursor-pointer text-center outline-none">
                                                 📦 Close & Archive Run
                                             </button>
@@ -402,149 +425,74 @@
                             </div>
 
                             <button type="submit" class="w-full bg-slate-900 hover:bg-black text-white font-black text-xs py-3.5 px-4 rounded-xl uppercase tracking-wider shadow transition-all active:scale-[0.99] cursor-pointer border-0 outline-none">
-                                Save Secure Channel ⚡
+                                Save Number Verified ✓
                             </button>
                         </form>
-
-                        <div class="text-[9px] text-slate-400 font-bold text-center pt-1 italic">
-                            Status: {{ auth()->user()->phone_2fa ? '🟢 Direct 2FA Security Channel Enabled' : '局 Security Warning: Fallback Routing Active' }}
-                        </div>
                     </div>
 
                     <div class="bg-white border-2 border-slate-300 rounded-3xl p-6 shadow-sm space-y-4">
                         <div class="border-b border-slate-200 pb-3">
-                            <h3 class="font-black text-sm tracking-tight text-slate-900 uppercase">
-                                🔄 Active Route Agreements
-                            </h3>
+                            <label class="flex items-center gap-3 font-black text-sm text-slate-900 uppercase tracking-wider cursor-pointer select-none">
+                                🔄 Ongoing Recurring Job Matrix
+                            </label>
                         </div>
-                        <div class="space-y-3">
-                            <div class="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl flex justify-between items-center group">
-                                <div>
-                                    <div class="text-base font-black text-slate-950 uppercase tracking-tight">Bi-Weekly Lawn Run</div>
-                                    <div class="text-xs text-slate-500 font-bold mt-0.5">Miller Estate • Visit 4 of 12</div>
-                                </div>
-                                <div class="text-xs font-mono font-black text-slate-800 bg-white border border-slate-200 px-2 py-1 rounded shadow-sm shrink-0">$140/run</div>
-                            </div>
-                        </div>
-                        <div class="p-4 bg-slate-100 border border-slate-200 rounded-2xl text-center text-xs font-bold text-slate-500 leading-normal italic">
-                            Pipeline indices update automatically as work flows are closed out.
+                        <div class="text-xs text-slate-400 font-bold leading-normal">
+                            Multi-visit service rotation schedules track completely within client estimate line files.
                         </div>
                     </div>
                 </div>
             </section>
         </main>
 
-        <div x-show="showApptModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity" @click="showApptModal = false"></div>
+        <!-- APP SHORTCUT INSTALLATION MODAL DIAGRAM VIEW -->
+        <div x-show="showInstallModal" x-cloak style="display: none;" class="fixed inset-0 z-100 flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity" @click="showInstallModal = false"></div>
+            <div class="bg-white border-4 border-slate-950 rounded-3xl max-w-sm w-full p-6 shadow-2xl relative z-10" x-transition>
+                <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+                    <h3 class="text-sm font-black uppercase tracking-tight text-slate-950 font-mono">📱 Mobile Workspace Shortcut</h3>
+                    <button type="button" @click="showInstallModal = false" class="text-slate-400 hover:text-slate-950 font-black text-sm bg-transparent border-0 cursor-pointer outline-none">✕</button>
+                </div>
+                <div class="space-y-4 text-left text-xs font-semibold text-slate-600 leading-relaxed">
+                    <p>To lock this command engine straight onto your phone field layout as a standalone mobile application utility wrapper:</p>
+                    <ol class="list-decimal list-inside space-y-2 font-bold pl-0.5">
+                        <li>Open this web route within your phone's native browser app.</li>
+                        <li>Tap the <span class="text-slate-900 font-black">"Share" (iOS)</span> or <span class="text-slate-900 font-black">"Menu" (Android)</span> command token icon.</li>
+                        <li>Select <span class="text-[#f58613] font-black">"Add to Home Screen"</span> straight from the option rail.</li>
+                    </ol>
+                    <p class="text-[10px] text-slate-400 italic">Bypasses registration barriers and unlocks instant field workspace load speeds natively.</p>
+                </div>
+            </div>
+        </div>
 
-            <div class="bg-white border-4 border-slate-900 rounded-3xl max-w-xl w-full p-6 shadow-2xl relative z-10 max-h-[90vh] overflow-y-auto" x-transition>
+        <!-- APPOINTMENT / STOP SCHEDULE MANAGEMENT MODAL CONTAINER -->
+        <div x-show="showApptModal" x-cloak style="display: none;" class="fixed inset-0 z-100 flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity" @click="showApptModal = false"></div>
+            <div class="bg-white border-4 border-slate-950 rounded-3xl max-w-md w-full p-6 shadow-2xl relative z-10" x-transition>
                 <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
                     <div>
-                        <span class="text-[10px] bg-slate-950 text-slate-300 font-mono font-black px-2 py-0.5 rounded uppercase tracking-wider">Master Production Schedule</span>
-                        <h3 class="text-xl font-black text-slate-950 mt-1" x-text="selectedDayName"></h3>
+                        <h3 class="text-sm font-black uppercase tracking-tight text-slate-950 font-mono">📋 Route Details</h3>
+                        <p class="text-[10px] text-slate-400 font-bold mt-0.5" x-text="selectedDayName"></p>
                     </div>
-                    <button type="button" @click="showApptModal = false" class="text-slate-400 hover:text-slate-900 font-bold text-lg bg-transparent border-0 cursor-pointer outline-none">✕</button>
+                    <button type="button" @click="showApptModal = false" class="text-slate-400 hover:text-slate-950 font-black text-sm bg-transparent border-0 cursor-pointer outline-none">✕</button>
                 </div>
 
-                <div class="space-y-4">
-                    <div class="contents">
-                        <template x-for="job in selectedDayJobs" :key="job.id">
-                            <div class="p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl space-y-3 hover:border-slate-900 transition-all text-left">
-                                <div class="flex justify-between items-start gap-4">
-                                    <div>
-                                        <h4 class="font-black text-slate-950 text-base uppercase tracking-tight" x-text="job.title"></h4>
-                                        <p class="text-xs font-bold text-slate-500 mt-1">
-                                            👤 Customer File: <span class="text-slate-900 font-black" x-text="job.customer_name"></span>
-                                        </p>
-                                    </div>
-                                    <span class="font-mono font-black text-xs text-white bg-slate-900 px-2.5 py-1 rounded-xl shadow-sm shrink-0" x-text="job.time"></span>
-                                </div>
-
-                                <template x-if="job.notes">
-                                    <div class="p-3 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-600 italic">
-                                        <span class="font-black text-slate-400 block not-italic uppercase text-[9px] tracking-wider mb-1">Field Dispatch Scope Notes:</span>
-                                        <span x-text="job.notes" class="whitespace-pre-line"></span>
-                                    </div>
-                                </template>
-
-                                <div class="flex justify-between items-center pt-2.5 border-t border-slate-200 text-xs">
-                                    <span class="inline-block px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider border bg-emerald-50 text-emerald-700 border-emerald-200" x-text="job.status"></span>
-                                    <template x-if="job.estimate_id">
-                                        <a :href="'/estimates/' + job.estimate_id" class="text-[#f58613] hover:text-orange-600 font-black uppercase text-[10px] tracking-widest flex items-center gap-1 text-decoration-none">
-                                            Open Contract File &rarr;
-                                        </a>
-                                    </template>
-                                </div>
+                <div class="space-y-3 max-h-60 overflow-y-auto text-left">
+                    <template x-for="appt in selectedDayJobs" :key="appt.id">
+                        <div class="p-3 bg-slate-50 border-2 border-slate-200 rounded-xl space-y-1">
+                            <div class="flex justify-between items-baseline gap-2">
+                                <h4 class="font-black text-slate-900 text-sm uppercase truncate" x-text=\"appt.title\"></h4>
+                                <span class="text-[10px] font-mono font-black px-1.5 py-0.5 rounded bg-slate-900 text-white" x-text=\"appt.status\"></span>
                             </div>
-                        </template>
-                    </div>
-
-                    <div x-show="selectedDayJobs.length === 0" class="text-center py-10 text-slate-400 font-bold italic text-sm bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl">
-                        No operational route stops scheduled for this calendar date.
-                    </div>
+                            <p class="text-xs font-bold text-slate-600" x-text="'👤 Customer: ' + appt.customer_name"></p>
+                            <p x-show="appt.notes" class="text-[11px] text-slate-500 font-medium italic bg-white p-2 rounded border border-slate-100 block whitespace-pre-line" x-text="appt.notes"></p>
+                        </div>
+                    </template>
+                    <div x-show="selectedDayJobs.length === 0" class="text-center py-6 text-slate-400 font-bold italic text-xs">No project route allocations mapped to this workspace date.</div>
                 </div>
             </div>
         </div>
-
-        <div x-show="showInstallModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity" @click="showInstallModal = false"></div>
-            <div class="bg-white border-4 border-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl relative z-10" x-transition>
-                <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
-                    <h3 class="text-lg font-black uppercase tracking-tight text-slate-950 flex items-center gap-1.5 font-mono"><span>📱</span> Device App Shortcut</h3>
-                    <button type="button" @click="showInstallModal = false" class="text-slate-400 hover:text-slate-900 font-bold text-base bg-transparent border-0 cursor-pointer outline-none">✕</button>
-                </div>
-                <div class="space-y-4 text-sm font-bold text-slate-700 leading-relaxed">
-                    <p>To drop a rapid-launch dashboard launcher onto your field phone's home view layout, tap the browser actions option on your screen bottom:</p>
-                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2 text-xs font-medium text-slate-600">
-                        <div class="flex items-start gap-2"><span>•</span> <p><span class="font-black text-slate-950">Apple iOS Safari:</span> Hit the native <span class="bg-slate-200 font-bold px-1.5 py-0.5 rounded">Share Sheet Card 📤</span> icon panel and select <span class="font-black text-slate-950">"Add to Home Screen"</span>.</p></div>
-                        <div class="flex items-start gap-2 pt-2 border-t border-slate-100"><span>•</span> <p><span class="font-black text-slate-950">Google Android Chrome:</span> Hit the browser options icon <span class="bg-slate-200 font-bold px-1.5 py-0.5 rounded">⋮ More Parameters</span> and tap <span class="font-black text-slate-950">"Install App / Add shortcut"</span>.</p></div>
-                    </div>
-                    <button type="button" @click="showInstallModal = false" class="w-full bg-slate-900 hover:bg-black text-white font-black text-xs py-3.5 px-4 rounded-xl uppercase tracking-wider text-center transition-colors shadow border-0 cursor-pointer outline-none">Got it, thanks</button>
-                </div>
-            </div>
-        </div>
-
-        <footer class="border-t border-slate-900 bg-black text-slate-400 py-12">
-            <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-                <div class="md:col-span-5 flex flex-col items-center md:items-start gap-4">
-                    <div class="w-[400px] max-w-[full] aspect-square bg-slate-950 border border-slate-900 rounded-2xl overflow-hidden shadow-lg flex items-center justify-center">
-                        <img src="/images/footer-logo.webp" alt="Corporate Brand Mark" class="w-full h-full object-contain p-4">
-                    </div>
-                    <div class="text-xs font-medium text-slate-500 text-center md:text-left mt-1">
-                        &copy; 2026 ContractorSpecialties.<br>
-                        ContractorSpecialties is owned and operated by Contractor Service Pros LLC.<br>
-                        All company databases and communication networks secure.
-                    </div>
-                </div>
-
-                <div class="md:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-6 text-xs font-bold uppercase tracking-wider md:pt-4">
-                    <div class="flex flex-col gap-2.5">
-                        <span class="text-[10px] text-slate-600 tracking-widest font-black">Tools & System</span>
-                        <a href="/estimates" class="text-slate-400 hover:text-[#f58613] transition-colors text-decoration-none">Estimate Creator</a>
-                        <a href="/pricebook" class="text-slate-400 hover:text-[#f58613] transition-colors text-decoration-none">Pricebook Matrix</a>
-                        <a href="{{ route('workspace.billing.quick') }}" class="text-slate-400 hover:text-[#f58613] transition-colors text-decoration-none">Text-to-Pay Rails</a>
-                    </div>
-                    <div class="flex flex-col gap-2.5">
-                        <span class="text-[10px] text-slate-600 tracking-widest font-black">Directories</span>
-                        <a href="/advertise" class="text-slate-400 hover:text-[#f58613] transition-colors text-decoration-none">Advertise With Us</a>
-                        <a href="/contractor-directory" class="text-slate-400 hover:text-[#f58613] transition-colors text-decoration-none">Public Directory</a>
-                        <a href="/leads" class="text-slate-400 hover:text-[#f58613] transition-colors text-decoration-none">Resource Funnels</a>
-                    </div>
-                    <div class="flex flex-col gap-2.5">
-                        <span class="text-[10px] text-slate-600 tracking-widest font-black">Legal & Policy</span>
-                        <a href="/privacy" class="text-slate-400 hover:text-[#f58613] transition-colors normal-case text-decoration-none">Privacy Policy</a>
-                        <a href="/terms" class="text-slate-400 hover:text-[#f58613] transition-colors normal-case text-decoration-none">Terms of Use</a>
-                    </div>
-                    <div class="flex flex-col gap-2.5">
-                        <span class="text-[10px] text-slate-600 tracking-widest font-black">Secure Entry</span>
-                        <a href="/login/partner" class="text-slate-500 hover:text-white transition-colors bg-slate-900 border border-slate-800 px-3 py-2 rounded-lg text-center truncate text-decoration-none">General Contractor</a>
-                        <a href="/login/subcontractor" class="text-slate-500 hover:text-white transition-colors bg-slate-900 border border-slate-800 px-3 py-2 rounded-lg text-center truncate mt-1 text-decoration-none">Sub-Portal</a>
-                        <a href="/tutorial" class="text-[#f58613] hover:text-orange-500 transition-colors normal-case mt-1.5 font-black tracking-wide italic text-decoration-none">How-To Manual 📺</a>
-                    </div>
-                </div>
-            </div>
-        </footer>
 
     </div>
+
 </body>
 </html>
