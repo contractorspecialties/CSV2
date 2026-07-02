@@ -225,9 +225,17 @@ class EstimateController extends Controller
     {
         $companyId = Auth::user()->company_id;
 
+        // 🛡️ TYPE-SAFE CALCULATION GUARD: Isolate variable strings to bypass data-type conversion collisions
         $estimate = Estimate::where('company_id', $companyId)
             ->with(['customer', 'items'])
-            ->findOrFail($id);
+            ->where(function ($query) use ($id) {
+                if (is_numeric($id)) {
+                    $query->where('id', $id);
+                } else {
+                    $query->where('estimate_number', $id);
+                }
+            })
+            ->firstOrFail();
 
         if ($estimate->customer) {
             $parts = explode(' ', trim($estimate->customer->client_name ?? ''), 2);
@@ -472,9 +480,15 @@ class EstimateController extends Controller
      */
     public function checkout($token)
     {
+        // 🔒 TYPE-SAFE CALCULATION GUARD: Enforce explicit string checks to block SQL conversion 404 bugs completely
         $estimate = Estimate::with(['customer', 'items'])
-            ->where('id', $token)
-            ->orWhere('estimate_number', $token)
+            ->where(function ($query) use ($token) {
+                if (is_numeric($token)) {
+                    $query->where('id', $token);
+                } else {
+                    $query->where('estimate_number', $token);
+                }
+            })
             ->firstOrFail();
 
         if ($estimate->customer) {
@@ -763,15 +777,14 @@ class EstimateController extends Controller
         $estimateTable = (new Estimate())->getTable();
         $itemsTable = (new EstimateItem())->getTable();
 
-        // 💳 DECOUPLED CONTRACTOR MERCHANT RAILS PROVISIONING
         $companiesTable = $prefix . 'companies';
         if (Schema::hasTable($companiesTable)) {
             Schema::table($companiesTable, function (Blueprint $table) use ($companiesTable) {
                 if (!Schema::hasColumn($companiesTable, 'stripe_link')) {
                     $table->string('stripe_link', 500)->nullable();
                 }
-                if (!Schema::hasColumn($companiesTable, 'paypal_link', 500)) {
-                    $table->string('paypal_link')->nullable();
+                if (!Schema::hasColumn($companiesTable, 'paypal_link')) {
+                    $table->string('paypal_link', 500)->nullable();
                 }
                 if (!Schema::hasColumn($companiesTable, 'zelle_handle')) {
                     $table->string('zelle_handle', 255)->nullable();
