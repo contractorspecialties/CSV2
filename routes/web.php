@@ -260,3 +260,31 @@ Route::view('/tutorial', 'tutorial')->name('platform.tutorial');
 
 // Inbound Telephony Carrier Webhooks
 Route::post('/webhooks/telnyx', [EstimateController::class, 'handleTelnyxWebhook'])->name('webhooks.telnyx');
+
+Route::get('/ghost-purge', function () {
+    $p = str_contains((new \App\Models\User())->getTable(), '_') ? explode('_', (new \App\Models\User())->getTable())[0] . '_' : 'sc_';
+
+    // Track down all estimate IDs where the customer row no longer exists
+    $ids = DB::table($p.'estimates')
+        ->leftJoin($p.'clients', $p.'estimates.customer_id', '=', $p.'clients.id')
+        ->whereNull($p.'clients.id')
+        ->pluck('id')
+        ->toArray();
+
+    if (!empty($ids)) {
+        // Clear child line items
+        DB::table($p.'estimate_items')->whereIn('estimate_id', $ids)->delete();
+
+        // Clear appointments if the table is loaded
+        if (Schema::hasTable($p.'appointments')) {
+            DB::table($p.'appointments')->whereIn('estimate_id', $ids)->delete();
+        }
+
+        // Clear the ghost estimates themselves
+        $purged = DB::table($p.'estimates')->whereIn('id', $ids)->delete();
+
+        return "⚡ Success! Cleared {$purged} ghost records from your Kanban board.";
+    }
+
+    return "✓ Your board is already completely clean of ghost records.";
+});
