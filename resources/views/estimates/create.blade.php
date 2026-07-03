@@ -44,7 +44,6 @@
             <p class="text-base text-slate-500 font-bold mt-1">Select a customer, build service line items, and lock parameters.</p>
         </div>
 
-        <!-- Added local cache purge trigger hook to form submission event execution pipeline -->
         <form action="/estimates" method="POST" enctype="multipart/form-data" @submit="clearLocalCache()" class="space-y-8">
             @csrf
 
@@ -73,7 +72,6 @@
                     </div>
                 </div>
 
-                <!-- Changed select labels and fallback strings to non-technical Customer phrasing -->
                 <div class="space-y-2" x-show="customerSource === 'directory'" x-transition>
                     <label for="customer_select" class="block text-xs font-black uppercase text-slate-500 tracking-wider">Choose Customer</label>
                     <select id="customer_select"
@@ -118,7 +116,7 @@
             </div>
 
             <div class="bg-white border-2 border-slate-300 rounded-3xl p-6 shadow-sm space-y-6">
-                <div class="border-b border-slate-200 pb-4 flex justify-between items-center gap-4">
+                <div class="border-b border-slate-200 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                         <h3 class="font-black text-lg text-slate-900 uppercase tracking-wider">2. Scope of Work & Bid Details</h3>
                     </div>
@@ -315,7 +313,6 @@
                 </div>
             </div>
 
-            <!-- Clarified help text reference to read Homeowner -->
             <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-2">
                 <label for="notes" class="block text-xs font-black uppercase text-slate-500 tracking-wider">Proposal Terms / Homeowner Scope Notes</label>
                 <p class="text-xs font-bold text-slate-400 mb-2">Scope constraints, materials lists, or payment schedules. The customer WILL see these details on their phone portal layout.</p>
@@ -344,7 +341,7 @@
                 </div>
 
                 <div class="w-full sm:w-auto">
-                    <button type="submit" class="w-full sm:w-auto bg-[#f58613] hover:bg-orange-600 text-white font-black text-lg py-5 px-10 rounded-2xl uppercase tracking-widest shadow-xl transition-all transform active:scale-98 border-0 cursor-pointer outline-none">
+                    <button type="submit" class="w-full sm:w-auto bg-[#f58613] hover:bg-orange-600 text-white font-black text-lg py-5 px-10 rounded-2xl uppercase tracking-widest shadow-xl transform active:scale-98 border-0 cursor-pointer outline-none">
                         Generate & Lock Bid ⚡
                     </button>
                 </div>
@@ -406,16 +403,13 @@
                 <span>✏️</span> Pen
             </button>
             <button type="button" @click="tool = 'line'" :class="tool === 'line' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0 outline-none">
-                <span>📏</span> Line
-            </button>
-            <button type="button" @click="tool = 'arrow'" :class="tool === 'arrow' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0 outline-none">
-                <span>↗️</span> Arrow
+                <span>Line</span> Line
             </button>
             <button type="button" @click="tool = 'box'" :class="tool === 'box' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0 outline-none">
-                <span>⬜</span> Box
+                <span>Box</span> Box
             </button>
             <button type="button" @click="tool = 'circle'" :class="tool === 'circle' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0 outline-none">
-                <span>⚪</span> Circle
+                <span>Circle</span> Circle
             </button>
             <button type="button" @click="tool = 'text'" :class="tool === 'text' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0 outline-none">
                 <span>🔤</span> Text
@@ -463,7 +457,6 @@
                 markupPreviewUrl: '',
 
                 init() {
-                    // 🛡️ DEAD-ZONE LOCAL CACHE EVALUATION HANDSHAKE
                     const savedCache = localStorage.getItem('cs_estimate_draft_cache');
                     if (savedCache) {
                         try {
@@ -488,7 +481,6 @@
                         }
                     }
 
-                    // Fallback to traditional Laravel validation state arrays if localStorage is unpopulated
                     if (this.items.length === 0) {
                         @if(old('items'))
                             @foreach(old('items') as $idx => $oldItem)
@@ -511,7 +503,6 @@
                         this.loadDirectoryProfile(preselectedId);
                     }
 
-                    // Register real-time field state watchers to seamlessly cache client variables
                     this.$watch('items', () => this.persistToLocalCache(), { deep: true });
                     this.$watch('customerSource', () => this.persistToLocalCache());
                     this.$watch('customer_first_name', () => this.persistToLocalCache());
@@ -653,8 +644,14 @@
                     this.history.forEach(shape => this.drawShapePrimitive(shape));
                 },
                 getCoordinates(event) {
-                    let clientX = event.touches ? event.touches[0].clientX : event.clientX;
-                    let clientY = event.touches ? event.touches[0].clientY : event.clientY;
+                    let touch = null;
+                    if (event.touches && event.touches.length > 0) {
+                        touch = event.touches[0];
+                    } else if (event.changedTouches && event.changedTouches.length > 0) {
+                        touch = event.changedTouches[0];
+                    }
+                    let clientX = touch ? touch.clientX : event.clientX;
+                    let clientY = touch ? touch.clientY : event.clientY;
                     const rect = this.canvas.getBoundingClientRect();
                     return { x: clientX - rect.left, y: clientY - rect.top };
                 },
