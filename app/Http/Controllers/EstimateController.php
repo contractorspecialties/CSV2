@@ -29,12 +29,10 @@ class EstimateController extends Controller
     {
         $companyId = Auth::user()->company_id;
 
-        // Fetch company directory clients ordered cleanly by client_name properties
         $customers = Client::where('company_id', $companyId)
             ->orderBy('client_name', 'asc')
             ->get();
 
-        // Inject first/last split properties into memory so legacy view variables evaluate cleanly
         $customers->each(function($client) {
             $parts = explode(' ', trim($client->client_name ?? ''), 2);
             $client->first_name = $parts[0] ?? 'Client';
@@ -42,7 +40,6 @@ class EstimateController extends Controller
             $client->billing_address = $client->address;
         });
 
-        // Optimized Model-Driven Query automatically tracking prefix definitions
         $pricebookItems = PricebookItem::where('company_id', $companyId)
             ->orderBy('category', 'asc')
             ->orderBy('name', 'asc')
@@ -58,7 +55,6 @@ class EstimateController extends Controller
      */
     public function store(Request $request)
     {
-        // Clean up empty form field string artifacts before firing validation sequences
         $inputData = $request->all();
         if (isset($inputData['expires_at']) && trim($inputData['expires_at']) === '') {
             $inputData['expires_at'] = null;
@@ -67,7 +63,6 @@ class EstimateController extends Controller
             $inputData['deposit_amount'] = null;
         }
 
-        // Cast pricebook and line item tax array checkbox tokens to absolute booleans
         if (isset($inputData['items']) && is_array($inputData['items'])) {
             foreach ($inputData['items'] as $key => $item) {
                 $inputData['items'][$key]['save_to_pricebook'] = (isset($item['save_to_pricebook']) && ($item['save_to_pricebook'] === 'true' || $item['save_to_pricebook'] === 'on' || $item['save_to_pricebook'] == 1)) ? true : false;
@@ -75,10 +70,7 @@ class EstimateController extends Controller
             }
         }
 
-        // Re-bind sanitized variables back into a clean request array
         $request->merge($inputData);
-
-        // Run plugin-driven structural modifications safely across dependent tables
         $this->healEstimateTablesSchema();
 
         $validated = $request->validate([
@@ -128,7 +120,6 @@ class EstimateController extends Controller
             $customer->address = $validated['customer_address'];
             $customer->save();
 
-            // 🧮 DYNAMIC SEQUENTIAL SERIAL ENGINE CALCULATION
             $lastEstimate = Estimate::where('company_id', $companyId)
                 ->orderBy('id', 'desc')
                 ->first();
@@ -199,7 +190,6 @@ class EstimateController extends Controller
             $estimate->grand_total = $calculatedGrandTotal;
             $estimate->save();
 
-            // Handle file ingestion securely into isolated storage
             if ($request->hasFile('image') && $request->file('image')->isValid()) {
                 $file = $request->file('image');
                 $securedPath = $this->compressAndVaultFieldPhoto($file, $estimate->id);
@@ -425,6 +415,70 @@ class EstimateController extends Controller
     }
 
     /**
+     * 💬 INTEGRATED MULTI-TEMPLATE CANNED MESSAGING SYSTEM ENGINE
+     * Dispatches immediate field coordination presets out of shared regional pools.
+     */
+    public function sendCannedSms(Request $request, $id)
+    {
+        $request->validate([
+            'message_type' => 'required|in:on_my_way,running_late,need_parts,progress_update'
+        ]);
+
+        $companyId = Auth::user()->company_id;
+        $estimate = Estimate::where('company_id', $companyId)->with('customer')->findOrFail($id);
+
+        if (!$estimate->customer || empty($estimate->customer->phone_number)) {
+            return back()->with('error', '🛑 Cannot execute field dispatch: Client profile phone number is missing.');
+        }
+
+        $userTable = (new \App\Models\User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+        $company = DB::table($prefix . 'companies')->where('id', $companyId)->first();
+
+        $fromLine = $company->sms_phone_number ?? env('TELNYX_DEFAULT_FROM');
+        $companyName = $company->name ?? 'Our Crew';
+        $portalLink = route('portal.checkout', ['token' => $estimate->estimate_number]);
+
+        // Construct high-impact, construction-focused text presets
+        switch ($request->message_type) {
+            case 'on_my_way':
+                $body = "🚚 On My Way: This is {$companyName}. Our crew is en route to your property now and will be arriving shortly!";
+                break;
+            case 'running_late':
+                $body = "⏱️ Running Late: This is {$companyName}. We are running slightly behind schedule on our previous field stop but are en route to your property now. Thank you for your patience!";
+                break;
+            case 'need_parts':
+                $body = "🔧 Status Update: This is {$companyName}. We need to secure additional material components to complete your current production line pass. Stepping off-site briefly, crew will return shortly.";
+                break;
+            case 'progress_update':
+                $body = "📸 Project Update: This is {$companyName}. We have logged fresh visual updates onto your secure tracking blueprint. Review progress rows here: {$portalLink}";
+                break;
+        }
+
+        try {
+            \App\Jobs\SendPortalSms::dispatch($estimate->customer->phone_number, $body, $fromLine);
+
+            // Log directly to preserve outbound context strings for threading stability
+            DB::table($prefix . 'sms_histories')->insert([
+                'company_id'   => $companyId,
+                'client_id'    => $estimate->customer_id,
+                'estimate_id'  => $estimate->id,
+                'direction'    => 'outbound',
+                'from_number'  => $fromLine,
+                'to_number'    => $estimate->customer->phone_number,
+                'message_body' => $body,
+                'created_at'   => now(),
+                'updated_at'   => now()
+            ]);
+
+            return back()->with('status', '⚡ Canned field update successfully dispatched to client.');
+        } catch (\Exception $e) {
+            Log::error("🚨 Canned SMS execution failure: " . $e->getMessage());
+            return back()->with('error', '🛑 Failed to route template payload to carrier network.');
+        }
+    }
+
+    /**
      * Upload an estimate attachment card, compressing assets on-the-fly into isolated vaults.
      */
     public function uploadAttachment(Request $request, $id)
@@ -479,15 +533,16 @@ class EstimateController extends Controller
      */
     public function checkout($token)
     {
-        $query = Estimate::withoutGlobalScopes()->with(['customer', 'items']);
-
-        if (is_numeric($token)) {
-            $query->where('id', $token);
-        } else {
-            $query->where('estimate_number', $token);
-        }
-
-        $estimate = $query->firstOrFail();
+        $estimate = Estimate::withoutGlobalScopes()
+            ->with(['customer', 'items'])
+            ->where(function ($query) use ($token) {
+                if (is_numeric($token)) {
+                    $query->where('id', $token);
+                } else {
+                    $query->where('estimate_number', $token);
+                }
+            })
+            ->firstOrFail();
 
         if ($estimate->customer) {
             $parts = explode(' ', trim($estimate->customer->client_name ?? ''), 2);
@@ -702,14 +757,12 @@ class EstimateController extends Controller
     }
 
     /**
-     * 🚀 ITEM 12: AUTOMATED REPUTATION EXPANSION FUNNEL ENGINE
      * Close out an active production run and launch the background review invite loop.
      */
     public function closeJob(Request $request, $id)
     {
         $companyId = Auth::user()->company_id;
 
-        // Pull the estimate details along with its specific customer mapping record
         $estimate = Estimate::where('company_id', $companyId)->with('customer')->findOrFail($id);
         $estimate->update(['status' => 'closed']);
 
@@ -718,12 +771,10 @@ class EstimateController extends Controller
 
         $company = DB::table($prefix . 'companies')->where('id', $companyId)->first();
 
-        // Check if the customer profile record has an active phone number to text
         if ($estimate->customer && !empty($estimate->customer->phone_number)) {
             $fromLine = $company->sms_phone_number ?? env('TELNYX_DEFAULT_FROM');
 
             if (!empty($fromLine)) {
-                // If a Google review link isn't configured, fall back to their platform brand portfolio profile route
                 $reviewLink = !empty($company->google_review_link)
                     ? $company->google_review_link
                     : route('brand.show', ['slug' => $company->slug ?? 'staged-profile']);
@@ -734,14 +785,8 @@ class EstimateController extends Controller
                 $smsMessageBody = "Hi {$clientFirstName}, thank you for choosing " . ($company->name ?? 'our crew') . "! We have finalized your project logs. Could you take 30 seconds to share your experience and review our field work here? " . $reviewLink;
 
                 try {
-                    // Offload outbound SMS text payload async straight into system background daemons
-                    \App\Jobs\SendPortalSms::dispatch(
-                        $estimate->customer->phone_number,
-                        $smsMessageBody,
-                        $fromLine
-                    );
+                    \App\Jobs\SendPortalSms::dispatch($estimate->customer->phone_number, $smsMessageBody, $fromLine);
 
-                    // Commit review request into transaction log to preserve bi-directional context mapping integrity
                     DB::table($prefix . 'sms_histories')->insert([
                         'company_id'   => $companyId,
                         'client_id'    => $estimate->customer_id,
@@ -836,7 +881,6 @@ class EstimateController extends Controller
                 if (!Schema::hasColumn($companiesTable, 'billing_instructions')) {
                     $table->text('billing_instructions')->nullable();
                 }
-                // 🚀 ADD GOOGLE REVIEW FUNNEL EXTERNAL LINK FIELD RAILS NATIVELY
                 if (!Schema::hasColumn($companiesTable, 'google_review_link')) {
                     $table->string('google_review_link', 500)->nullable();
                 }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $estimate->estimate_number }} | Estimate Details</title>
+    <title>Estimate Details | {{ $estimate->estimate_number }}</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
@@ -18,7 +18,7 @@
             <div class="w-[400px] max-w-[60%] h-[100px] flex items-center">
                 <img src="/images/header-logo.webp" alt="ContractorSpecialties Logo" class="w-full h-auto max-h-[90px] object-contain object-left">
             </div>
-            <a href="/dashboard" class="text-xs font-black text-slate-400 hover:text-white uppercase tracking-wider bg-slate-900 border border-slate-800 px-4 py-2.5 rounded-xl transition-all shadow-inner">
+            <a href="/dashboard" class="text-xs font-black text-slate-400 hover:text-white uppercase tracking-wider bg-slate-900 border border-slate-800 px-4 py-2.5 rounded-xl transition-all shadow-inner text-decoration-none">
                 &larr; Back to Dashboard
             </a>
         </div>
@@ -50,7 +50,7 @@
                 @endif
                 <div>
                     <span class="text-[10px] bg-slate-900 text-slate-300 font-mono font-black px-2 py-0.5 rounded uppercase tracking-wider">
-                        Current Status: {{ $estimate->status }}
+                        Current Status: {{ strtoupper(str_replace('_', ' ', $estimate->status)) }}
                     </span>
                     <h1 class="text-2xl font-black text-slate-950 uppercase tracking-tight mt-1">Estimate {{ $estimate->estimate_number }}</h1>
                     <p class="text-sm text-slate-500 font-medium">Customer: <strong class="text-slate-900">{{ $estimate->customer->last_name }}, {{ $estimate->customer->first_name }}</strong></p>
@@ -63,7 +63,7 @@
                         @endif
 
                         @if(!empty($estimate->company?->slug))
-                            <a href="{{ route('brand.show', ['slug' => $estimate->company->slug]) }}" target="_blank" class="inline-flex items-center gap-1 bg-orange-50 hover:bg-orange-100 border border-orange-200 text-[#f58613] text-[9px] font-black tracking-widest uppercase px-2 py-0.5 rounded shadow-sm transition-all select-none cursor-pointer">
+                            <a href="{{ route('brand.show', ['slug' => $estimate->company->slug]) }}" target="_blank" class="inline-flex items-center gap-1 bg-orange-50 hover:bg-orange-100 border border-orange-200 text-[#f58613] text-[9px] font-black tracking-widest uppercase px-2 py-0.5 rounded shadow-sm transition-all select-none cursor-pointer text-decoration-none">
                                 ✨ Verified Trust Profile &rarr;
                             </a>
                         @endif
@@ -73,14 +73,14 @@
 
             <div class="bg-white border border-slate-200 rounded-xl p-2.5 flex items-center gap-2 shadow-sm">
                 <span class="text-[10px] font-black uppercase tracking-wider text-slate-400 pl-1">Quick Actions:</span>
-                <form action="/estimates/{{ $estimate->id }}/status" method="POST" class="flex gap-1">
+                <form action="/estimates/{{ $estimate->id }}/status" method="POST" class="flex gap-1 m-0">
                     @csrf
                     <input type="hidden" name="status" value="sent">
                     <button type="submit" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-black text-[10px] px-2.5 py-1.5 rounded uppercase tracking-wide cursor-pointer transition-all border-0">
                         Mark Sent
                     </button>
                 </form>
-                <form action="/estimates/{{ $estimate->id }}/status" method="POST" class="flex gap-1">
+                <form action="/estimates/{{ $estimate->id }}/status" method="POST" class="flex gap-1 m-0">
                     @csrf
                     <input type="hidden" name="status" value="approved">
                     <button type="submit" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/50 font-black text-[10px] px-2.5 py-1.5 rounded uppercase tracking-wide cursor-pointer transition-all">
@@ -157,13 +157,13 @@
                             {{ $estimate->notes }}
                         </div>
 
-                        <form action="/estimates/{{ $estimate->id }}/blueprint" method="POST" class="space-y-3 pt-2">
+                        <form action="/estimates/{{ $estimate->id }}/blueprint" method="POST" class="space-y-3 pt-2 m-0">
                             @csrf
                             <div>
-                                <label for="response_notes" class="block text-[10px] font-black uppercase text-slate-500 mb-1">Adjust Proposal Parameters & Reply</label>
-                                <textarea id="response_notes" name="notes" rows="3" placeholder="Type structural adjustments, timeline parameter changes, or direct clarification answers here..." class="w-full bg-white border border-slate-300 rounded-xl p-3 text-xs font-medium focus:outline-none focus:border-[#f58613] text-slate-900"></textarea>
+                                <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">Adjust Proposal Parameters & Reply</label>
+                                <textarea name="notes" rows="3" placeholder="Type structural adjustments, timeline parameter changes, or direct clarification answers here..." class="w-full bg-white border border-slate-300 rounded-xl p-3 text-xs font-medium focus:outline-none focus:border-[#f58613] text-slate-900"></textarea>
                             </div>
-                            <button type="submit" class="bg-slate-950 hover:bg-black text-white font-black text-xs py-2.5 px-4 rounded-xl uppercase tracking-wider transition-all cursor-pointer border-0">
+                            <button type="submit" class="bg-slate-950 hover:bg-black text-white font-black text-xs py-2.5 px-4 rounded-xl uppercase tracking-wider transition-all cursor-pointer border-0 outline-none">
                                 Lock Adjustments & Notify Client ⚡
                             </button>
                         </form>
@@ -180,6 +180,7 @@
 
             <div class="space-y-6">
 
+                <!-- 📢 CUSTOMER DISPATCH & CANNED PRESETS HUB -->
                 <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
                     <div class="border-b border-slate-100 pb-2">
                         <h3 class="font-black text-xs text-slate-900 uppercase tracking-wider">📢 Customer Dispatch Hub</h3>
@@ -209,19 +210,57 @@
                     </div>
 
                     <div class="space-y-2 pt-2">
-                        <form action="/estimates/{{ $estimate->id }}/text-dispatch" method="POST">
+                        <form action="/estimates/{{ $estimate->id }}/text-dispatch" method="POST" class="m-0">
                             @csrf
-                            <button type="submit" @empty($estimate->customer->phone) disabled @endempty class="w-full bg-[#f58613] hover:bg-orange-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-black text-xs py-3.5 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] flex justify-center items-center gap-2 cursor-pointer border-0">
-                                📱 Send Link via Text Message Run
+                            <button type="submit" @empty($estimate->customer->phone) disabled @endempty class="w-full bg-[#f58613] hover:bg-orange-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-black text-xs py-3.5 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] flex justify-center items-center gap-2 cursor-pointer border-0 outline-none">
+                                📱 Send Proposal Link via Text
                             </button>
                         </form>
 
-                        <form action="/estimates/{{ $estimate->id }}/email-dispatch" method="POST">
+                        <form action="/estimates/{{ $estimate->id }}/email-dispatch" method="POST" class="m-0">
                             @csrf
-                            <button type="submit" class="w-full bg-slate-900 hover:bg-black text-white font-black text-xs py-3.5 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] flex justify-center items-center gap-2 cursor-pointer border border-slate-950">
-                                📧 Send Link via Official Email Trail
+                            <button type="submit" class="w-full bg-slate-900 hover:bg-black text-white font-black text-xs py-3.5 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] flex justify-center items-center gap-2 cursor-pointer border border-slate-950 outline-none">
+                                📧 Send Proposal Link via Email
                             </button>
                         </form>
+                    </div>
+
+                    <!-- 🛠️ FIELD-DRIVEN ONE-CLICK DISPATCH UI MODULE -->
+                    <div class="border-t border-slate-100 pt-4 mt-2 space-y-2">
+                        <span class="block text-[10px] font-black uppercase text-slate-400 tracking-wider">⚡ Quick Field Dispatch Presets</span>
+                        <div class="grid grid-cols-2 gap-2">
+                            <form action="/estimates/{{ $estimate->id }}/canned-dispatch" method="POST" class="m-0">
+                                @csrf
+                                <input type="hidden" name="message_type" value="on_my_way">
+                                <button type="submit" @empty($estimate->customer->phone) disabled @endempty class="w-full bg-slate-50 hover:bg-slate-100 disabled:bg-slate-100 disabled:text-slate-300 text-slate-800 font-bold text-[10px] py-2.5 px-2 rounded-xl border border-slate-200 cursor-pointer transition-colors text-center uppercase tracking-wide">
+                                    🚚 On Way
+                                </button>
+                            </form>
+
+                            <form action="/estimates/{{ $estimate->id }}/canned-dispatch" method="POST" class="m-0">
+                                @csrf
+                                <input type="hidden" name="message_type" value="running_late">
+                                <button type="submit" @empty($estimate->customer->phone) disabled @endempty class="w-full bg-slate-50 hover:bg-slate-100 disabled:bg-slate-100 disabled:text-slate-300 text-slate-800 font-bold text-[10px] py-2.5 px-2 rounded-xl border border-slate-200 cursor-pointer transition-colors text-center uppercase tracking-wide">
+                                    ⏱️ Late
+                                </button>
+                            </form>
+
+                            <form action="/estimates/{{ $estimate->id }}/canned-dispatch" method="POST" class="m-0">
+                                @csrf
+                                <input type="hidden" name="message_type" value="need_parts">
+                                <button type="submit" @empty($estimate->customer->phone) disabled @endempty class="w-full bg-slate-50 hover:bg-slate-100 disabled:bg-slate-100 disabled:text-slate-300 text-slate-800 font-bold text-[10px] py-2.5 px-2 rounded-xl border border-slate-200 cursor-pointer transition-colors text-center uppercase tracking-wide">
+                                    🔧 Parts
+                                </button>
+                            </form>
+
+                            <form action="/estimates/{{ $estimate->id }}/canned-dispatch" method="POST" class="m-0">
+                                @csrf
+                                <input type="hidden" name="message_type" value="progress_update">
+                                <button type="submit" @empty($estimate->customer->phone) disabled @endempty class="w-full bg-slate-50 hover:bg-slate-100 disabled:bg-slate-100 disabled:text-slate-300 text-slate-800 font-bold text-[10px] py-2.5 px-2 rounded-xl border border-slate-200 cursor-pointer transition-colors text-center uppercase tracking-wide">
+                                    📸 Photos
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
 
@@ -231,7 +270,7 @@
                         <p class="text-[11px] text-slate-400 font-medium mt-0.5">Upload visual proof or job status photos directly to this folder profile.</p>
                     </div>
 
-                    <form action="/estimates/{{ $estimate->id }}/attachments" method="POST" enctype="multipart/form-data" class="space-y-3" id="attachmentForm">
+                    <form action="/estimates/{{ $estimate->id }}/attachments" method="POST" enctype="multipart/form-data" class="space-y-3 m-0" id="attachmentForm">
                         @csrf
                         <div>
                             <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Select Field Capture Image</label>
@@ -240,7 +279,7 @@
                         <div>
                             <input type="text" name="caption" placeholder="Short description (e.g., Finished framing pass)" class="w-full bg-slate-50 border border-slate-300 rounded-lg py-2 px-2.5 text-xs font-medium focus:outline-none focus:border-[#f58613] text-slate-900">
                         </div>
-                        <button type="submit" class="w-full bg-slate-950 hover:bg-black text-white font-black text-xs py-2.5 rounded-lg uppercase tracking-wider transition-all cursor-pointer border-0">
+                        <button type="submit" class="w-full bg-slate-950 hover:bg-black text-white font-black text-xs py-2.5 rounded-lg uppercase tracking-wider transition-all cursor-pointer border-0 outline-none">
                             Commit Progress Asset ⚡
                         </button>
                     </form>
@@ -268,18 +307,18 @@
 
     <div x-show="showStudio" x-cloak class="fixed inset-0 z-100 bg-slate-950 flex flex-col select-none" @window:resize.debounce.200="resizeCanvas()">
         <div class="bg-slate-900 border-b border-slate-800 px-4 h-16 shrink-0 flex items-center justify-between">
-            <button type="button" @click="closeStudio()" class="text-slate-400 hover:text-white font-black text-xs tracking-widest uppercase cursor-pointer bg-transparent border-0">
+            <button type="button" @click="closeStudio()" class="text-slate-400 hover:text-white font-black text-xs tracking-widest uppercase cursor-pointer bg-transparent border-0 outline-none">
                 &larr; Cancel
             </button>
             <div class="flex items-center gap-3">
-                <button type="button" @click="undoLastShape()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all border-0">
+                <button type="button" @click="undoLastShape()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all border-0 outline-none">
                     ↩ Undo
                 </button>
-                <button type="button" @click="clearStudioCanvas()" class="bg-red-950/40 text-red-400 hover:bg-red-900/40 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all border-0">
+                <button type="button" @click="clearStudioCanvas()" class="bg-red-950/40 text-red-400 hover:bg-red-900/40 font-black text-xs px-3.5 py-2 rounded-xl uppercase tracking-widest cursor-pointer transition-all border-0 outline-none">
                     🗑️ Clear
                 </button>
             </div>
-            <button type="button" @click="commitStudioMarkup()" class="bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs px-5 py-2.5 rounded-xl uppercase tracking-widest shadow transition-all active:scale-95 cursor-pointer border-0">
+            <button type="button" @click="commitStudioMarkup()" class="bg-slate-900 text-[#f58613] hover:text-orange-500 font-black text-xs px-5 py-2.5 rounded-xl uppercase tracking-widest shadow transition-all active:scale-95 cursor-pointer border-0 outline-none">
                 Save Markup ✓
             </button>
         </div>
@@ -288,19 +327,19 @@
             <div class="absolute left-3 top-1/2 -translate-y-1/2 bg-slate-900/90 backdrop-blur-md border border-slate-800 p-2.5 rounded-2xl flex flex-col gap-4 z-10 shadow-xl">
                 <div class="space-y-2">
                     <span class="block text-[8px] font-black text-slate-500 uppercase tracking-wider text-center">Size</span>
-                    <button type="button" @click="thickness = 2; textSize = 14" :class="thickness === 2 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold cursor-pointer border-0">F</button>
-                    <button type="button" @click="thickness = 6; textSize = 22" :class="thickness === 6 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold cursor-pointer border-0">M</button>
-                    <button type="button" @click="thickness = 12; textSize = 32" :class="thickness === 12 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-base font-bold cursor-pointer border-0">B</button>
+                    <button type="button" @click="thickness = 2; textSize = 14" :class="thickness === 2 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold cursor-pointer border-0 outline-none">F</button>
+                    <button type="button" @click="thickness = 6; textSize = 22" :class="thickness === 6 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold cursor-pointer border-0 outline-none">M</button>
+                    <button type="button" @click="thickness = 12; textSize = 32" :class="thickness === 12 ? 'border-2 border-[#f58613] bg-slate-800' : 'border border-slate-700'" class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-base font-bold cursor-pointer border-0 outline-none">B</button>
                 </div>
             </div>
 
             <div class="absolute right-3 top-1/2 -translate-y-1/2 bg-slate-900/90 backdrop-blur-md border border-slate-800 p-2.5 rounded-2xl flex flex-col gap-3 z-10 shadow-xl">
                 <span class="block text-[8px] font-black text-slate-500 uppercase tracking-wider text-center">Color</span>
-                <button type="button" @click="color = '#f58613'" :class="color === '#f58613' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-[#f58613] cursor-pointer transition-transform border-0"></button>
-                <button type="button" @click="color = '#eab308'" :class="color === '#eab308' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-yellow-500 cursor-pointer transition-transform border-0"></button>
-                <button type="button" @click="color = '#dc2626'" :class="color === '#dc2626' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-red-600 cursor-pointer transition-transform border-0"></button>
-                <button type="button" @click="color = '#ffffff'" :class="color === '#ffffff' ? 'ring-2 ring-orange-500 scale-110' : ''" class="w-6 h-6 rounded-full bg-white border border-slate-300 cursor-pointer transition-transform"></button>
-                <button type="button" @click="color = '#0f172a'" :class="color === '#0f172a' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-slate-900 border border-slate-800 cursor-pointer transition-transform"></button>
+                <button type="button" @click="color = '#f58613'" :class="color === '#f58613' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-[#f58613] cursor-pointer transition-transform border-0 outline-none"></button>
+                <button type="button" @click="color = '#eab308'" :class="color === '#eab308' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-yellow-500 cursor-pointer transition-transform border-0 outline-none"></button>
+                <button type="button" @click="color = '#dc2626'" :class="color === '#dc2626' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-red-600 cursor-pointer transition-transform border-0 outline-none"></button>
+                <button type="button" @click="color = '#ffffff'" :class="color === '#ffffff' ? 'ring-2 ring-orange-500 scale-110' : ''" class="w-6 h-6 rounded-full bg-white border border-slate-300 cursor-pointer transition-transform outline-none"></button>
+                <button type="button" @click="color = '#0f172a'" :class="color === '#0f172a' ? 'ring-2 ring-white scale-110' : ''" class="w-6 h-6 rounded-full bg-slate-900 border border-slate-800 cursor-pointer transition-transform outline-none"></button>
             </div>
 
             <canvas id="studioCanvas"
@@ -316,22 +355,22 @@
         </div>
 
         <div class="bg-slate-900 border-t border-slate-800 px-4 h-20 shrink-0 flex items-center justify-center gap-1.5 sm:gap-3 overflow-x-auto">
-            <button type="button" @click="tool = 'pen'" :class="tool === 'pen' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0">
+            <button type="button" @click="tool = 'pen'" :class="tool === 'pen' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0 outline-none">
                 <span>✏️</span> Pen
             </button>
-            <button type="button" @click="tool = 'line'" :class="tool === 'line' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0">
+            <button type="button" @click="tool = 'line'" :class="tool === 'line' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0 outline-none">
                 <span>📏</span> Line
             </button>
-            <button type="button" @click="tool = 'arrow'" :class="tool === 'arrow' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0">
+            <button type="button" @click="tool = 'arrow'" :class="tool === 'arrow' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0 outline-none">
                 <span>↗️</span> Arrow
             </button>
-            <button type="button" @click="tool = 'box'" :class="tool === 'box' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0">
+            <button type="button" @click="tool = 'box'" :class="tool === 'box' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0 outline-none">
                 <span>⬜</span> Box
             </button>
-            <button type="button" @click="tool = 'circle'" :class="tool === 'circle' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0">
+            <button type="button" @click="tool = 'circle'" :class="tool === 'circle' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0 outline-none">
                 <span>⚪</span> Circle
             </button>
-            <button type="button" @click="tool = 'text'" :class="tool === 'text' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0">
+            <button type="button" @click="tool = 'text'" :class="tool === 'text' ? 'bg-[#f58613] text-white font-black' : 'bg-slate-800 text-slate-400'" class="py-2.5 px-3.5 rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 transition-colors cursor-pointer shrink-0 border-0 outline-none">
                 <span>🔤</span> Text
             </button>
         </div>
