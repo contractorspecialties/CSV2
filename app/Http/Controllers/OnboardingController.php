@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Str;
 
 class OnboardingController extends Controller
@@ -19,7 +20,7 @@ class OnboardingController extends Controller
     {
         $user = Auth::user();
 
-        // Safety check: If they are already onboarded, send directly to operational dashboard
+        // Safety check: If already onboarded, route directly to master workspace console
         if ($user && $user->onboarding_completed_at) {
             return redirect()->route('dashboard');
         }
@@ -27,8 +28,12 @@ class OnboardingController extends Controller
         // Secure dynamic prefix extraction matching your model standardizations cleanly
         $userTable = (new User())->getTable();
         $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+        $companyTable = $prefix . 'companies';
 
-        $company = DB::table($prefix . 'companies')->where('id', $user->company_id)->first();
+        // Self-heal the database schema layers defensively before running queries
+        $this->ensureSchemaIsHealed($companyTable);
+
+        $company = DB::table($companyTable)->where('id', $user->company_id)->first();
 
         // Extract current step state from session fallback or user database value
         $step = session('onboarding_active_step', 1);
@@ -413,6 +418,10 @@ class OnboardingController extends Controller
 
         $userTable = (new User())->getTable();
         $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+        $companyTable = $prefix . 'companies';
+
+        // Secure baseline table updates ahead of parameter mutation steps
+        $this->ensureSchemaIsHealed($companyTable);
 
         $currentStep = (int)$request->input('current_step', 1);
         $direction = $request->input('direction', 'next');
@@ -454,7 +463,7 @@ class OnboardingController extends Controller
                     }
                 }
 
-                DB::table($prefix . 'companies')->where('id', $user->company_id)->update([
+                DB::table($companyTable)->where('id', $user->company_id)->update([
                     'name'                 => $validated['company_name'],
                     'city'                 => $validated['city'],
                     'state'                => strtoupper($validated['state']),
@@ -499,7 +508,7 @@ class OnboardingController extends Controller
                     $updatePayload['logo_path'] = 'uploads/logos/' . $name;
                 }
 
-                DB::table($prefix . 'companies')->where('id', $user->company_id)->update($updatePayload);
+                DB::table($companyTable)->where('id', $user->company_id)->update($updatePayload);
 
                 session(['onboarding_active_step' => 3]);
                 return redirect()->route('onboarding.view')->with('status', 'Compliance profiles structural layer compiled.');
@@ -528,7 +537,7 @@ class OnboardingController extends Controller
                     $updatePayload['portfolio_image_path'] = 'uploads/portfolio/' . $name;
                 }
 
-                DB::table($prefix . 'companies')->where('id', $user->company_id)->update($updatePayload);
+                DB::table($companyTable)->where('id', $user->company_id)->update($updatePayload);
 
                 session(['onboarding_active_step' => 4]);
                 return redirect()->route('onboarding.view')->with('status', 'Functional capability checkboxes logged.');
@@ -541,7 +550,7 @@ class OnboardingController extends Controller
                     'yelp_link'          => 'nullable|url|max:255',
                 ]);
 
-                DB::table($prefix . 'companies')->where('id', $user->company_id)->update([
+                DB::table($companyTable)->where('id', $user->company_id)->update([
                     'social_links' => json_encode([
                         'google'   => $validated['google_review_link'],
                         'facebook' => $validated['facebook_link'],
@@ -565,7 +574,7 @@ class OnboardingController extends Controller
 
                 DB::beginTransaction();
 
-                DB::table($prefix . 'companies')->where('id', $user->company_id)->update([
+                DB::table($companyTable)->where('id', $user->company_id)->update([
                     'crew_structure'          => $validated['crew_structure'],
                     'invoice_preferences'     => $validated['invoice_preferences'],
                     'default_tax_rate'        => $validated['default_tax_rate'],
@@ -581,7 +590,7 @@ class OnboardingController extends Controller
                 DB::commit();
 
                 session()->forget('onboarding_active_step');
-                Log::info("🚀 Onboarding funnel verified complete. Workspace ID: {$user->company_id} launched into active state layout.");
+                Log::info("Onboarding funnel verified complete. Workspace ID: {$user->company_id} launched into active state layout.");
 
                 return redirect()->route('dashboard')->with('status', '⚡ Workspace fully calibrated and deployed live!');
             }
@@ -590,10 +599,74 @@ class OnboardingController extends Controller
             if ($currentStep === 5) {
                 DB::rollBack();
             }
-            Log::error("🚨 Onboarding pipeline checkpoint engine fault at Step {$currentStep}: " . $e->getMessage());
+            Log::error("Onboarding pipeline checkpoint engine fault at Step {$currentStep}: " . $e->getMessage());
             return back()->withInput()->withErrors(['error' => 'An operational parameters fault occurred. Verify inputs and retry.']);
         }
 
         return redirect()->route('onboarding.view');
+    }
+
+    /**
+     * Safe Plugin-Driven Database Self-Healing Structural Schema Guard for Companies.
+     */
+    private function ensureSchemaIsHealed(string $tableName): void
+    {
+        if (!Schema::hasTable($tableName)) {
+            Schema::create($tableName, function (Blueprint $table) {
+                $table->id();
+                $table->string('name', 255)->nullable();
+                $table->string('city', 255)->nullable();
+                $table->string('state', 10)->nullable();
+                $table->string('city_slug', 255)->nullable()->index();
+                $table->string('state_slug', 10)->nullable()->index();
+                $table->string('trade', 255)->nullable();
+                $table->integer('service_radius_miles')->default(25);
+                $table->boolean('is_publicly_listed')->default(0)->index();
+                $table->integer('years_experience')->default(0);
+                $table->string('license_number', 100)->nullable();
+                $table->boolean('is_insured')->default(1);
+                $table->string('company_bio_short', 255)->nullable();
+                $table->text('company_bio_long')->nullable();
+                $table->string('logo_path', 255)->nullable();
+                $table->text('service_tags')->nullable();
+                $table->boolean('emergency_availability')->default(0);
+                $table->string('portfolio_image_path', 255)->nullable();
+                $table->text('social_links')->nullable();
+                $table->string('crew_structure', 50)->default('solo');
+                $table->string('invoice_preferences', 50)->default('digital_only');
+                $table->decimal('default_tax_rate', 5, 2)->default(0.00);
+                $table->integer('starting_invoice_number')->default(1000);
+                $table->text('deposit_rules')->nullable();
+                $table->timestamp('onboarding_completed_at')->nullable()->index();
+                $table->timestamps();
+            });
+        } else {
+            Schema::table($tableName, function (Blueprint $table) use ($tableName) {
+                if (!Schema::hasColumn($tableName, 'name')) { $table->string('name', 255)->nullable(); }
+                if (!Schema::hasColumn($tableName, 'city')) { $table->string('city', 255)->nullable(); }
+                if (!Schema::hasColumn($tableName, 'state')) { $table->string('state', 10)->nullable(); }
+                if (!Schema::hasColumn($tableName, 'city_slug')) { $table->string('city_slug', 255)->nullable()->index(); }
+                if (!Schema::hasColumn($tableName, 'state_slug')) { $table->string('state_slug', 10)->nullable()->index(); }
+                if (!Schema::hasColumn($tableName, 'trade')) { $table->string('trade', 255)->nullable(); }
+                if (!Schema::hasColumn($tableName, 'service_radius_miles')) { $table->integer('service_radius_miles')->default(25); }
+                if (!Schema::hasColumn($tableName, 'is_publicly_listed')) { $table->boolean('is_publicly_listed')->default(0)->index(); }
+                if (!Schema::hasColumn($tableName, 'years_experience')) { $table->integer('years_experience')->default(0); }
+                if (!Schema::hasColumn($tableName, 'license_number')) { $table->string('license_number', 100)->nullable(); }
+                if (!Schema::hasColumn($tableName, 'is_insured')) { $table->boolean('is_insured')->default(1); }
+                if (!Schema::hasColumn($tableName, 'company_bio_short')) { $table->string('company_bio_short', 255)->nullable(); }
+                if (!Schema::hasColumn($tableName, 'company_bio_long')) { $table->text('company_bio_long')->nullable(); }
+                if (!Schema::hasColumn($tableName, 'logo_path')) { $table->string('logo_path', 255)->nullable(); }
+                if (!Schema::hasColumn($tableName, 'service_tags')) { $table->text('service_tags')->nullable(); }
+                if (!Schema::hasColumn($tableName, 'emergency_availability')) { $table->boolean('emergency_availability')->default(0); }
+                if (!Schema::hasColumn($tableName, 'portfolio_image_path')) { $table->string('portfolio_image_path', 255)->nullable(); }
+                if (!Schema::hasColumn($tableName, 'social_links')) { $table->text('social_links')->nullable(); }
+                if (!Schema::hasColumn($tableName, 'crew_structure')) { $table->string('crew_structure', 50)->default('solo'); }
+                if (!Schema::hasColumn($tableName, 'invoice_preferences')) { $table->string('invoice_preferences', 50)->default('digital_only'); }
+                if (!Schema::hasColumn($tableName, 'default_tax_rate')) { $table->decimal('default_tax_rate', 5, 2)->default(0.00); }
+                if (!Schema::hasColumn($tableName, 'starting_invoice_number')) { $table->integer('starting_invoice_number')->default(1000); }
+                if (!Schema::hasColumn($tableName, 'deposit_rules')) { $table->text('deposit_rules')->nullable(); }
+                if (!Schema::hasColumn($tableName, 'onboarding_completed_at')) { $table->timestamp('onboarding_completed_at')->nullable()->index(); }
+            });
+        }
     }
 }
