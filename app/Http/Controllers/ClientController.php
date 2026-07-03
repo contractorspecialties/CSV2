@@ -28,18 +28,19 @@ class ClientController extends Controller
         // Self-heal the schema structure safely
         $this->ensureSchemaIsHealed($clientTable);
 
-        $query = DB::table($clientTable)->where('company_id', $user->company_id);
+        // Filter out soft-isolated historical clients to keep the active directory clean
+        $query = DB::table($clientTable)
+            ->where('company_id', $user->company_id)
+            ->where('is_archived', 0);
 
         $search = '';
         if ($request->filled('search')) {
             $search = trim($request->input('search'));
             $query->where(function($q) use ($search) {
-                // Multi-column safety search fallback
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('company', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")
                   ->orWhere('phone', 'like', "%{$search}%")
-                  // Support old table names if search runs before cache drops
                   ->orWhere('client_name', 'like', "%{$search}%");
             });
         }
@@ -48,21 +49,17 @@ class ClientController extends Controller
         $rawClients = $query->orderBy('updated_at', 'desc')->get();
 
         // 🛡️ INDESTRUCTIBLE DATA NORMALIZATION COMPATIBILITY LAYER
-        // Maps old table structures and new layout targets seamlessly so Blade never throws an undefined property error
         $clients = $rawClients->map(function ($client) {
             $normalized = new \stdClass();
             $normalized->id = $client->id;
             $normalized->company_id = $client->company_id;
 
-            // Core Identity Normalization
             $normalized->name = $client->name ?? $client->client_name ?? 'Unknown Client';
             $normalized->company = $client->company ?? $client->company_name ?? '';
 
-            // Communication Lines Normalization
             $normalized->phone = $client->phone ?? $client->phone_number ?? '';
             $normalized->email = $client->email ?? $client->email_address ?? '';
 
-            // Address System Normalization
             if (isset($client->address)) {
                 $normalized->address = $client->address;
             } else {
@@ -73,7 +70,6 @@ class ClientController extends Controller
                 $normalized->address = trim("{$street} {$city} {$state} {$zip}");
             }
 
-            // Notes & Logs Normalization
             $normalized->notes = $client->notes ?? $client->customer_notes ?? $client->project_description ?? 'No specific job site notes saved yet.';
 
             return $normalized;
@@ -112,17 +108,17 @@ class ClientController extends Controller
 
         $this->ensureSchemaIsHealed($clientTable);
 
-        // Double-write array structure to support legacy or newly patched schemas safely
         $insertData = [
-            'company_id' => $user->company_id,
-            'name'       => $validated['name'],
-            'company'    => $validated['company'],
-            'email'      => $validated['email'],
-            'phone'      => $validated['phone'],
-            'address'    => $validated['address'],
-            'notes'      => $validated['notes'],
-            'created_at' => now(),
-            'updated_at' => now(),
+            'company_id'  => $user->company_id,
+            'name'        => $validated['name'],
+            'company'     => $validated['company'],
+            'email'       => $validated['email'],
+            'phone'       => $validated['phone'],
+            'address'     => $validated['address'],
+            'notes'       => $validated['notes'],
+            'is_archived' => 0,
+            'created_at'  => now(),
+            'updated_at'  => now(),
         ];
 
         if (Schema::hasColumn($clientTable, 'client_name')) { $insertData['client_name'] = $validated['name']; }
@@ -132,7 +128,7 @@ class ClientController extends Controller
 
         DB::table($clientTable)->insert($insertData);
 
-        Log::info("静态 field client profile saved to list by User ID: {$user->id}");
+        Log::info("Field client profile saved to list by User ID: {$user->id}");
 
         return redirect()->route('workspace.crm.index')->with('status', '⚡ New customer profile successfully saved to your list.');
     }
@@ -156,7 +152,6 @@ class ClientController extends Controller
             abort(404, 'Client target data row missing.');
         }
 
-        // Normalize single data model for edit frame rendering safely
         $normalized = new \stdClass();
         $normalized->id = $client->id;
         $normalized->name = $client->name ?? $client->client_name ?? '';
@@ -230,21 +225,72 @@ class ClientController extends Controller
     }
 
     /**
-     * Purge a customer profile record from the tenant partition.
+     * Purge a customer profile record and perform dependent active pipeline card scrubs.
      */
     public function destroy($id)
     {
         $user = Auth::user();
         $userTable = (new User())->getTable();
         $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
-        $clientTable = $prefix . 'clients';
 
-        DB::table($clientTable)
+        $clientTable      = $prefix . 'clients';
+        $estimateTable    = $prefix . 'estimates';
+        $itemsTable       = $prefix . 'estimate_items';
+        $appointmentTable = $prefix . 'appointments';
+
+        $client = DB::table($clientTable)
             ->where('id', $id)
             ->where('company_id', $user->company_id)
-            ->delete();
+            ->first();
 
-        return redirect()->route('workspace.crm.index')->with('status', '🗑️ Customer account cleanly scrubbed from company directory registries.');
+        if (!$client) {
+            abort(404, 'Target client record not found.');
+        }
+
+        // Gather all estimates linked to this target profile
+        $estimates = DB::table($estimateTable)->where('customer_id', $id)->get();
+
+        $activeEstimateIds = [];
+        $hasArchivedHistory = false;
+
+        foreach ($estimates as $est) {
+            if ($est->status === 'closed') {
+                $hasArchivedHistory = true;
+            } else {
+                $activeEstimateIds[] = $est->id;
+            }
+        }
+
+        DB::transaction(function () use ($id, $clientTable, $estimateTable, $itemsTable, $appointmentTable, $activeEstimateIds, $hasArchivedHistory) {
+            // 1. Hard purge all pipeline data cards to instantly clean up the active Kanban board columns
+            if (!empty($activeEstimateIds)) {
+                DB::table($itemsTable)->whereIn('estimate_id', $activeEstimateIds)->delete();
+
+                if (Schema::hasTable($appointmentTable)) {
+                    DB::table($appointmentTable)->whereIn('estimate_id', $activeEstimateIds)->delete();
+                }
+
+                DB::table($estimateTable)->whereIn('id', $activeEstimateIds)->delete();
+            }
+
+            // 2. Safely process the primary client structural footprint row
+            if ($hasArchivedHistory) {
+                // Closed records exist; soft-isolate the name string link so historical invoices don't break
+                DB::table($clientTable)->where('id', $id)->update([
+                    'is_archived' => 1,
+                    'updated_at'  => now()
+                ]);
+            } else {
+                // Zero historical accounting footprints exist; hard delete the client row safely
+                DB::table($clientTable)->where('id', $id)->delete();
+            }
+        });
+
+        $msg = $hasArchivedHistory
+            ? '🗑️ Customer removed. Active bids scrubbed from Kanban board; historical data preserved for tax analytics.'
+            : '🗑️ Customer account and all matching proposal cards permanently purged.';
+
+        return redirect()->route('workspace.crm.index')->with('status', $msg);
     }
 
     /**
@@ -261,6 +307,7 @@ class ClientController extends Controller
 
         $rawClients = DB::table($clientTable)
             ->where('company_id', $user->company_id)
+            ->where('is_archived', 0)
             ->orderBy('name', 'asc')
             ->get();
 
@@ -305,7 +352,7 @@ class ClientController extends Controller
     }
 
     /**
-     * Safe Plugin-Driven Database Self-Healing Structural Guard.
+     * Safe Plugin-Driven Database Self-Healing Structural Schema Guard.
      */
     private function ensureSchemaIsHealed(string $tableName): void
     {
@@ -319,6 +366,7 @@ class ClientController extends Controller
                 $table->string('email', 255)->nullable();
                 $table->text('address')->nullable();
                 $table->text('notes')->nullable();
+                $table->boolean('is_archived')->default(0)->index();
                 $table->timestamps();
             });
         } else {
@@ -329,6 +377,7 @@ class ClientController extends Controller
                 if (!Schema::hasColumn($tableName, 'email')) { $table->string('email', 255)->nullable()->after('phone'); }
                 if (!Schema::hasColumn($tableName, 'address')) { $table->text('address')->nullable()->after('email'); }
                 if (!Schema::hasColumn($tableName, 'notes')) { $table->text('notes')->nullable()->after('address'); }
+                if (!Schema::hasColumn($tableName, 'is_archived')) { $table->boolean('is_archived')->default(0)->index()->after('notes'); }
             });
         }
     }
