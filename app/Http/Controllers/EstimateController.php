@@ -479,17 +479,15 @@ class EstimateController extends Controller
      */
     public function checkout($token)
     {
-        // 🛡️ CRITICAL TENANT SCOPE IMMUNITY: Public routes must bypass company_id isolation gates
-        $estimate = Estimate::withoutGlobalScopes()
-            ->with(['customer', 'items'])
-            ->where(function ($query) use ($token) {
-                if (is_numeric($token)) {
-                    $query->where('id', $token);
-                } else {
-                    $query->where('estimate_number', $token);
-                }
-            })
-            ->firstOrFail();
+        $query = Estimate::withoutGlobalScopes()->with(['customer', 'items']);
+
+        if (is_numeric($token)) {
+            $query->where('id', $token);
+        } else {
+            $query->where('estimate_number', $token);
+        }
+
+        $estimate = $query->firstOrFail();
 
         if ($estimate->customer) {
             $parts = explode(' ', trim($estimate->customer->client_name ?? ''), 2);
@@ -519,7 +517,6 @@ class EstimateController extends Controller
      */
     public function handlePortalAction(Request $request, $id)
     {
-        // 🛡️ CRITICAL TENANT SCOPE IMMUNITY: Homeowner postback processing must bypass isolation gates
         $estimate = Estimate::withoutGlobalScopes()->findOrFail($id);
         $action = $request->input('action');
 
@@ -604,7 +601,7 @@ class EstimateController extends Controller
     }
 
     /**
-     * Intercept and process unauthenticated inbound messaging webhooks from Telnyx.
+     * Inbound SMS transaction webhook interceptor.
      */
     public function handleTelnyxWebhook(Request $request)
     {
@@ -629,25 +626,21 @@ class EstimateController extends Controller
         $userTable = (new \App\Models\User())->getTable();
         $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
 
-        $customer = Client::where('phone_number', $senderLine)->first();
-
-        if (!$customer) {
-            Log::info("📨 Inbound SMS text from unmapped phone tracking line {$senderLine}: {$incomingBody}");
-            return response()->json(['status' => 'unmapped_sender_logged'], 200);
-        }
-
-        $latestEstimate = Estimate::withoutGlobalScopes()
-            ->where('customer_id', $customer->id)
-            ->where('status', '!=', 'closed')
+        $lastOutbound = DB::table($prefix . 'sms_histories')
+            ->where('to_number', $senderLine)
+            ->where('direction', 'outbound')
             ->orderBy('id', 'desc')
             ->first();
 
-        $estimateId = $latestEstimate ? $latestEstimate->id : null;
+        if (!$lastOutbound) {
+            Log::info("📨 Inbound SMS text from unmapped tracking line {$senderLine}: {$incomingBody}");
+            return response()->json(['status' => 'unmapped_thread_logged'], 200);
+        }
 
         DB::table($prefix . 'sms_histories')->insert([
-            'company_id'   => $customer->company_id,
-            'client_id'    => $customer->id,
-            'estimate_id'  => $estimateId,
+            'company_id'   => $lastOutbound->company_id,
+            'client_id'    => $lastOutbound->client_id,
+            'estimate_id'  => $lastOutbound->estimate_id,
             'direction'    => 'inbound',
             'from_number'  => $senderLine,
             'to_number'    => $receiverLine,
@@ -656,9 +649,10 @@ class EstimateController extends Controller
             'updated_at'   => now()
         ]);
 
-        // Smart Bi-Directional SMS Automation Hooks
-        if ($latestEstimate && ($cleanKeyword === 'APPROVE' || $cleanKeyword === 'ACCEPT' || $cleanKeyword === 'YES')) {
-            if ($latestEstimate->status === 'draft' || $latestEstimate->status === 'sent') {
+        if ($lastOutbound->estimate_id && ($cleanKeyword === 'APPROVE' || $cleanKeyword === 'ACCEPT' || $cleanKeyword === 'YES')) {
+            $latestEstimate = Estimate::withoutGlobalScopes()->find($lastOutbound->estimate_id);
+
+            if ($latestEstimate && ($latestEstimate->status === 'draft' || $latestEstimate->status === 'sent')) {
 
                 $latestEstimate->status = 'approved';
                 $latestEstimate->signature_name = "AUTHORIZED VIA MOBILE SMS TEXT";
@@ -690,7 +684,6 @@ class EstimateController extends Controller
         $companyId = Auth::user()->company_id;
         $estimate = Estimate::where('company_id', $companyId)->findOrFail($id);
 
-        // ... rest of method logic completely preserved ...
         DB::transaction(function () use ($estimate) {
             EstimateItem::where('estimate_id', $estimate->id)->delete();
 
@@ -709,16 +702,64 @@ class EstimateController extends Controller
     }
 
     /**
-     * Close out an active production run and shift it cleanly to archived status.
+     * 🚀 ITEM 12: AUTOMATED REPUTATION EXPANSION FUNNEL ENGINE
+     * Close out an active production run and launch the background review invite loop.
      */
     public function closeJob(Request $request, $id)
     {
         $companyId = Auth::user()->company_id;
-        $estimate = Estimate::where('company_id', $companyId)->findOrFail($id);
 
+        // Pull the estimate details along with its specific customer mapping record
+        $estimate = Estimate::where('company_id', $companyId)->with('customer')->findOrFail($id);
         $estimate->update(['status' => 'closed']);
 
-        return redirect()->route('dashboard')->with('status', '📦 Operational job run marked CLOSED and cleanly archived inside history logs.');
+        $userTable = (new \App\Models\User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+
+        $company = DB::table($prefix . 'companies')->where('id', $companyId)->first();
+
+        // Check if the customer profile record has an active phone number to text
+        if ($estimate->customer && !empty($estimate->customer->phone_number)) {
+            $fromLine = $company->sms_phone_number ?? env('TELNYX_DEFAULT_FROM');
+
+            if (!empty($fromLine)) {
+                // If a Google review link isn't configured, fall back to their platform brand portfolio profile route
+                $reviewLink = !empty($company->google_review_link)
+                    ? $company->google_review_link
+                    : route('brand.show', ['slug' => $company->slug ?? 'staged-profile']);
+
+                $clientParts = explode(' ', trim($estimate->customer->client_name ?? ''));
+                $clientFirstName = $clientParts[0] ?? 'Client';
+
+                $smsMessageBody = "Hi {$clientFirstName}, thank you for choosing " . ($company->name ?? 'our crew') . "! We have finalized your project logs. Could you take 30 seconds to share your experience and review our field work here? " . $reviewLink;
+
+                try {
+                    // Offload outbound SMS text payload async straight into system background daemons
+                    \App\Jobs\SendPortalSms::dispatch(
+                        $estimate->customer->phone_number,
+                        $smsMessageBody,
+                        $fromLine
+                    );
+
+                    // Commit review request into transaction log to preserve bi-directional context mapping integrity
+                    DB::table($prefix . 'sms_histories')->insert([
+                        'company_id'   => $companyId,
+                        'client_id'    => $estimate->customer_id,
+                        'estimate_id'  => $estimate->id,
+                        'direction'    => 'outbound',
+                        'from_number'  => $fromLine,
+                        'to_number'    => $estimate->customer->phone_number,
+                        'message_body' => "Hi {$clientFirstName}, thank you for choosing us! Leave us a review here: " . $reviewLink,
+                        'created_at'   => now(),
+                        'updated_at'   => now()
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error("🚨 Reputation funnel SMS invite dispatch failure on job close: " . $e->getMessage());
+                }
+            }
+        }
+
+        return redirect()->route('dashboard')->with('status', '📦 Operational job run marked CLOSED and cleanly archived inside history logs. Local review funnel request dispatched.');
     }
 
     /**
@@ -794,6 +835,10 @@ class EstimateController extends Controller
                 }
                 if (!Schema::hasColumn($companiesTable, 'billing_instructions')) {
                     $table->text('billing_instructions')->nullable();
+                }
+                // 🚀 ADD GOOGLE REVIEW FUNNEL EXTERNAL LINK FIELD RAILS NATIVELY
+                if (!Schema::hasColumn($companiesTable, 'google_review_link')) {
+                    $table->string('google_review_link', 500)->nullable();
                 }
             });
         }
