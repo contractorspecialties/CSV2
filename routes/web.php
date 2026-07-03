@@ -111,16 +111,17 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('pricebook', PricebookController::class)->only(['index', 'store', 'destroy']);
 
         // 💵 Quick On-Site Mobile Billing Counter UI View Node
-Route::get('/workspace/billing/quick', function () { return view('billing.quick'); })->name('workspace.billing.quick');
+        Route::get('/workspace/billing/quick', function () { return view('billing.quick'); })->name('workspace.billing.quick');
 
-// 💳 Dedicated Decoupled Merchant Payout Configuration Gateways
-Route::get('/workspace/billing', [\App\Http\Controllers\WorkspaceBillingController::class, 'edit'])->name('workspace.billing.edit');
-Route::post('/workspace/billing', [\App\Http\Controllers\WorkspaceBillingController::class, 'update'])->name('workspace.billing.update');
+        // 💳 Dedicated Decoupled Merchant Payout Configuration Gateways
+        Route::get('/workspace/billing', [\App\Http\Controllers\WorkspaceBillingController::class, 'edit'])->name('workspace.billing.edit');
+        Route::post('/workspace/billing', [\App\Http\Controllers\WorkspaceBillingController::class, 'update'])->name('workspace.billing.update');
 
         // Estimates & Job Operational Processing (Unified under EstimateController)
         Route::post('/estimates/{id}/blueprint', [EstimateController::class, 'saveBlueprint'])->name('estimates.blueprint');
         Route::post('/estimates/{id}/text-dispatch', [EstimateController::class, 'sendEstimateSms'])->name('estimates.text-dispatch');
         Route::post('/estimates/{id}/email-dispatch', [EstimateController::class, 'sendEstimateEmail'])->name('estimates.email-dispatch');
+        Route::post('/estimates/{id}/canned-dispatch', [EstimateController::class, 'sendCannedSms'])->name('estimates.canned-dispatch');
         Route::post('/estimates/{id}/status', [EstimateController::class, 'updateStatus'])->name('estimates.status');
         Route::post('/estimates/{id}/attachments', [EstimateController::class, 'uploadAttachment'])->name('estimates.attachments');
         Route::post('/estimates/{id}/close-job', [EstimateController::class, 'closeJob'])->name('estimates.close-job');
