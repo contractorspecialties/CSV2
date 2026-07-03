@@ -246,14 +246,14 @@
                                         </div>
                                     </a>
                                     <div class="pt-2.5 border-t border-slate-200 flex items-center justify-between gap-2">
-                                        <form action="/estimates/{{ $bid->id }}/status" method="POST" class="inline-block flex-1">
+                                        <form action="/estimates/{{ $bid->id }}/status" method="POST" class="inline-block flex-1 m-0">
                                             @csrf
                                             <input type="hidden" name="status" value="sent">
                                             <button type="submit" class="w-full bg-slate-50 border-2 border-slate-300 hover:bg-[#f58613] hover:text-white text-slate-800 text-[10px] font-black uppercase py-2 px-2 rounded-xl transition-colors cursor-pointer text-center outline-none">
                                                 Send Out &rarr;
                                             </button>
                                         </form>
-                                        <form action="/estimates/{{ $bid->id }}" method="POST" class="inline-block" onsubmit="return confirm('🛑 Permanently scrub this quote draft record?')">
+                                        <form action="/estimates/{{ $bid->id }}" method="POST" class="inline-block m-0" onsubmit="return confirm('🛑 Permanently scrub this quote draft record?')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="bg-red-50 hover:bg-red-600 border-2 border-red-200 text-red-600 hover:text-white font-black text-xs p-2 rounded-xl transition-colors cursor-pointer outline-none">
@@ -287,14 +287,14 @@
                                         </div>
                                     </a>
                                     <div class="pt-2.5 border-t border-slate-200 flex gap-2">
-                                        <form action="/estimates/{{ $bid->id }}/status" method="POST" class="inline-block flex-1">
+                                        <form action="/estimates/{{ $bid->id }}/status" method="POST" class="inline-block flex-1 m-0">
                                             @csrf
                                             <input type="hidden" name="status" value="approved">
                                             <button type="submit" class="w-full bg-emerald-50 border-2 border-emerald-300 hover:bg-emerald-600 text-emerald-700 hover:text-white text-[10px] font-black uppercase py-2 px-2 rounded-xl transition-colors cursor-pointer text-center outline-none">
                                                 ✓ Force Approve
                                             </button>
                                         </form>
-                                        <form action="/estimates/{{ $bid->id }}/status" method="POST" class="inline-block">
+                                        <form action="/estimates/{{ $bid->id }}/status" method="POST" class="inline-block m-0">
                                             @csrf
                                             <input type="hidden" name="status" value="draft">
                                             <button type="submit" class="bg-slate-50 hover:bg-slate-200 border-2 border-slate-300 text-slate-600 font-black text-xs py-2 px-2.5 rounded-xl transition-colors cursor-pointer outline-none" title="Pull Back to Draft">
@@ -327,8 +327,47 @@
                                             <p class="text-[10px] text-emerald-600 font-black tracking-tight uppercase text-[8px] mt-1 bg-emerald-50 border border-emerald-100 inline-block px-1.5 py-0.5 rounded shadow-sm">⚡ Active Production Order</p>
                                         </div>
                                     </a>
-                                    <div class="pt-2.5 border-t border-slate-200">
-                                        <form action="/estimates/{{ $bid->id }}/close-job" method="POST" class="w-full">
+
+                                    <!-- 🛠️ INTERACTIVE SIDEBAR CANNED MESSAGE DISPATCH ACCORDION FOR TRUCK DRIVERS -->
+                                    <div x-data="{ openCanned: false }" class="pt-2 border-t border-slate-100 space-y-1.5">
+                                        <button @click.prevent="openCanned = !openCanned" class="w-full text-left bg-slate-50 hover:bg-slate-100 text-slate-700 font-black text-[9px] py-1.5 px-2 rounded-lg border border-slate-200 flex justify-between items-center outline-none cursor-pointer">
+                                            <span>⚡ One-Tap Client Updates</span>
+                                            <span x-text="openCanned ? '▲' : '▼'"></span>
+                                        </button>
+                                        <div x-show="openCanned" x-cloak class="grid grid-cols-2 gap-1.5 pt-1">
+                                            <form action="/estimates/{{ $bid->id }}/canned-dispatch" method="POST" class="m-0">
+                                                @csrf
+                                                <input type="hidden" name="message_type" value="on_my_way">
+                                                <button type="submit" @empty($bid->customer?->phone_number) disabled @endempty class="w-full bg-slate-900 text-white font-bold text-[9px] py-2 px-1 rounded-lg hover:bg-black transition-colors border-0 cursor-pointer disabled:bg-slate-100 disabled:text-slate-300 outline-none">
+                                                    🚚 En Route
+                                                </button>
+                                            </form>
+                                            <form action="/estimates/{{ $bid->id }}/canned-dispatch" method="POST" class="m-0">
+                                                @csrf
+                                                <input type="hidden" name="message_type" value="running_late">
+                                                <button type="submit" @empty($bid->customer?->phone_number) disabled @endempty class="w-full bg-slate-900 text-white font-bold text-[9px] py-2 px-1 rounded-lg hover:bg-black transition-colors border-0 cursor-pointer disabled:bg-slate-100 disabled:text-slate-300 outline-none">
+                                                    ⏱️ Delayed
+                                                </button>
+                                            </form>
+                                            <form action="/estimates/{{ $bid->id }}/canned-dispatch" method="POST" class="m-0">
+                                                @csrf
+                                                <input type="hidden" name="message_type" value="need_parts">
+                                                <button type="submit" @empty($bid->customer?->phone_number) disabled @endempty class="w-full bg-slate-50 text-slate-800 border border-slate-200 font-bold text-[9px] py-2 px-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer disabled:bg-slate-100 disabled:text-slate-300 outline-none">
+                                                    🔧 Parts
+                                                </button>
+                                            </form>
+                                            <form action="/estimates/{{ $bid->id }}/canned-dispatch" method="POST" class="m-0">
+                                                @csrf
+                                                <input type="hidden" name="message_type" value="progress_update">
+                                                <button type="submit" @empty($bid->customer?->phone_number) disabled @endempty class="w-full bg-slate-50 text-slate-800 border border-slate-200 font-bold text-[9px] py-2 px-1 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer disabled:bg-slate-100 disabled:text-slate-300 outline-none">
+                                                    📸 Share Pics
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+
+                                    <div class="pt-2">
+                                        <form action="/estimates/{{ $bid->id }}/close-job" method="POST" class="w-full m-0">
                                             @csrf
                                             <button type="submit" class="w-full bg-slate-900 border-2 border-slate-950 hover:bg-black text-white text-[10px] font-black uppercase py-2 px-2 rounded-xl transition-colors cursor-pointer text-center outline-none">
                                                 📦 Close & Archive Run
@@ -367,7 +406,7 @@
                                         </div>
                                     </a>
                                     <div class="pt-2 border-t border-slate-200">
-                                        <form action="/estimates/{{ $bid->id }}/status" method="POST" class="w-full">
+                                        <form action="/estimates/{{ $bid->id }}/status" method="POST" class="w-full m-0">
                                             @csrf
                                             <input type="hidden" name="status" value="approved">
                                             <button type="submit" class="w-full bg-white border-2 border-slate-300 text-slate-500 text-[9px] font-black uppercase py-1.5 px-2 rounded-xl hover:bg-slate-100 transition-all cursor-pointer text-center outline-none">
@@ -438,7 +477,7 @@
                             <p class="text-[11px] text-slate-400 font-bold mt-0.5">Configure your phone number to receive secure login verification tokens instantly.</p>
                         </div>
 
-                        <form action="/user/security-phone" method="POST" class="space-y-3">
+                        <form action="/user/security-phone" method="POST" class="space-y-3 m-0">
                             @csrf
                             <div>
                                 <label class="block text-[10px] font-black uppercase text-slate-500 mb-2 tracking-wide">Secure Mobile Line</label>
