@@ -25,6 +25,30 @@ class ClientController extends Controller
         $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
         $clientTable = $prefix . 'clients';
 
+        // ⚠️ LIVE FIELD RESCUE: RUN AUTOMATED GHOST CLEANUP PASS ON WORKSPACE LOAD
+        $ghostIds = DB::table($prefix . 'estimates')
+            ->leftJoin($clientTable, $prefix . 'estimates.customer_id', '=', $clientTable . '.id')
+            ->whereNull($clientTable . '.id')
+            ->select($prefix . 'estimates.id as oid')
+            ->get()
+            ->pluck('oid')
+            ->toArray();
+
+        if (!empty($ghostIds)) {
+            // Scrub matching nested line item dependencies
+            DB::table($prefix . 'estimate_items')->whereIn('estimate_id', $ghostIds)->delete();
+
+            // Scrub matching dispatch route stops if calendar is populated
+            if (Schema::hasTable($prefix . 'appointments')) {
+                DB::table($prefix . 'appointments')->whereIn('estimate_id', $ghostIds)->delete();
+            }
+
+            // Scrub parent card boundaries instantly from Kanban view grids
+            DB::table($prefix . 'estimates')->whereIn('id', $ghostIds)->delete();
+
+            Log::info("🧹 Active Board Reset: Flushed " . count($ghostIds) . " orphaned ghost job cards from memory.");
+        }
+
         // Self-heal the schema structure safely
         $this->ensureSchemaIsHealed($clientTable);
 
