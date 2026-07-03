@@ -28,11 +28,13 @@
     @endif
 
     @php
-        // Dynamic Merchant Account Verification Check
+        // Dynamic Multi-Tenant Framework Account Verification Logs
         $userTable = (new \App\Models\User())->getTable();
         $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
         $currentCompany = \Illuminate\Support\Facades\DB::table($prefix . 'companies')->where('id', auth()->user()->company_id)->first();
+
         $hasMerchantConfigured = !empty($currentCompany->stripe_link) || !empty($currentCompany->paypal_link) || !empty($currentCompany->zelle_handle);
+        $hasReputationConfigured = !empty($currentCompany->google_review_link);
     @endphp
 
     <div x-data="{
@@ -71,18 +73,12 @@
                         </a>
                     @endauth
 
-                    @guest
-                        <a href="{{ route('welcome') }}" class="bg-[#f58613] hover:bg-orange-600 text-white font-black text-[10px] py-2.5 px-4 rounded-xl uppercase tracking-wider transition-all shadow-sm text-decoration-none cursor-pointer">
-                            Sign In
-                        </a>
-                    @endguest
-
                     <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></div>
                 </div>
             </div>
         </header>
 
-        <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8 space-y-8">
+        <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8 space-y-6">
 
             @if(session('status'))
                 <div class="bg-emerald-600 border border-emerald-700 text-white rounded-2xl p-4 flex items-center gap-3 shadow-md">
@@ -98,21 +94,40 @@
                 </div>
             @endif
 
-            <!-- ⚠️ DYNAMIC ONBOARDING MERCHANT CHECKLIST ALERT ROUTE MODULE -->
-            @if(!$hasMerchantConfigured)
-                <div class="bg-amber-50 border-4 border-amber-300 rounded-3xl p-5 flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm">
-                    <div class="flex items-start gap-3 text-center md:text-left flex-col md:flex-row">
-                        <span class="text-3xl block mx-auto md:mx-0">⚠️</span>
-                        <div>
-                            <h4 class="text-base font-black text-amber-950 uppercase tracking-tight">Direct Payout Merchant Channels Disconnected</h4>
-                            <p class="text-xs text-amber-800 font-bold mt-0.5 leading-normal">Your payment collection layout is defaulted to manual check rules. Link your individual Stripe links, PayPal strings, or Zelle handles to clear customers to fund upfront project deposits directly into your bank lines.</p>
+            <!-- 🚨 MULTI-ALERT SYSTEM CONTROL BLOCKS -->
+            <div class="space-y-3">
+                <!-- 💳 Merchant Account Checklist Alert -->
+                @if(!$hasMerchantConfigured)
+                    <div class="bg-amber-50 border-2 border-amber-300 rounded-3xl p-5 flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm">
+                        <div class="flex items-start gap-3 text-center md:text-left flex-col md:flex-row">
+                            <span class="text-2xl block mx-auto md:mx-0">⚠️</span>
+                            <div>
+                                <h4 class="text-sm font-black text-amber-950 uppercase tracking-tight">Direct Payout Merchant Channels Disconnected</h4>
+                                <p class="text-xs text-amber-800 font-bold mt-0.5 leading-normal">Your payment collection layout is defaulted to manual check rules. Link your individual Stripe links, PayPal strings, or Zelle handles to clear customers to fund upfront project deposits directly into your bank lines.</p>
+                            </div>
                         </div>
+                        <a href="/workspace/billing" class="w-full md:w-auto text-center bg-amber-600 hover:bg-amber-700 text-white font-black text-[10px] py-3 px-5 rounded-xl uppercase tracking-wider text-decoration-none shadow shadow-amber-700/20 shrink-0 transition-colors">
+                            Configure Merchant Channels &rarr;
+                        </a>
                     </div>
-                    <a href="/workspace/billing" class="w-full md:w-auto text-center bg-amber-600 hover:bg-amber-700 text-white font-black text-xs py-3.5 px-6 rounded-xl uppercase tracking-wider text-decoration-none shadow-md shrink-0 transition-colors">
-                        Configure Merchant Channels &rarr;
-                    </a>
-                </div>
-            @endif
+                @endif
+
+                <!-- 📡 reputation Manager Checklist Alert -->
+                @if(!$hasReputationConfigured)
+                    <div class="bg-blue-50 border-2 border-blue-300 rounded-3xl p-5 flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm">
+                        <div class="flex items-start gap-3 text-center md:text-left flex-col md:flex-row">
+                            <span class="text-2xl block mx-auto md:mx-0">⭐</span>
+                            <div>
+                                <h4 class="text-sm font-black text-blue-950 uppercase tracking-tight">Automated Reputation Engine Inactive</h4>
+                                <p class="text-xs text-blue-800 font-bold mt-0.5 leading-normal">The system review request loop is unlinked. Supply your Google Business Review link inside your Merchant Settings screen to automatically text clients direct review requests the exact second you close out active operational jobs.</p>
+                            </div>
+                        </div>
+                        <a href="/workspace/billing" class="w-full md:w-auto text-center bg-blue-600 hover:bg-blue-700 text-white font-black text-[10px] py-3 px-5 rounded-xl uppercase tracking-wider text-decoration-none shadow shadow-blue-700/20 shrink-0 transition-colors">
+                            Activate Review Loop &rarr;
+                        </a>
+                    </div>
+                @endif
+            </div>
 
             <section class="grid grid-cols-3 md:grid-cols-6 gap-4">
                 <a href="/estimates/create" class="relative flex flex-col items-center justify-center aspect-square bg-gradient-to-b from-[#f58613] to-orange-600 rounded-3xl shadow-md hover:shadow-xl active:scale-95 transition-all group overflow-hidden cursor-pointer text-decoration-none border-0">
@@ -342,7 +357,13 @@
                                         </div>
                                         <div>
                                             <h4 class="font-black text-sm text-slate-700 uppercase truncate mt-1">{{ $bid->customer->client_name ?? 'Unmapped Client' }}</h4>
-                                            <p class="text-[10px] text-slate-400 font-medium truncate mt-0.5">Fulfillment run finalized</p>
+
+                                            <!-- 📈 REPUTATION EXPANSION FUNNEL TRANSPARENCY MARKERS -->
+                                            @if($hasReputationConfigured)
+                                                <p class="text-[10px] text-emerald-600 font-black uppercase tracking-tight text-[8px] mt-1 bg-emerald-50 border border-emerald-100 inline-block px-1.5 py-0.5 rounded shadow-sm">✓ Review Request Dispatched</p>
+                                            @else
+                                                <p class="text-[10px] text-amber-600 font-black uppercase tracking-tight text-[8px] mt-1 bg-amber-50 border border-amber-100 inline-block px-1.5 py-0.5 rounded shadow-sm">⚠️ Review Loop Skipped</p>
+                                            @endif
                                         </div>
                                     </a>
                                     <div class="pt-2 border-t border-slate-200">
@@ -465,9 +486,10 @@
         </div>
 
         <!-- APPOINTMENT / STOP SCHEDULE MANAGEMENT MODAL CONTAINER -->
-        <div x-show="showApptModal" x-cloak style="display: none;" class="fixed inset-0 z-100 flex items-center justify-center p-4">
-            <div class="absolute inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity" @click="showApptModal = false"></div>
-            <div class="bg-white border-4 border-slate-950 rounded-3xl max-w-md w-full p-6 shadow-2xl relative z-10" x-transition>
+        <div x-show="showApptModal" x-cloak style="display: none;" class="fixed inset-0 z-100 flex items-center justify-center p-4 overflow-y-auto">
+            <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity" @click="showApptModal = false"></div>
+
+            <div class="bg-white border-4 border-slate-950 rounded-3xl max-w-xl w-full p-6 shadow-2xl relative z-10 max-h-[90vh] overflow-y-auto" x-transition>
                 <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
                     <div>
                         <h3 class="text-sm font-black uppercase tracking-tight text-slate-950 font-mono">📋 Route Details</h3>
@@ -480,8 +502,8 @@
                     <template x-for="appt in selectedDayJobs" :key="appt.id">
                         <div class="p-3 bg-slate-50 border-2 border-slate-200 rounded-xl space-y-1">
                             <div class="flex justify-between items-baseline gap-2">
-                                <h4 class="font-black text-slate-900 text-sm uppercase truncate" x-text=\"appt.title\"></h4>
-                                <span class="text-[10px] font-mono font-black px-1.5 py-0.5 rounded bg-slate-900 text-white" x-text=\"appt.status\"></span>
+                                <h4 class="font-black text-slate-900 text-sm uppercase truncate" x-text="appt.title"></h4>
+                                <span class="text-[10px] font-mono font-black px-1.5 py-0.5 rounded bg-slate-900 text-white" x-text="appt.status"></span>
                             </div>
                             <p class="text-xs font-bold text-slate-600" x-text="'👤 Customer: ' + appt.customer_name"></p>
                             <p x-show="appt.notes" class="text-[11px] text-slate-500 font-medium italic bg-white p-2 rounded border border-slate-100 block whitespace-pre-line" x-text="appt.notes"></p>
