@@ -11,7 +11,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
@@ -120,18 +119,27 @@ class EstimateController extends Controller
             $customer->address = $validated['customer_address'];
             $customer->save();
 
+            // Extract dynamic company prefix setup information
+            $userTable = (new \App\Models\User())->getTable();
+            $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+            $company = DB::table($prefix . 'companies')->where('id', $companyId)->first();
+            $startingBaseline = isset($company->starting_invoice_number) ? (int)$company->starting_invoice_number : 1000;
+
+            // Scan the data array to pinpoint the absolute latest tracking point
             $lastEstimate = Estimate::where('company_id', $companyId)
                 ->orderBy('id', 'desc')
                 ->first();
 
-            $nextSequence = 1001;
             if ($lastEstimate) {
-                if (preg_match('/EST-(\d+)$/', $lastEstimate->estimate_number, $matches)) {
-                    $nextSequence = ((int) $matches[1]) + 1;
-                } elseif (preg_match('/-(\d+)$/', $lastEstimate->estimate_number, $matches)) {
-                    $nextSequence = ((int) $matches[1]) + 1;
+                if (preg_match('/(\d+)/', $lastEstimate->estimate_number, $matches)) {
+                    $nextSequence = max($startingBaseline, (int)$matches[1] + 1);
+                } else {
+                    $nextSequence = $startingBaseline + 1;
                 }
+            } else {
+                $nextSequence = $startingBaseline;
             }
+
             $estimateNumber = 'EST-' . $nextSequence;
 
             $estimate = new Estimate();
@@ -359,7 +367,7 @@ class EstimateController extends Controller
             return back()->with('status', '📧 Project proposal transaction successfully dispatched via your SendGrid gateway matrix.');
         } catch (\Exception $e) {
             Log::error('SendGrid SMTP Dispatch Failure: ' . $e->getMessage());
-            return back()->with('error', '🛑 SendGrid SMTP transport rejected transmission.');
+            return back()->with('error', '🛑 Failed to drop SMTP execution payload to local system daemons.');
         }
     }
 
@@ -410,13 +418,12 @@ class EstimateController extends Controller
             return back()->with('status', '⚡ Outbound transactional SMS dropped straight down the communication worker queue channel.');
         } catch (\Exception $e) {
             Log::error('SMS Dispatch Worker Injection Failure: ' . $e->getMessage());
-            return back()->with('error', '🛑 Failed to drop execution payload to local system daemons.');
+            return back()->with('error', '🛑 Failed to route template payload to carrier network.');
         }
     }
 
     /**
-     * 💬 INTEGRATED MULTI-TEMPLATE CANNED MESSAGING SYSTEM ENGINE
-     * Dispatches immediate field coordination presets out of shared regional pools.
+     * Integrated multi-template canned messaging system engine.
      */
     public function sendCannedSms(Request $request, $id)
     {
@@ -439,7 +446,6 @@ class EstimateController extends Controller
         $companyName = $company->name ?? 'Our Crew';
         $portalLink = route('portal.checkout', ['token' => $estimate->estimate_number]);
 
-        // Construct high-impact, construction-focused text presets
         switch ($request->message_type) {
             case 'on_my_way':
                 $body = "🚚 On My Way: This is {$companyName}. Our crew is en route to your property now and will be arriving shortly!";
@@ -458,7 +464,6 @@ class EstimateController extends Controller
         try {
             \App\Jobs\SendPortalSms::dispatch($estimate->customer->phone_number, $body, $fromLine);
 
-            // Log directly to preserve outbound context strings for threading stability
             DB::table($prefix . 'sms_histories')->insert([
                 'company_id'   => $companyId,
                 'client_id'    => $estimate->customer_id,
