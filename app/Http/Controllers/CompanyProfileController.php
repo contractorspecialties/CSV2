@@ -177,13 +177,13 @@ class CompanyProfileController extends Controller
     }
 
     /**
-     * 🧠 SECURE ENDPOINT: High-Volume Flagship Gemini 3.5 Flash Entry Hub
+     * 🧠 SECURE ENDPOINT: High-Volume Gemini Flash Copywriting Port
      */
     public function generateAiAssist(Request $request)
     {
         $apiKey = config('services.gemini.key');
         if (empty($apiKey)) {
-            return response()->json(['error' => 'Gemini API operational token is missing inside cached configurations.'], 500);
+            return response()->json(['error' => 'Gemini API token missing inside cached configurations.'], 500);
         }
 
         $validated = $request->validate([
@@ -205,10 +205,10 @@ class CompanyProfileController extends Controller
         $regions = !empty($validated['target_service_cities']) ? 'proudly dispatching service crews across ' . $validated['target_service_cities'] : 'serving local properties';
 
         $advantages = [
-            'owner_onsite' => 'maintaining a strict owner on-site policy to personally oversee every single framing and structural pass',
-            'rapid_response' => 'enforcing a rigid 15-minute communication guarantee to ensure no property owner is left waiting for updates',
-            'clean_site' => 'adhering to an immaculate zero-mess site policy, guaranteeing your residential footprint is left cleaner than we found it',
-            'transparent_pricing' => 'delivering absolute upfront line-item pricing visibility to completely eliminate hidden fees and unexpected budget creep'
+            'owner_onsite' => 'maintaining a strict owner on-site policy to personally oversee every single pass',
+            'rapid_response' => 'enforcing a rigid 15-minute communication guarantee to ensure no property owner is left waiting',
+            'clean_site' => 'adhering to an immaculate zero-mess site policy, guaranteeing your footprint is left cleaner than we found it',
+            'transparent_pricing' => 'delivering absolute upfront line-item pricing visibility to completely eliminate hidden fees'
         ];
         $edgeText = data_get($advantages, $validated['competitive_advantage'], 'delivering premium structural craftsmanship guarantees');
 
@@ -220,24 +220,11 @@ class CompanyProfileController extends Controller
         $vibeText = data_get($vibes, $validated['ideal_client_vibe'], 'providing top-tier trade services');
 
         if ($validated['type'] === 'bio') {
-            $systemInstruction = "You are an elite conversion copywriter for local contractor directories. Your job is to draft a comprehensive, trust-building company profile biography. You must generate a fluid, detailed narrative block containing exactly 4 to 5 descriptive sentences. Avoid short summaries or truncation.";
-
-            $userPrompt = "Write a comprehensive contractor company biography for the business named '{$name}'. You must expand the text to thoroughly weave in every one of these details across multiple distinct sentences:\n"
-                . "1. Specialty: They specialize in {$specialty}.\n"
-                . "2. Location: They serve homeowners across {$regions}.\n"
-                . "3. Experience: They bring over {$years} of hands-on field expertise.\n"
-                . "4. Legitimacy: They are fully legal, {$license}.\n"
-                . "5. Advantage: Their competitive signature edge relies on {$edgeText}.\n"
-                . "6. Project Focus: They are widely recognized for {$vibeText}.\n\n"
-                . "Elaborate fully on each criteria to create a dense, premium copy block for local consumers.";
+            $systemInstruction = "You are an elite copywriter for contractor directories. Draft a dense narrative block containing exactly 4 to 5 descriptive sentences. Avoid short summaries.";
+            $userPrompt = "Write a contractor biography for '{$name}': Specialty: {$specialty}. Regions: {$regions}. Experience: {$years}. Legitimacy: {$license}. Edge: {$edgeText}. Focus: {$vibeText}.";
         } else {
-            $systemInstruction = "You are a premium brand reputation engineer for elite construction specialties. Your job is to draft a thorough customer value commitment pledge. You must generate a substantial paragraph containing 3 to 4 thorough sentences detailing field protection rules and craftsmanship pride.";
-
-            $userPrompt = "Write a substantial customer promise statement paragraph from the perspective of '{$name}'. Weave these specific parameters into a fluid multi-sentence narrative block:\n"
-                . "1. Experience: Backed by over {$years} of reliable local field presence.\n"
-                . "2. Competitive Edge: They strictly follow their promise of {$edgeText}.\n"
-                . "3. Service Standard: They ensure high-end results by {$vibeText}.\n\n"
-                . "Elaborate thoroughly on their dedication to structural site protection, cleanliness, communication updates, and craftsmanship warranties.";
+            $systemInstruction = "You are a brand reputation engineer. Draft a customer value commitment pledge paragraph containing 3 to 4 thorough sentences detailing field protection rules and craftsmanship pride.";
+            $userPrompt = "Write a customer promise paragraph for '{$name}': Experience: {$years}. Edge: {$edgeText}. Standard: {$vibeText}. Focus on cleanliness, updates, and site protection.";
         }
 
         try {
@@ -266,40 +253,21 @@ class CompanyProfileController extends Controller
             $responseJson = $response->json();
 
             if ($response->failed()) {
-                Log::error('Gemini API framework gateway rejection: ' . $response->body());
-                return response()->json(['error' => 'API gateway rejected content streams. Response Status Code: ' . $response->status()], 502);
+                return response()->json(['error' => 'API gateway rejected content streams.'], 502);
             }
 
             $suggestion = data_get($responseJson, 'candidates.0.content.parts.0.text');
-
-            if (empty($suggestion)) {
-                Log::error('Gemini structural extraction failure: ' . json_encode($responseJson));
-
-                $finishReason = data_get($responseJson, 'candidates.0.finishReason');
-                $blockReason = data_get($responseJson, 'promptFeedback.blockReason');
-
-                if ($finishReason) {
-                    return response()->json(['error' => "Google blocked generation pass. Finish Code: {$finishReason}."], 422);
-                }
-                if ($blockReason) {
-                    return response()->json(['error' => "Prompt payload blocked by Google gateway. Reason: {$blockReason}."], 422);
-                }
-
-                return response()->json(['error' => 'Model endpoint returned an empty response object structure.'], 502);
-            }
-
             $cleanSuggestion = trim(str_replace(['`', '""'], '', $suggestion));
 
             return response()->json(['suggestion' => $cleanSuggestion]);
 
         } catch (\Exception $exception) {
-            Log::error('Gemini GA Gateway Connection Exception: ' . $exception->getMessage());
-            return response()->json(['error' => 'Network framework failed to complete communication streams.'], 500);
+            return response()->json(['error' => 'Network framework failed content stream loops.'], 500);
         }
     }
 
     /**
-     * Display the high-conversion public homeowner profile preview page.
+     * Display the high-conversion public homeowner profile page.
      */
     public function show($slug)
     {
@@ -315,15 +283,14 @@ class CompanyProfileController extends Controller
             abort(404, 'Contractor profile workspace not found.');
         }
 
-        // Hydrate visual arrays dynamically across old structure boundaries and new assets
         $galleryImages = $this->safeJsonDecode($company->gallery_paths ?? null);
         if (empty($galleryImages) && !empty($company->portfolio_image_path)) {
             $galleryImages[] = $company->portfolio_image_path;
         }
 
-        // Build seamless server-side content fallbacks for programmatic SEO stability
-        $company->computed_bio_long = $company->company_bio_long ?? $company->company_bio ?? 'Professional field services provider.';
-        $company->computed_bio_short = $company->company_bio_short ?? substr($company->computed_bio_long, 0, 160);
+        // Build robust semantic search normalization variables for seamless JSON-LD injection
+        $company->computed_bio_long = $company->company_bio_long ?? $company->company_bio ?? 'Professional trade services provider.';
+        $company->computed_bio_short = $company->company_bio_short ?? Str::limit(strip_tags($company->computed_bio_long), 160);
         $company->computed_experience = $company->years_experience ?? $company->years_in_business ?? 0;
         $company->computed_trade = $company->trade ?? $company->primary_specialty ?? $company->signature_specialty ?? 'Construction Specialties Trade Partner';
 
@@ -363,7 +330,7 @@ class CompanyProfileController extends Controller
     }
 
     /**
-     * Safe Plugin-Driven Database Self-Healing Structural Guard.
+     * Safe Database Self-Healing Structural Schema Guard.
      */
     private function ensureSchemaIsHealed(string $tableName): void
     {
@@ -397,7 +364,7 @@ class CompanyProfileController extends Controller
                     $table->longText('gallery_paths')->nullable();
                 }
 
-                // Self-Healing Core Onboarding Positioning Schema Updates
+                // Core onboarding parameter placement definitions
                 if (!Schema::hasColumn($tableName, 'signature_specialty')) {
                     $table->string('signature_specialty', 255)->nullable()->after('license_number');
                 }

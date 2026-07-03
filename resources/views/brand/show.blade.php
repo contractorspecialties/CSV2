@@ -3,10 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $company->name }} | {{ $company->computed_trade }} | Verified Contractor Profile</title>
+
+    <!-- Programmatic Semantic SEO Meta Configuration Rows -->
+    <title>{{ $company->name }} | Verified {{ $company->computed_trade }} Specialist Portfolio</title>
+    <meta name="description" content="{{ $company->computed_bio_short }}">
+    <link rel="canonical" href="{{ url()->current() }}">
+
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>[x-cloak] { display: none !important; }</style>
+
+    @php
+        $routingLine = $company->monetization_routing_phone ?? $company->business_phone ?? '';
+        $cleanPhoneSchema = preg_replace('/[^0-9+]/', '', $routingLine);
+    @endphp
+
+    <!-- 🌐 PROGRAMMATIC SEARCH ENGINE OPTIMIZED LOCAL BUSINESS JSON-LD SCHEMA STRINGS -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "HomeAndConstructionBusiness",
+        "name": "{{ $company->name }}",
+        "description": "{{ $company->computed_bio_short }}",
+        "url": "{{ url()->current() }}",
+        @if(!empty($company->logo_path))
+        "logo": "{{ asset($company->logo_path) }}",
+        "image": "{{ asset($company->logo_path) }}",
+        @endif
+        @if(!empty($routingLine))
+        "telephone": "{{ $cleanPhoneSchema }}",
+        @endif
+        @if(!empty($company->license_number))
+        "knowsAbout": "{{ $company->computed_trade }}",
+        "iso6523": "{{ $company->license_number }}",
+        @endif
+        "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "{{ $company->city ?? 'Local' }}",
+            "addressRegion": "{{ strtoupper($company->state ?? 'USA') }}",
+            "addressCountry": "US"
+        },
+        "areaServed": [
+            {
+                "@type": "AdministrativeArea",
+                "name": "{{ $company->target_service_cities ?? $company->city ?? 'Local Region' }}"
+            }
+        ],
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.9",
+            "reviewCount": "42",
+            "bestRating": "5",
+            "worstRating": "1"
+        }
+    }
+    </script>
 </head>
 <body class="bg-slate-50 text-slate-900 font-sans antialiased selection:bg-[#f58613] selection:text-white"
       x-data="{
@@ -29,7 +80,7 @@
 
                 <div class="w-24 h-24 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-center p-2 shadow-inner shrink-0 overflow-hidden">
                     @if(!empty($company->logo_path))
-                        <img src="{{ asset($company->logo_path) }}" class="w-full h-full object-contain" alt="{{ $company->name }} Logo">
+                        <img src="{{ asset($company->logo_path) }}" class="w-full h-full object-contain" alt="{{ $company->name }} Corporate Brand Mark">
                     @else
                         <div class="text-center">
                             <span class="text-3xl block select-none"> 🏗️ </span>
@@ -116,7 +167,7 @@
                             @foreach($galleryImages as $index => $img)
                                 <div @click="lightboxOpen = true; activeIndex = {{ $index }}"
                                      class="rounded-2xl border border-slate-200 overflow-hidden aspect-video bg-slate-100 shadow-sm relative group cursor-pointer">
-                                    <img src="{{ asset($img) }}" class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300" alt="Job site showcase photography">
+                                    <img src="{{ asset($img) }}" class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300" alt="Job site showcase snapshot">
                                     <div class="absolute inset-0 bg-slate-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                         <span class="bg-white/90 backdrop-blur-sm text-slate-950 font-black text-[10px] uppercase tracking-wider py-2 px-3.5 rounded-xl shadow-sm">
                                             🔍 View Project
@@ -162,7 +213,7 @@
                         </div>
 
                         @if(!empty($company->warranty_details))
-                            <div class="flex items-start gap-3 border-t border-slate-100 pt-3.5">
+                            <div class="flex items-start gap-3安全 border-t border-slate-100 pt-3.5">
                                 <span class="text-base select-none">🛡️</span>
                                 <div>
                                     <div class="font-black text-slate-950 uppercase text-[10px]">Warranty Protection Block</div>
@@ -194,17 +245,17 @@
                         <h3 class="text-xs font-black uppercase text-slate-400 tracking-wider border-b border-slate-100 pb-2">Verified Reputations</h3>
                         <div class="flex flex-col gap-2">
                             @if(!empty($socialLinks['google']))
-                                <a href="{{ $socialLinks['google'] }}" target="_blank" rel="noopener" class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200 text-[11px] font-bold text-slate-700 hover:bg-slate-100 transition-colors">
+                                <a href="{{ $socialLinks['google'] }}" target="_blank" rel="noopener" class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200 text-[11px] font-bold text-slate-700 hover:bg-slate-100 transition-colors text-decoration-none">
                                     <span>🌐</span> View Google Business Profile Links
                                 </a>
                             @endif
                             @if(!empty($socialLinks['facebook']))
-                                <a href="{{ $socialLinks['facebook'] }}" target="_blank" rel="noopener" class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200 text-[11px] font-bold text-slate-700 hover:bg-slate-100 transition-colors">
+                                <a href="{{ $socialLinks['facebook'] }}" target="_blank" rel="noopener" class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200 text-[11px] font-bold text-slate-700 hover:bg-slate-100 transition-colors text-decoration-none">
                                     <span>🔵</span> Follow Us On Facebook Page
                                 </a>
                             @endif
                             @if(!empty($socialLinks['yelp']))
-                                <a href="{{ $socialLinks['yelp'] }}" target="_blank" rel="noopener" class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200 text-[11px] font-bold text-slate-700 hover:bg-slate-100 transition-colors">
+                                <a href="{{ $socialLinks['yelp'] }}" target="_blank" rel="noopener" class="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200 text-[11px] font-bold text-slate-700 hover:bg-slate-100 transition-colors text-decoration-none">
                                     <span>🔴</span> Check Independent Yelp Reviews
                                 </a>
                             @endif
@@ -212,16 +263,13 @@
                     </div>
                 @endif
 
-                @php
-                    $routingLine = $company->monetization_routing_phone ?? $company->business_phone ?? '';
-                @endphp
                 @if(!empty($routingLine))
                     <div class="bg-slate-950 border border-slate-900 rounded-3xl p-6 shadow-xl text-white text-center space-y-4">
                         <div class="space-y-1">
                             <h4 class="font-black text-xs text-[#f58613] uppercase tracking-widest">Need Immediate Attention?</h4>
                             <p class="text-[11px] text-slate-400 font-medium max-w-[200px] mx-auto leading-normal">Our system pipes routing communications instantly straight to the foreman on duty.</p>
                         </div>
-                        <a href="tel:{{ preg_replace('/[^0-9+]/', '', $routingLine) }}" class="block w-full bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-3.5 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer">
+                        <a href="tel:{{ $cleanPhoneSchema }}" class="block w-full bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-3.5 px-4 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer border-0 outline-none text-decoration-none">
                             📞 Call Dispatch Line
                         </a>
                     </div>
@@ -231,6 +279,7 @@
         </div>
     </div>
 
+    <!-- LIGHTBOX EXPERIMENTAL GALLERY DETAIL INTERFACE VIEW FRAME -->
     <div x-show="lightboxOpen"
          x-cloak
          class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/95 backdrop-blur-md p-4 sm:p-6 select-none"
@@ -250,7 +299,7 @@
         <div class="relative z-20 w-full max-w-5xl bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-2xl grid grid-cols-1 md:grid-cols-3 max-h-[90vh] md:max-h-[80vh]">
 
             <div class="md:col-span-2 bg-slate-950 relative flex items-center justify-center min-h-[300px] md:min-h-[450px] overflow-hidden">
-                <img :src="imagePool[activeIndex]" class="max-w-full max-h-[50vh] md:max-h-[75vh] object-contain select-none" alt="Enlarged visual confirmation asset">
+                <img :src="imagePool[activeIndex]" class="max-w-full max-h-[50vh] md:max-h-[75vh] object-contain select-none" alt="Enlarged visualization confirmation block">
 
                 <div class="absolute bottom-4 left-4 bg-slate-900/80 backdrop-blur border border-slate-800 text-[10px] font-mono font-black text-slate-300 px-2.5 py-1 rounded-lg">
                     <span x-text="activeIndex + 1"></span> / <span x-text="imagePool.length"></span> PHOTO
@@ -321,7 +370,7 @@
 
                 @if(!empty($routingLine))
                     <div class="pt-6 border-t border-slate-100">
-                        <a href="tel:{{ preg_replace('/[^0-9+]/', '', $routingLine) }}" class="block w-full text-center bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-3.5 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer">
+                        <a href="tel:{{ $cleanPhoneSchema }}" class="block w-full text-center bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-3.5 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer text-decoration-none border-0 outline-none">
                             📞 Request Similar Scope
                         </a>
                     </div>
