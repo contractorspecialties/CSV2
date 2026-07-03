@@ -33,6 +33,7 @@ class WorkspaceBillingController extends Controller
             'paypal_link'          => 'nullable|url|max:500',
             'zelle_handle'         => 'nullable|string|max:255',
             'billing_instructions' => 'nullable|string|max:2000',
+            'google_review_link'   => 'nullable|url|max:500',
         ]);
 
         $companyId = Auth::user()->company_id;
@@ -45,9 +46,10 @@ class WorkspaceBillingController extends Controller
             'paypal_link'          => $request->paypal_link,
             'zelle_handle'         => $request->zelle_handle,
             'billing_instructions' => $request->billing_instructions,
+            'google_review_link'   => $request->google_review_link,
             'updated_at'           => now(),
         ]);
 
-        return back()->with('status', '💳 Direct customer payout parameters safely locked onto company profile ledger.');
+        return back()->with('status', 'Direct customer payout and review metrics safely locked onto company profile ledger.');
     }
 }

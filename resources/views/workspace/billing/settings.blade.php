@@ -32,22 +32,24 @@
         @if($errors->any())
             <div class="bg-red-600 border border-red-700 text-white rounded-2xl p-4 flex items-center gap-3 shadow-md mb-6">
                 <span class="text-lg">🛑</span>
-                <p class="text-xs font-black uppercase tracking-tight">Configuration Error: Ensure your payment link structure parameters are completely valid URL strings.</p>
+                <p class="text-xs font-black uppercase tracking-tight">Configuration Error: Ensure your link structure parameters are valid URL strings.</p>
             </div>
         @endif
 
         <div class="border-b border-slate-200 pb-4 mb-6">
-            <h1 class="text-3xl font-black text-slate-950 uppercase tracking-tight">Direct Merchant Control Desk</h1>
-            <p class="text-base text-slate-500 font-bold mt-1">Configure your processing assets once. Customers will use these rails to handle deposits straight to your accounts.</p>
+            <h1 class="text-3xl font-black text-slate-950 uppercase tracking-tight">Direct Merchant & Integration Desk</h1>
+            <p class="text-base text-slate-500 font-bold mt-1">Configure your processing and review rails once. The system handles customer presentation automatically.</p>
         </div>
 
         <form action="/workspace/billing" method="POST" class="space-y-6">
             @csrf
 
+            <!-- 💰 FINANCIAL PAYOUT SETTIINGS CARD -->
             <div class="bg-white border-2 border-slate-300 rounded-3xl p-6 shadow-sm space-y-6">
+                <h2 class="text-xs font-black uppercase text-slate-400 tracking-wider font-mono">💵 Direct Revenue Collection Channels</h2>
 
                 <div>
-                    <label class="block text-sm font-black uppercase text-slate-900 tracking-wide mb-1">Stripe Direct Checkout link</label>
+                    <label class="block text-sm font-black uppercase text-slate-900 tracking-wide mb-1">Stripe Direct Checkout Link</label>
                     <p class="text-xs text-slate-400 font-bold mb-2">Paste a pre-compiled Stripe Payment Link or customized invoice gateway endpoint row asset here.</p>
                     <input type="url" name="stripe_link" value="{{ old('stripe_link', $company->stripe_link ?? '') }}" placeholder="https://buy.stripe.com/..."
                            class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3.5 px-4 text-base font-mono font-bold focus:outline-none focus:border-slate-900 text-slate-900">
@@ -74,15 +76,26 @@
                 <div>
                     <label class="block text-sm font-black uppercase text-slate-900 tracking-wide mb-1">Custom Settlement Terms & Field Instructions</label>
                     <p class="text-xs text-slate-400 font-bold mb-2">Provide manual routing guidelines (like checks or bank wire numbers) that customers can use during terminal invoice reviews.</p>
-                    <textarea name="billing_instructions" rows="4" placeholder="e.g., For direct bank clearance routing transactions, please wire parameters directly into account registry..."
+                    <textarea name="billing_instructions" rows="3" placeholder="e.g., For direct bank clearance routing transactions, please wire parameters directly into account registry..."
                               class="w-full bg-slate-50 border-2 border-slate-300 rounded-2xl p-4 text-base font-medium focus:outline-none focus:border-slate-900 text-slate-900">{{ old('billing_instructions', $company->billing_instructions ?? '') }}</textarea>
                 </div>
+            </div>
 
+            <!-- ⭐ REPUTATION MANAGEMENT CARD -->
+            <div class="bg-white border-2 border-slate-300 rounded-3xl p-6 shadow-sm space-y-4">
+                <h2 class="text-xs font-black uppercase text-slate-400 tracking-wider font-mono">📡 Automated Reputation Engine</h2>
+
+                <div>
+                    <label class="block text-sm font-black uppercase text-slate-900 tracking-wide mb-1">Google Business Public Review Link</label>
+                    <p class="text-xs text-slate-400 font-bold mb-2">Paste your direct Google local shortcut link panel string. When you wrap up/archive job rows, the app text message engine targets this link to pull review metrics on autopilot.</p>
+                    <input type="url" name="google_review_link" value="{{ old('google_review_link', $company->google_review_link ?? '') }}" placeholder="https://g.page/r/your-profile-id/review"
+                           class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3.5 px-4 text-base font-mono font-bold focus:outline-none focus:border-slate-900 text-slate-900">
+                </div>
             </div>
 
             <div class="flex justify-end">
                 <button type="submit" class="w-full sm:w-auto bg-[#f58613] hover:bg-orange-600 text-white font-black text-base py-4 px-8 rounded-xl uppercase tracking-widest shadow-md transition-all active:scale-[0.99] cursor-pointer border-0 outline-none">
-                    Synchronize Merchant Channels ⚡
+                    Synchronize System Integration Channels ⚡
                 </button>
             </div>
 
