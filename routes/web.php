@@ -22,9 +22,36 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () { return view('welcome'); })->name('welcome');
 Route::get('/login', function () { return redirect()->route('welcome'); })->name('login');
 
-// High-Conversion Product-Led Growth (PLG) Marketing Funnel
-Route::get('/free-estimate-generator', [PublicEstimateController::class, 'showBuilder'])->name('public.estimate.builder');
+// 📡 HIGH-CONVERSION PROGRAMMATIC SEO (pSEO) MARKETING FUNNEL HUB
+// Programmatic SEO Lead-Generation Core Hub & Direct Conversion Handshakes
+Route::get('/free-estimate-generator/{state?}/{city?}/{trade?}', [PublicEstimateController::class, 'showBuilder'])->name('public.estimate.builder');
 Route::post('/free-estimate-generator/submit', [PublicEstimateController::class, 'storeLeadPayload'])->name('public.estimate.submit');
+Route::get('/free-estimate-generator/claim/{token}', [PublicEstimateController::class, 'showClaimPage'])->name('public.estimate.claim.view');
+Route::post('/free-estimate-generator/claim/{token}', [PublicEstimateController::class, 'processClaim'])->name('public.estimate.claim.commit');
+
+// 🤖 AUTOMATED INFRASTRUCTURE: DYNAMIC XML SITEMAP GENERATOR FOR GOOGLE BOT INDEXING
+Route::get('/sitemap-seo.xml', function() {
+    $trades = ['roofing', 'landscaping', 'lawn-care', 'hvac', 'plumbing', 'electrical', 'general-contracting'];
+    $cities = ['raleigh', 'charlotte'];
+
+    $xml = '<?xml version="1.0" encoding="UTF-8"?>';
+    $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+
+    // Add baseline general index route
+    $xml .= '<url><loc>' . route('public.estimate.builder') . '</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>';
+
+    // Programmatically map every targeted hyper-local vertical combination
+    foreach ($cities as $city) {
+        foreach ($trades as $trade) {
+            $url = url("/free-estimate-generator/nc/{$city}/{$trade}");
+            $xml .= "<url><loc>{$url}</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>";
+        }
+    }
+
+    $xml .= '</urlset>';
+
+    return response($xml, 200)->header('Content-Type', 'text/xml');
+})->name('public.sitemap');
 
 // Frictionless Onboarding Tiers
 Route::get('/register', function () { return view('register'); })->name('register');
@@ -138,6 +165,7 @@ Route::middleware(['auth'])->group(function () {
         |--------------------------------------------------------------------------
         | app(Controller::class) resolves the instance dynamically from the container,
         | allowing standard instance methods to be processed cleanly with zero conflicts.
+        |
         |
         |
         */
