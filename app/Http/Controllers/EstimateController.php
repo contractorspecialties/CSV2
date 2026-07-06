@@ -119,13 +119,11 @@ class EstimateController extends Controller
             $customer->address = $validated['customer_address'];
             $customer->save();
 
-            // Extract dynamic company prefix setup information
             $userTable = (new \App\Models\User())->getTable();
             $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
             $company = DB::table($prefix . 'companies')->where('id', $companyId)->first();
             $startingBaseline = isset($company->starting_invoice_number) ? (int)$company->starting_invoice_number : 1000;
 
-            // Scan the data array to pinpoint the absolute latest tracking point
             $lastEstimate = Estimate::where('company_id', $companyId)
                 ->orderBy('id', 'desc')
                 ->first();
@@ -296,6 +294,7 @@ class EstimateController extends Controller
         ]);
 
         if (!empty($estimate->customer->phone_number)) {
+            $cleanClientPhone = $this->normalizeToE164($estimate->customer->phone_number);
             $portalLink = route('portal.checkout', ['token' => $estimate->estimate_number]);
 
             $userTable = (new \App\Models\User())->getTable();
@@ -303,76 +302,32 @@ class EstimateController extends Controller
             $company = DB::table($prefix . 'companies')->where('id', $companyId)->first();
             $fromLine = $company->sms_phone_number ?? env('TELNYX_DEFAULT_FROM');
 
-            if (!empty($fromLine)) {
+            if (!empty($fromLine) && !empty($cleanClientPhone)) {
                 try {
                     \App\Jobs\SendPortalSms::dispatch(
-                        $estimate->customer->phone_number,
-                        "Hello " . ($estimate->customer->first_name ?? 'Client') . ", we have processed your feedback and adjusted your project proposal specifications package. Review revisions here: " . $portalLink,
-                        $fromLine
+                        $cleanClientPhone,
+                        "Hello " . ($estimate->customer->first_name ?? 'Client') . ", we updated your proposal. View the modifications here: " . $portalLink,
+                        $fromNumber
                     );
                 } catch (\Exception $e) {
-                    Log::error('Telnyx response notification queueing failed: ' . $e->getMessage());
+                    Log::error("🚨 Telnyx inline dispatch failure: " . $e->getMessage());
                 }
             }
         }
 
-        return back()->with('status', '🔄 Clarification written to file ledger and customer notification dispatched.');
+        return back()->with('status', '⚡ Estimate blueprint modifications saved and notification scheduled.');
     }
 
     /**
-     * Dispatch HTML contract proposal framework to customer inbox.
+     * Display dedicated control frame for single estimate.
      */
-    public function sendEstimateEmail(Request $request, $id)
+    public function showEstimateControl($id)
     {
-        $companyId = Auth::user()->company_id;
-        $estimate = Estimate::where('company_id', $companyId)->with('customer')->findOrFail($id);
-
-        if (empty($estimate->customer->email)) {
-            return back()->with('error', '🛑 Target customer profile does not contain a valid email coordinates path.');
-        }
-
-        $portalLink = route('portal.checkout', ['token' => $estimate->estimate_number]);
-
-        try {
-            Mail::send([], [], function ($message) use ($estimate, $portalLink) {
-                $message->to($estimate->customer->email)
-                    ->subject("Project Estimate Revisions Available - Estimate #{$estimate->estimate_number}")
-                    ->html("
-                        <div style=\"font-family: Arial, sans-serif; padding: 32px; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;\">
-                            <h2 style=\"color: #0f172a; font-size: 22px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: -0.5px;\">Project Proposal Update</h2>
-                            <p style=\"font-size: 14px; color: #64748b; margin-top: 0; margin-bottom: 24px;\">Sent via ContractorSpecialties Secure Portal Manager</p>
-
-                            <p style=\"font-size: 15px; color: #334155; line-height: 1.6;\">Hello,</p>
-                            <p style=\"font-size: 15px; color: #334155; line-height: 1.6;\">An updated digital project estimate has been compiled and uploaded to your secure client portal dashboard for review.</p>
-
-                            <div style=\"background-color: #f8fafc; border-left: 4px solid #f58613; padding: 16px; margin: 24px 0; border-radius: 4px;\">
-                                <strong style=\"display: block; font-size: 12px; text-transform: uppercase; color: #64748b; margin-bottom: 4px;\">Document Reference:</strong>
-                                <span style=\"font-family: monospace; font-size: 15px; font-weight: bold; color: #0f172a;\">Estimate #{$estimate->estimate_number}</span>
-                            </div>
-
-                            <p style=\"font-size: 15px; color: #334155; line-height: 1.6; margin-bottom: 28px;\">Please click the secure gateway link below to open the interactive blueprint ledger, review your service line rows, and sign off on the terms to clear your project for field mobilization scheduling.</p>
-
-                            <div style=\"margin: 32px 0; text-align: center;\">
-                                <a href=\"{$portalLink}\" style=\"background-color: #f58613; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; text-transform: uppercase; font-size: 13px; tracking-wider: 1px; box-shadow: 0 4px 6px -1px rgba(245, 134, 19, 0.2);\">Review & Sign Proposal</a>
-                            </div>
-
-                            <hr style=\"border: 0; border-top: 1px solid #e2e8f0; margin: 32px 0;\">
-                            <p style=\"font-size: 11px; color: #94a3b8; line-height: 1.5;\">This notification was dispatched automatically on behalf of your contracted professional. For technical assistance or security routing questions, please contact platform network operations. Reply to this message directly to reach your service manager.</p>
-                        </div>
-                    ");
-            });
-
-            $estimate->update(['status' => 'sent']);
-
-            return back()->with('status', '📧 Project proposal transaction successfully dispatched via your SendGrid gateway matrix.');
-        } catch (\Exception $e) {
-            Log::error('SendGrid SMTP Dispatch Failure: ' . $e->getMessage());
-            return back()->with('error', '🛑 Failed to drop SMTP execution payload to local system daemons.');
-        }
+        return $this->show($id);
     }
 
     /**
-     * Dispatch transactional SMS alert link via background communication queues.
+     * Send estimate notification via SMS pipeline.
      */
     public function sendEstimateSms(Request $request, $id)
     {
@@ -380,50 +335,77 @@ class EstimateController extends Controller
         $estimate = Estimate::where('company_id', $companyId)->with('customer')->findOrFail($id);
 
         if (empty($estimate->customer->phone_number)) {
-            return back()->with('error', '🛑 Target customer profile does not contain a valid mobile telephone coordinate line.');
+            return back()->withErrors(['sms' => '🛑 Customer has no active mobile telephone configuration listed in their profile registry.']);
         }
-
-        $portalLink = route('portal.checkout', ['token' => $estimate->estimate_number]);
 
         $userTable = (new \App\Models\User())->getTable();
         $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
         $company = DB::table($prefix . 'companies')->where('id', $companyId)->first();
-        $fromLine = $company->sms_phone_number ?? env('TELNYX_DEFAULT_FROM');
 
-        if (empty($fromLine)) {
-            return back()->with('error', '🛑 Outbound SMS line configuration parameter missing from application settings file.');
+        $senderNumber = $company->sms_number ?? config('services.telnyx.fallback_toll_free');
+        if (empty($senderSystemNumber)) {
+            return back()->withErrors(['sms' => '🛑 No active operational SMS text link is provisioned on your company account file ledger.']);
         }
 
-        try {
-            \App\Jobs\SendPortalSms::dispatch(
-                $estimate->customer->phone_number,
-                "Hello, your project estimate details are compiled. View your customized proposal link here: " . $portalLink . " Reply STOP to opt out.",
-                $fromLine
-            );
+        $cleanDestination = $this->normalizeToE164($estimate->customer->phone_number);
+        $checkoutRouteLink = route('portal.checkout', ['token' => $estimate->estimate_number]);
+        $messageText = "Hello " . ($estimate->customer->first_name ?? 'Client') . ", your project estimate details are compiled. View your customized proposal link here: " . $checkoutRouteLink . " Reply STOP to opt out.";
 
-            DB::table($prefix . 'sms_histories')->insert([
-                'company_id'   => $companyId,
-                'client_id'    => $estimate->customer_id,
-                'estimate_id'  => $estimate->id,
-                'direction'    => 'outbound',
-                'from_number'  => $fromLine,
-                'to_number'    => $estimate->customer->phone_number,
-                'message_body' => "View your customized proposal link here: " . $portalLink,
-                'created_at'   => now(),
-                'updated_at'   => now()
+        try {
+            // Outbound Telnyx pipeline standard call route initialization
+            $attachment = [];
+            \App\Services\TelnyxService::sendSms($senderLine, $cleanDestination, $messageText);
+
+            DB::table($prefix . 'estimates')->where('id', $estimate->id)->update([
+                'status' => 'sent',
+                'updated_at' => now()
             ]);
 
-            $estimate->update(['status' => 'sent']);
-
-            return back()->with('status', '⚡ Outbound transactional SMS dropped straight down the communication worker queue channel.');
+            return back()->with('status', "🔒 Digital tracking estimate proposal texted to client successfully via lane {$senderLine}.");
         } catch (\Exception $e) {
-            Log::error('SMS Dispatch Worker Injection Failure: ' . $e->getMessage());
-            return back()->with('error', '🛑 Failed to route template payload to carrier network.');
+            Log::error("🚨 Telnyx Dispatch failure run: " . $e->getMessage());
+            return back()->withErrors(['sms' => 'Outbound carrier transit pipeline failed. Check system logs logs.']);
         }
     }
 
     /**
-     * Integrated multi-template canned messaging system engine.
+     * Send estimate notification via transaction email channel wrappers.
+     */
+    public function sendEstimateEmail(Request $request, $id)
+    {
+        $companyId = Auth::user()->company_id;
+        $estimate = Estimate::where('company_id', $companyId)->with(['customer', 'items'])->findOrFail($id);
+
+        $customer = $estimate->customer;
+
+        try {
+            $portalLink = route('portal.checkout', ['token' => $estimate->estimate_number]);
+
+            Mail::send([], [], function ($message) use ($estimate, $customer, $portalLink) {
+                $message->to($customer->email)
+                    ->subject("Project Proposal Dispatched - Estimate #{$estimate->estimate_number}")
+                    ->html("
+                        <div style=\"font-family: Arial, sans-serif; padding: 32px; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px;\">
+                            <h2 style=\"color: #0f172a; font-size: 22px; margin-bottom: 4px; text-transform: uppercase;\">Project Proposal Ready</h2>
+                            <p style=\"font-size: 15px; color: #334155; line-height: 1.6;\">Hello {$customer->client_name},</p>
+                            <p style=\"font-size: 15px; color: #334155; line-height: 1.6;\">Your itemized service value breakdown package totaling <strong>$" . number_format($estimate->grand_total, 2) . "</strong> has been compiled and issued to your coordinates.</p>
+                            <div style=\"margin: 32px 0; text-align: center;\">
+                                <a href=\"{$portalLink}\" style=\"background-color: #f58613; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block; text-transform: uppercase;\">Review & Approve Proposal &rarr;</a>
+                            </div>
+                        </div>
+                    ");
+            });
+
+            $estimate->update(['status' => 'sent']);
+            return back()->with('status', '📧 Project proposal transaction successfully emailed.');
+        } catch (\Exception $e) {
+            Log::error('SMTP standard mailer dispatch failure: ' . $e->getMessage());
+            return back()->withErrors(['email' => 'Failed to execute SMTP delivery payload tracking configurations.']);
+        }
+    }
+
+    /**
+     * Dispatch canned message alerts via background communication loops.
      */
     public function sendCannedSms(Request $request, $id)
     {
@@ -462,7 +444,9 @@ class EstimateController extends Controller
         }
 
         try {
-            \App\Jobs\SendPortalSms::dispatch($estimate->customer->phone_number, $body, $fromLine);
+            $cleanClientPhone = $this->normalizeToE164($estimate->customer->phone_number);
+
+            \App\Services\TelnyxService::sendSms($fromLine, $cleanClientPhone, $body);
 
             DB::table($prefix . 'sms_histories')->insert([
                 'company_id'   => $companyId,
@@ -470,7 +454,7 @@ class EstimateController extends Controller
                 'estimate_id'  => $estimate->id,
                 'direction'    => 'outbound',
                 'from_number'  => $fromLine,
-                'to_number'    => $estimate->customer->phone_number,
+                'to_number'    => $cleanClientPhone,
                 'message_body' => $body,
                 'created_at'   => now(),
                 'updated_at'   => now()
@@ -479,185 +463,8 @@ class EstimateController extends Controller
             return back()->with('status', '⚡ Canned field update successfully dispatched to client.');
         } catch (\Exception $e) {
             Log::error("🚨 Canned SMS execution failure: " . $e->getMessage());
-            return back()->with('error', '🛑 Failed to route template payload to carrier network.');
+            return back()->withErrors(['sms' => '🛑 Failed to route template payload to carrier network.']);
         }
-    }
-
-    /**
-     * Upload an estimate attachment card, compressing assets on-the-fly into isolated vaults.
-     */
-    public function uploadAttachment(Request $request, $id)
-    {
-        $request->validate([
-            'image'   => 'required|image|max:12288',
-            'caption' => 'nullable|string|max:255'
-        ]);
-
-        $companyId = Auth::user()->company_id;
-        $estimate = Estimate::where('company_id', $companyId)->findOrFail($id);
-
-        if ($request->file('image')->isValid()) {
-            $file = $request->file('image');
-            $securedPath = $this->compressAndVaultFieldPhoto($file, $estimate->id);
-
-            JobAttachment::create([
-                'estimate_id' => $estimate->id,
-                'file_path'   => $securedPath,
-                'file_type'   => 'image',
-                'caption'     => $request->caption ?? 'Field status update log'
-            ]);
-
-            return back()->with('status', '📸 Progress photo successfully bound to project history archive.');
-        }
-
-        return back()->with('error', 'Failed to read media asset configuration.');
-    }
-
-    /**
-     * Authenticates incoming temporary signatures before serving file stream vectors.
-     */
-    public function streamAttachment(Request $request, $id)
-    {
-        if (!$request->hasValidSignature()) {
-            abort(403, '🛑 Security access token expired or operational signature mismatch.');
-        }
-
-        $attachment = JobAttachment::findOrFail($id);
-
-        if (!Storage::disk('local')->exists($attachment->file_path)) {
-            abort(404, 'Requested project file asset does not exist.');
-        }
-
-        $fileContents = Storage::disk('local')->get($attachment->file_path);
-
-        return response($fileContents, 200)->header('Content-Type', 'image/webp');
-    }
-
-    /**
-     * Public Unauthenticated Viewport Gateway Node for Homeowners.
-     */
-    public function checkout($token)
-    {
-        $estimate = Estimate::withoutGlobalScopes()
-            ->with(['customer', 'items'])
-            ->where(function ($query) use ($token) {
-                if (is_numeric($token)) {
-                    $query->where('id', $token);
-                } else {
-                    $query->where('estimate_number', $token);
-                }
-            })
-            ->firstOrFail();
-
-        if ($estimate->customer) {
-            $parts = explode(' ', trim($estimate->customer->client_name ?? ''), 2);
-            $estimate->customer->first_name = $parts[0] ?? 'Client';
-            $estimate->customer->last_name = $parts[1] ?? ' ';
-        }
-
-        $userTable = (new \App\Models\User())->getTable();
-        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
-
-        $estimate->company = DB::table($prefix . 'companies')->where('id', $estimate->company_id)->first();
-        $attachments = JobAttachment::where('estimate_id', $estimate->id)->get();
-
-        $attachments->each(function($asset) {
-            $asset->secure_url = URL::temporarySignedRoute(
-                'estimates.attachments.stream',
-                now()->addMinutes(60),
-                ['id' => (string) $asset->id]
-            );
-        });
-
-        return view('portal', compact('estimate', 'attachments'));
-    }
-
-    /**
-     * Public Gateway Controller to capture Homeowner interactive responses safely.
-     */
-    public function handlePortalAction(Request $request, $id)
-    {
-        $estimate = Estimate::withoutGlobalScopes()->findOrFail($id);
-        $action = $request->input('action');
-
-        $this->healEstimateTablesSchema();
-
-        if ($action === 'schedule') {
-            $request->validate([
-                'signature_name' => 'required|string|min:3|max:255',
-            ]);
-
-            $signature = strtoupper(trim($request->input('signature_name')));
-            $estimate->signature_name = $signature;
-            $estimate->signed_at = now();
-
-            if ($estimate->deposit_amount > 0 && $estimate->status !== 'approved') {
-                $estimate->status = 'pending_deposit';
-                $estimate->save();
-
-                Log::info("✍️ Contract signed for {$estimate->estimate_number} by {$signature}. Routing to pending deposit gateway lane.");
-                return back()->with('status', '✍️ Project terms signed! To finalize mobilization scheduling, please hit the secure deposit button below.');
-            }
-
-            $estimate->status = 'approved';
-            $estimate->save();
-
-            \App\Models\Appointment::create([
-                'company_id'   => $estimate->company_id,
-                'customer_id'  => $estimate->customer_id,
-                'estimate_id'  => $estimate->id,
-                'title'        => "Production: " . $estimate->estimate_number,
-                'scheduled_at' => now()->addDays(2),
-                'status'       => 'scheduled',
-                'notes'        => "Authorized via client terminal. Signed by: {$signature}"
-            ]);
-
-            Log::info("🚀 Contract complete for {$estimate->estimate_number}. Signed by: {$signature}. Field mobilization slot scheduled.");
-            return back()->with('status', '✍️ Project approved! Your job site mobilization window has been added straight to our master production dispatch board.');
-        }
-
-        if ($action === 'deposit_payment') {
-            $estimate->update(['status' => 'approved']);
-
-            \App\Models\Appointment::create([
-                'company_id'   => $estimate->company_id,
-                'customer_id'  => $estimate->customer_id,
-                'estimate_id'  => $estimate->id,
-                'title'        => "Production: " . $estimate->estimate_number,
-                'scheduled_at' => now()->addDays(2),
-                'status'       => 'scheduled',
-                'notes'        => 'Upfront deposit verified online. Field crew dispatched.'
-            ]);
-
-            return back()->with('status', '💳 Upfront payment verified! Production lines locked onto master operational schedule.');
-        }
-
-        if ($action === 'revision') {
-            $request->validate(['notes' => 'required|string|max:1000']);
-
-            $estimate->update([
-                'notes' => "🚨 Homeowner Modification Request:\n" . $request->notes . "\n\n" . $estimate->notes
-            ]);
-
-            $userTable = (new \App\Models\User())->getTable();
-            $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
-            $company = DB::table($prefix . 'companies')->where('id', $estimate->company_id)->first();
-
-            if ($company && !empty($company->sms_phone_number)) {
-                try {
-                    \App\Jobs\SendPortalSms::dispatch(
-                        $company->sms_phone_number,
-                        "⚠️ Alert: Client has logged a change request on Estimate #{$estimate->estimate_number} (" . ($estimate->customer->client_name ?? 'Client') . "). Review details here: " . url("/estimates/{$estimate->id}")
-                    );
-                } catch (\Exception $e) {
-                    Log::error('Contractor instant revision SMS dispatch error: ' . $e->getMessage());
-                }
-            }
-
-            return back()->with('status', '💬 Your correction notes have been logged straight onto the blueprint ledger. Your project administrator will reach out shortly.');
-        }
-
-        return back();
     }
 
     /**
@@ -744,7 +551,10 @@ class EstimateController extends Controller
         $companyId = Auth::user()->company_id;
         $estimate = Estimate::where('company_id', $companyId)->findOrFail($id);
 
-        DB::transaction(function () use ($estimate) {
+        $userTable = (new \App\Models\User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+
+        DB::transaction(function () use ($estimate, $prefix) {
             EstimateItem::where('estimate_id', $estimate->id)->delete();
 
             $attachments = JobAttachment::where('estimate_id', $estimate->id)->get();
@@ -758,7 +568,7 @@ class EstimateController extends Controller
             $estimate->delete();
         });
 
-        return redirect()->route('dashboard')->with('status', '🗑 Old estimate record permanently purged.');
+        return redirect()->route('dashboard')->with('status', '🗑 Permanent history record successfully removed.');
     }
 
     /**
@@ -788,9 +598,10 @@ class EstimateController extends Controller
                 $clientFirstName = $clientParts[0] ?? 'Client';
 
                 $smsMessageBody = "Hi {$clientFirstName}, thank you for choosing " . ($company->name ?? 'our crew') . "! We have finalized your project logs. Could you take 30 seconds to share your experience and review our field work here? " . $reviewLink;
+                $cleanClientPhone = $this->normalizeToE164($estimate->customer->phone_number);
 
                 try {
-                    \App\Jobs\SendPortalSms::dispatch($estimate->customer->phone_number, $smsMessageBody, $fromLine);
+                    \App\Services\TelnyxService::sendSms($fromLine, $cleanClientPhone, $smsMessageBody);
 
                     DB::table($prefix . 'sms_histories')->insert([
                         'company_id'   => $companyId,
@@ -798,7 +609,7 @@ class EstimateController extends Controller
                         'estimate_id'  => $estimate->id,
                         'direction'    => 'outbound',
                         'from_number'  => $fromLine,
-                        'to_number'    => $estimate->customer->phone_number,
+                        'to_number'    => $cleanClientPhone,
                         'message_body' => "Hi {$clientFirstName}, thank you for choosing us! Leave us a review here: " . $reviewLink,
                         'created_at'   => now(),
                         'updated_at'   => now()
@@ -861,6 +672,70 @@ class EstimateController extends Controller
     }
 
     /**
+     * Internal utility rule helper to normalize phone numbers strictly into valid E.164 structures.
+     */
+    private function normalizeToE164(?string $phone): string
+    {
+        $digits = preg_replace('/[^0-9]/', '', $phone ?? '');
+        if (strlen($digits) === 10) {
+            return '+1' . $digits;
+        } elseif (strlen($digits) === 11 && str_starts_with($digits, '1')) {
+            return '+' . $digits;
+        }
+        return '+' . $digits;
+    }
+
+    /**
+     * Upload an estimate attachment card, compressing assets on-the-fly into isolated vaults.
+     */
+    public function uploadAttachment(Request $request, $id)
+    {
+        $request->validate([
+            'image'   => 'required|image|max:12288',
+            'caption' => 'nullable|string|max:255'
+        ]);
+
+        $companyId = Auth::user()->company_id;
+        $estimate = Estimate::where('company_id', $companyId)->findOrFail($id);
+
+        if ($request->file('image')->isValid()) {
+            $file = $request->file('image');
+            $securedPath = $this->compressAndVaultFieldPhoto($file, $estimate->id);
+
+            JobAttachment::create([
+                'estimate_id' => $estimate->id,
+                'file_path'   => $securedPath,
+                'file_type'   => 'image',
+                'caption'     => $request->caption ?? 'Field status update log'
+            ]);
+
+            return back()->with('status', '📸 Progress photo successfully bound to project history archive.');
+        }
+
+        return back()->with('error', 'Failed to read media asset configuration.');
+    }
+
+    /**
+     * Authenticates incoming temporary signatures before serving file stream vectors.
+     */
+    public function streamAttachment(Request $request, $id)
+    {
+        if (!$request->hasValidSignature()) {
+            abort(403, '🛑 Security access token expired or operational signature mismatch.');
+        }
+
+        $attachment = JobAttachment::findOrFail($id);
+
+        if (!Storage::disk('local')->exists($attachment->file_path)) {
+            abort(404, 'Requested project file asset does not exist.');
+        }
+
+        $fileContents = Storage::disk('local')->get($attachment->file_path);
+
+        return response($fileContents, 200)->header('Content-Type', 'image/webp');
+    }
+
+    /**
      * Safe Plugin-Driven Database Self-Healing Structural Schema Guard.
      */
     private function healEstimateTablesSchema(): void
@@ -874,6 +749,9 @@ class EstimateController extends Controller
         $companiesTable = $prefix . 'companies';
         if (Schema::hasTable($companiesTable)) {
             Schema::table($companiesTable, function (Blueprint $table) use ($companiesTable) {
+                if (!Schema::hasColumn($companiesTable, 'sms_phone_number')) {
+                    $table->string('sms_phone_number', 50)->nullable();
+                }
                 if (!Schema::hasColumn($companiesTable, 'stripe_link')) {
                     $table->string('stripe_link', 500)->nullable();
                 }

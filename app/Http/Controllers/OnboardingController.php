@@ -124,7 +124,7 @@ class OnboardingController extends Controller
                                     <span class=\"text-base select-none\">⚡</span>
                                     <p class=\"text-[11px] text-slate-400 leading-normal font-medium\">
                                         <span class=\"font-black text-white uppercase text-[9px] block tracking-wide mb-0.5\">The Easy Win</span>
-                                        Calibrate your baseline operating files. These metrics anchor your routing map and automated lead engines.
+                                        Calibrate your baseline operating files. These metrics anchor your local 10DLC geographic tracking and automated text routing engines.
                                     </p>
                                 </div>
 
@@ -144,14 +144,18 @@ class OnboardingController extends Controller
                                     <input type=\"text\" id=\"company_name\" name=\"company_name\" required value=\"" . old('company_name', $company->name ?? '') . "\" class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold text-white shadow-inner focus:outline-none\">
                                 </div>
 
-                                <div class=\"grid grid-cols-3 gap-4 items-end\">
+                                <div class=\"grid grid-cols-4 gap-3 items-end\">
                                     <div class=\"col-span-2\">
-                                        <label for=\"city\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Central Operating Base (City)</label>
-                                        <input type=\"text\" id=\"city\" name=\"city\" required value=\"" . old('city', $company->city ?? '') . "\" placeholder=\"e.g., Washington\" class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold text-white shadow-inner focus:outline-none\">
+                                        <label for=\"city\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Operating Base (City)</label>
+                                        <input type=\"text\" id=\"city\" name=\"city\" required value=\"" . old('city', $company->city ?? '') . "\" placeholder=\"e.g., Charlotte\" class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm font-semibold text-white shadow-inner focus:outline-none\">
                                     </div>
                                     <div>
                                         <label for=\"state\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">State</label>
                                         <input type=\"text\" id=\"state\" name=\"state\" required maxlength=\"2\" value=\"" . old('state', $company->state ?? '') . "\" placeholder=\"NC\" class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm text-center font-mono font-black uppercase text-white shadow-inner focus:outline-none\">
+                                    </div>
+                                    <div>
+                                        <label for=\"zip_code\" class=\"block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5\">Zip Code</label>
+                                        <input type=\"text\" id=\"zip_code\" name=\"zip_code\" required value=\"" . old('zip_code', $company->zip_code ?? '') . "\" placeholder=\"27601\" class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-3 px-4 text-sm text-center font-mono font-black text-white shadow-inner focus:outline-none\">
                                     </div>
                                 </div>
 
@@ -174,7 +178,7 @@ class OnboardingController extends Controller
 
                                 <div class=\"pt-4 flex justify-end\">
                                     <button type=\"submit\" name=\"direction\" value=\"next\" class=\"w-full md:w-auto bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-4 px-8 rounded-xl tracking-widest uppercase shadow transition-all active:scale-[0.99] cursor-pointer text-center\">
-                                        Lock Progress & Continue &rarr;
+                                        Lock Progress & Assign Line &rarr;
                                     </button>
                                 </div>
                             </div>
@@ -442,6 +446,7 @@ class OnboardingController extends Controller
                     'state'                => 'required|string|size:2',
                     'trade'                => 'required|string|max:255',
                     'service_radius_miles' => 'required|integer|min:1|max:500',
+                    'zip_code'             => 'required|string|max:10',
                 ]);
 
                 $user->update([
@@ -463,20 +468,29 @@ class OnboardingController extends Controller
                     }
                 }
 
+                // 📡 AUTOMATED INTELLIGENT TELEPHONY PROVISIONER
+                $assignedSmsLine = $this->allocateGeographicSmsPipe(
+                    $validated['state'],
+                    $validated['city'],
+                    $validated['zip_code']
+                );
+
                 DB::table($companyTable)->where('id', $user->company_id)->update([
                     'name'                 => $validated['company_name'],
                     'city'                 => $validated['city'],
                     'state'                => strtoupper($validated['state']),
+                    'zip_code'             => $validated['zip_code'],
                     'city_slug'            => $citySlug,
                     'state_slug'           => $stateSlug,
                     'trade'                => $validated['trade'],
                     'service_radius_miles' => $validated['service_radius_miles'],
+                    'sms_phone_number'     => $assignedSmsLine,
                     'is_publicly_listed'   => $isPubliclyListed,
                     'updated_at'           => now(),
                 ]);
 
                 session(['onboarding_active_step' => 2]);
-                return redirect()->route('onboarding.view')->with('status', 'Core dispatch vitals committed.');
+                return redirect()->route('onboarding.view')->with('status', "Core dispatch vitals committed. Secure SMS route handle provisioned: {$assignedSmsLine}");
             }
 
             if ($currentStep === 2) {
@@ -607,6 +621,35 @@ class OnboardingController extends Controller
     }
 
     /**
+     * Parse geographic inputs to allocate either 10DLC local pool resources or the verified Toll-Freefallback lane.
+     */
+    private function allocateGeographicSmsPipe(string $state, string $city, string $zip): string
+    {
+        $cleanState = strtolower(trim($state));
+        $cleanCity  = strtolower(trim($city));
+        $cleanZip   = substr(preg_replace('/[^0-9]/', '', $zip), 0, 5);
+
+        // Raleigh / Wake County Core Mapping Vectors
+        $raleighZips = ['27601', '27603', '27604', '27605', '27606', '27607', '27608', '27609', '27610', '27612', '27613', '27614', '27615', '27616', '27617'];
+        // Charlotte / Mecklenburg Core Mapping Vectors
+        $charlotteZips = ['28202', '28203', '28204', '28205', '28206', '28207', '28208', '28209', '28210', '28211', '28212', '28213', '28214', '28215', '28216', '28217', '28226', '28262', '28269', '28270', '28273', '28277'];
+
+        if ($cleanState === 'nc' && ($cleanCity === 'raleigh' || in_array($cleanZip, $raleighZips))) {
+            Log::info("🎯 Local 10DLC Match: Assigning Raleigh 919 operational pipe token line to new company onboarding file.");
+            return env('TELNYX_RALEIGH_NUMBER', '+19195550199');
+        }
+
+        if ($cleanState === 'nc' && ($cleanCity === 'charlotte' || in_array($cleanZip, $charlotteZips))) {
+            Log::info("🎯 Local 10DLC Match: Assigning Charlotte 704 operational pipe token line to new company onboarding file.");
+            return env('TELNYX_CHARLOTTE_NUMBER', '+17045550188');
+        }
+
+        // Global Catch-All Fallback Pipe
+        Log::info("📡 Out-of-Bounds User Registered [{$cleanCity}, {$cleanState}]. Routing to verified corporate Toll-Free platform pipe fallback.");
+        return config('services.telnyx.fallback_toll_free', env('TELNYX_DEFAULT_FROM', '+18005550100'));
+    }
+
+    /**
      * Safe Plugin-Driven Database Self-Healing Structural Schema Guard for Companies.
      */
     private function ensureSchemaIsHealed(string $tableName): void
@@ -617,10 +660,12 @@ class OnboardingController extends Controller
                 $table->string('name', 255)->nullable();
                 $table->string('city', 255)->nullable();
                 $table->string('state', 10)->nullable();
+                $table->string('zip_code', 20)->nullable();
                 $table->string('city_slug', 255)->nullable()->index();
                 $table->string('state_slug', 10)->nullable()->index();
                 $table->string('trade', 255)->nullable();
                 $table->integer('service_radius_miles')->default(25);
+                $table->string('sms_phone_number', 50)->nullable();
                 $table->boolean('is_publicly_listed')->default(0)->index();
                 $table->integer('years_experience')->default(0);
                 $table->string('license_number', 100)->nullable();
@@ -645,10 +690,12 @@ class OnboardingController extends Controller
                 if (!Schema::hasColumn($tableName, 'name')) { $table->string('name', 255)->nullable(); }
                 if (!Schema::hasColumn($tableName, 'city')) { $table->string('city', 255)->nullable(); }
                 if (!Schema::hasColumn($tableName, 'state')) { $table->string('state', 10)->nullable(); }
+                if (!Schema::hasColumn($tableName, 'zip_code')) { $table->string('zip_code', 20)->nullable(); }
                 if (!Schema::hasColumn($tableName, 'city_slug')) { $table->string('city_slug', 255)->nullable()->index(); }
                 if (!Schema::hasColumn($tableName, 'state_slug')) { $table->string('state_slug', 10)->nullable()->index(); }
                 if (!Schema::hasColumn($tableName, 'trade')) { $table->string('trade', 255)->nullable(); }
                 if (!Schema::hasColumn($tableName, 'service_radius_miles')) { $table->integer('service_radius_miles')->default(25); }
+                if (!Schema::hasColumn($tableName, 'sms_phone_number')) { $table->string('sms_phone_number', 50)->nullable(); }
                 if (!Schema::hasColumn($tableName, 'is_publicly_listed')) { $table->boolean('is_publicly_listed')->default(0)->index(); }
                 if (!Schema::hasColumn($tableName, 'years_experience')) { $table->integer('years_experience')->default(0); }
                 if (!Schema::hasColumn($tableName, 'license_number')) { $table->string('license_number', 100)->nullable(); }
