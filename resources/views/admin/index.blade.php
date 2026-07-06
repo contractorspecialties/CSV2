@@ -16,7 +16,7 @@
                 <div class="w-[300px] flex items-center">
                     <img src="/images/header-logo.webp" alt="ContractorSpecialties Logo" class="w-full h-auto max-h-[75px] object-contain object-left">
                 </div>
-                <a href="/dashboard" class="bg-slate-900 hover:bg-slate-800 text-amber-400 font-black text-[10px] py-2 px-3.5 rounded-lg uppercase tracking-wider transition-all border border-slate-800 cursor-pointer">
+                <a href="/dashboard" class="bg-slate-900 hover:bg-slate-800 text-amber-400 font-black text-[10px] py-2 px-3.5 rounded-lg uppercase tracking-wider transition-all border border-slate-800 cursor-pointer text-decoration-none">
                     &larr; Operations Room
                 </a>
             </div>
@@ -29,7 +29,7 @@
         </div>
     </header>
 
-    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8 space-y-8">
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8 space-y-6">
 
         @if($errors->any())
             <div class="bg-red-50 border border-red-200 text-red-900 rounded-2xl p-4 flex items-center gap-3 shadow-sm">
@@ -45,6 +45,7 @@
             </div>
         @endif
 
+        <!-- Master Global Telemetry Cards -->
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-1">
                 <span class="text-xs font-black uppercase tracking-wider text-slate-400 block">System Tenants</span>
@@ -61,13 +62,60 @@
                 <div class="text-3xl font-black text-slate-900 font-mono">{{ $globalTelemetry['total_estimates'] }}</div>
                 <span class="text-[10px] text-slate-500 block font-medium uppercase tracking-tight">Cumulative Compiled Estimates</span>
             </div>
-            <div class="bg-white border-slate-250 rounded-2xl p-5 shadow-md space-y-1 border-l-4 border-l-emerald-500">
+            <div class="bg-white border border-slate-250 rounded-2xl p-5 shadow-md space-y-1 border-l-4 border-l-emerald-500">
                 <span class="text-xs font-black uppercase tracking-wider text-slate-400 block">Network Revenue Booked</span>
                 <div class="text-3xl font-black text-emerald-600 font-mono">${{ number_format($globalTelemetry['booked_revenue'], 2) }}</div>
                 <span class="text-[10px] text-slate-500 block font-medium uppercase tracking-tight">Aggregated Approved Contracts</span>
             </div>
         </section>
 
+        <!-- 🛡️ HIGH-PRESENCE ANTI-BOT BULK CLEANER TOOL STRIP -->
+        <section class="bg-white border-2 border-red-200 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden" x-data="{ openBulkPurge: false }">
+            <div class="space-y-1 z-10">
+                <div class="flex items-center gap-2">
+                    <span class="flex h-2 w-2 relative">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
+                    <span class="text-[10px] font-black uppercase text-red-600 tracking-widest font-mono">Automated Threat Mitigation Vault</span>
+                </div>
+                <h3 class="text-base font-black text-slate-950 uppercase tracking-tight">Stale Un-Onboarded Ghost Accounts</h3>
+                <p class="text-xs text-slate-500 font-medium leading-normal max-w-xl">
+                    There are currently <strong class="text-red-600 font-black font-mono bg-red-50 px-1.5 py-0.5 rounded border border-red-200/60">{{ $globalTelemetry['ghost_profiles_count'] }}</strong> transient profiles that abandoned setup over 24 hours ago. Wipe them out in a single transaction sweep to recover space allocations.
+                </p>
+            </div>
+
+            <div class="shrink-0 z-10 w-full md:w-auto text-right">
+                <button type="button" @click="openBulkPurge = !openBulkPurge" class="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white font-black text-xs py-3 px-5 rounded-xl uppercase tracking-wider shadow-md border border-red-700 transition-all cursor-pointer outline-none">
+                    Bulk Purge Ghost Rows 🧹
+                </button>
+            </div>
+
+            <!-- Expandable confirmation block -->
+            <div x-show="openBulkPurge" x-cloak x-transition class="w-full border-t border-slate-100 pt-4 mt-2 grid grid-cols-1 gap-3 text-left z-10 col-span-full" x-data="{ bulkConfirm: '' }">
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+                    <div class="text-xs font-black text-red-600 uppercase tracking-wide">⚠️ CRITICAL INLINE ACTION FORM: CASCADING PLATFORM PURGE</div>
+                    <p class="text-[11px] text-slate-500 leading-normal">
+                        Executing this command permanently drops all un-onboarded parent company partitions, their nested un-verified administrator user nodes, and any sandbox estimates generated during that cycle. This action cannot be reversed.
+                    </p>
+                    <form action="{{ route('admin.workspace.bulk-purge') }}" method="POST" class="flex flex-col sm:flex-row items-end gap-3 m-0">
+                        @csrf
+                        <div class="flex-grow max-w-sm">
+                            <label class="block text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1">Type <span class="text-red-500 font-mono font-black">PURGE STALE</span> to clear queues</label>
+                            <input type="text" x-model="bulkConfirm" placeholder="Verification string" class="w-full bg-white border border-slate-300 focus:border-red-500 rounded-lg py-2 px-3 text-xs font-bold text-slate-950 focus:outline-none shadow-sm">
+                        </div>
+                        <div class="flex gap-2 w-full sm:w-auto justify-end">
+                            <button type="button" @click="openBulkPurge = false; bulkConfirm = ''" class="bg-white border border-slate-300 text-slate-500 font-black text-[10px] py-2 px-4 rounded-lg uppercase tracking-wider cursor-pointer">Abort</button>
+                            <button type="submit" :disabled="bulkConfirm !== 'PURGE STALE'" class="bg-red-600 disabled:bg-slate-200 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed text-white font-black text-[10px] py-2 px-4 rounded-lg uppercase tracking-widest shadow border border-red-700">
+                                Confirm Cascade Wipe &rarr;
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Workspace Registry Table -->
         <section class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                 <h3 class="font-black text-sm tracking-tight text-slate-900 uppercase flex items-center gap-2">
@@ -130,7 +178,6 @@
                                 <td class="p-3.5 text-right">
                                     <div class="flex items-center justify-end gap-1.5">
                                         @if($row->id !== auth()->id())
-                                            <!-- Interactive Auth Session Intercept Trigger Form -->
                                             <form action="{{ route('admin.impersonate', ['id' => $row->id]) }}" method="POST" class="inline-block">
                                                 @csrf
                                                 <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white font-black text-[9px] py-1.5 px-2.5 rounded-lg transition-all uppercase tracking-wider cursor-pointer shadow-sm border border-amber-600">
@@ -213,9 +260,9 @@
                                         </div>
                                     @endif
 
-                                    <!-- EXPANDABLE PURGE PANEL -->
+                                    <!-- EXPANDABLE PURGE PANEL (Fixed Inline Alpine Syntax Definition Block) -->
                                     @if($row->id !== auth()->id())
-                                        <div x-show="openPanel === 'purge'" x-cloak x-transition class="mt-4 p-4 bg-red-950/20 border border-red-900/40 rounded-xl text-left space-y-3 shadow-inner" x-data TYPE_UNSPECIFIED="{ confirmWord: '' }">
+                                        <div x-show="openPanel === 'purge'" x-cloak x-transition class="mt-4 p-4 bg-red-950/20 border border-red-900/40 rounded-xl text-left space-y-3 shadow-inner" x-data="{ confirmWord: '' }">
                                             <div class="text-xs font-black text-red-400 uppercase tracking-wider flex items-center gap-1">
                                                 ⚠️ CRITICAL MANEUVER: Cascading Clean-Sweep Purge
                                             </div>
@@ -229,7 +276,7 @@
                                                     <input type="text" x-model="confirmWord" placeholder="Verification string" class="w-full bg-slate-50 border border-slate-300 focus:border-red-500 rounded-lg py-2 px-3 text-xs font-bold text-slate-950 focus:outline-none shadow-inner">
                                                 </div>
                                                 <div class="flex justify-end gap-2">
-                                                    <button type="button" @click="openPanel = null" class="bg-white border border-slate-300 text-slate-500 font-black text-[9px] py-2 px-4 rounded-lg uppercase tracking-wider cursor-pointer shadow-sm">Abort</button>
+                                                    <button type="button" @click="openPanel = null; confirmWord = ''" class="bg-white border border-slate-300 text-slate-500 font-black text-[9px] py-2 px-4 rounded-lg uppercase tracking-wider cursor-pointer shadow-sm">Abort</button>
                                                     <button type="submit" :disabled="confirmWord !== 'DELETE'" class="bg-red-600 disabled:bg-slate-200 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed text-white font-black text-[9px] py-2 px-4 rounded-lg uppercase tracking-wider cursor-pointer shadow-md border border-red-700">
                                                         Execute System Purge 🧹
                                                     </button>

@@ -26,11 +26,17 @@ class AdminDashboardController extends Controller
         $globalBookedRevenue = Schema::hasTable($estimatesTable) ? DB::table($estimatesTable)->where('status', 'approved')->sum('grand_total') : 0.00;
         $globalSentBids = Schema::hasTable($estimatesTable) ? DB::table($estimatesTable)->where('status', 'sent')->count() : 0;
 
+        // Trace how many stale un-onboarded ghost profiles are currently polluting the company ledger
+        $ghostProfilesCount = Schema::hasTable($companyTable)
+            ? DB::table($companyTable)->whereNull('onboarding_completed_at')->where('created_at', '<', now()->subHours(24))->count()
+            : 0;
+
         $globalTelemetry = [
-            'total_workspaces' => $totalWorkspaces,
-            'total_estimates'  => $totalEstimates,
-            'booked_revenue'   => $globalBookedRevenue,
-            'sent_bids'        => $globalSentBids,
+            'total_workspaces'     => $totalWorkspaces,
+            'total_estimates'      => $totalEstimates,
+            'booked_revenue'       => $globalBookedRevenue,
+            'sent_bids'            => $globalSentBids,
+            'ghost_profiles_count' => $ghostProfilesCount,
         ];
 
         $users = User::latest()->get();
@@ -48,7 +54,7 @@ class AdminDashboardController extends Controller
                     DB::raw('sum(case when status = "approved" then grand_total else 0 end) as booked_revenue')
                 )
                 ->whereIn('company_id', $companyIds)
-                ->groupBy('company_id')
+                ->groupIn('company_id')
                 ->get()
                 ->keyBy('company_id');
         }
@@ -129,10 +135,8 @@ class AdminDashboardController extends Controller
             return back()->withErrors(['error' => '🛑 Loop error: Interception loop targeted at active profile node rejected.']);
         }
 
-        // Lock your genuine admin signature credentials down into persistent session space
         session(['admin_impersonator_id' => auth()->id()]);
 
-        // Shift security tokens over to the contractor
         Auth::loginUsingId($targetUser->id);
 
         Log::info("🔑 Platform Override Activated: Admin ID " . session('admin_impersonator_id') . " shifted perspectives into Contractor Account ID: {$id}");
@@ -178,7 +182,7 @@ class AdminDashboardController extends Controller
     }
 
     /**
-     * Execute a cascading clean-sweep purge on an operational workspace.
+     * Execute a cascading clean-sweep purge on a single targeted operational workspace.
      */
     public function destroyWorkspace($id)
     {
@@ -194,7 +198,7 @@ class AdminDashboardController extends Controller
         try {
             DB::beginTransaction();
 
-            $tenantTables = ['estimates', 'clients', 'pricebook', 'estimates_blueprint'];
+            $tenantTables = ['estimates', 'clients', 'pricebook', 'estimates_blueprint', 'sms_histories', 'appointments'];
             foreach ($tenantTables as $tableBase) {
                 $tableName = $prefix . $tableBase;
                 if (Schema::hasTable($tableName)) {
@@ -217,6 +221,63 @@ class AdminDashboardController extends Controller
             DB::rollBack();
             Log::error("🚨 Administrative purge routine failure on Workspace ID {$companyId}: " . $e->getMessage());
             return back()->withErrors(['error' => 'An operational fault occurred during the cascading deletion run. Workspace drop aborted.']);
+        }
+    }
+
+    /**
+     * Execute a cascading bulk clean-sweep purge on all un-onboarded stale bot workspaces.
+     */
+    public function bulkPurgeStaleWorkspaces(Request $request)
+    {
+        $userTable = (new User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+        $companyTable = $prefix . 'companies';
+
+        if (!Schema::hasTable($companyTable)) {
+            return back()->withErrors(['error' => '🛑 System mapping mismatch: Companies tracking partition table not found on disk memory.']);
+        }
+
+        // Pull company records that abandoned onboarding over 24 hours ago
+        $staleCompanies = DB::table($companyTable)
+            ->whereNull('onboarding_completed_at')
+            ->where('created_at', '<', now()->subHours(24))
+            ->get();
+
+        $companyIds = $staleCompanies->pluck('id')->toArray();
+
+        if (empty($companyIds)) {
+            return back()->with('status', '🧹 Zero stale un-onboarded bot profiles found inside the 24-hour database retention window.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Clear dependencies out of transactional data channels in bulk blocks
+            $tenantTables = ['estimates', 'clients', 'pricebook', 'estimates_blueprint', 'sms_histories', 'appointments'];
+            foreach ($tenantTables as $tableBase) {
+                $tableName = $prefix . $tableBase;
+                if (Schema::hasTable($tableName)) {
+                    DB::table($tableName)->whereIn('company_id', $companyIds)->delete();
+                }
+            }
+
+            // Drop un-onboarded user records bound to stale profiles
+            User::whereIn('company_id', $companyIds)->delete();
+
+            // Clear the parent company tables in a single transaction sweep
+            DB::table($companyTable)->whereIn('id', $companyIds)->delete();
+
+            DB::commit();
+
+            $totalPurged = count($companyIds);
+            Log::alert("🚨 SYSTEM WIDE BULK PURGE EXECUTED: Admin ID " . auth()->id() . " wiped {$totalPurged} stale bot workspaces from the cluster layers.");
+
+            return back()->with('status', "🧹 Clean sweep successful! Purged {$totalPurged} un-onboarded bot profiles completely from system clusters.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("🚨 Administrative bulk database execution failure: " . $e->getMessage());
+            return back()->withErrors(['error' => 'An operational parameters fault occurred while executing bulk cascading deletions. Wipe sweep aborted.']);
         }
     }
 }
