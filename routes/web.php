@@ -8,6 +8,7 @@ use App\Http\Controllers\EstimateController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\CompanyProfileController;
+use App\Http\Controllers\PublicEstimateController;
 use App\Http\Middleware\EnsureOnboardingIsCompleted;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +21,10 @@ use Illuminate\Support\Facades\Route;
 // Public Entry Node
 Route::get('/', function () { return view('welcome'); })->name('welcome');
 Route::get('/login', function () { return redirect()->route('welcome'); })->name('login');
+
+// High-Conversion Product-Led Growth (PLG) Marketing Funnel
+Route::get('/free-estimate-generator', [PublicEstimateController::class, 'showBuilder'])->name('public.estimate.builder');
+Route::post('/free-estimate-generator/submit', [PublicEstimateController::class, 'storeLeadPayload'])->name('public.estimate.submit');
 
 // Frictionless Onboarding Tiers
 Route::get('/register', function () { return view('register'); })->name('register');
@@ -133,6 +138,7 @@ Route::middleware(['auth'])->group(function () {
         |--------------------------------------------------------------------------
         | app(Controller::class) resolves the instance dynamically from the container,
         | allowing standard instance methods to be processed cleanly with zero conflicts.
+        |
         |
         */
         Route::get('/admin/management', function () {
@@ -260,4 +266,3 @@ Route::view('/tutorial', 'tutorial')->name('platform.tutorial');
 
 // Inbound Telephony Carrier Webhooks
 Route::post('/webhooks/telnyx', [EstimateController::class, 'handleTelnyxWebhook'])->name('webhooks.telnyx');
-
