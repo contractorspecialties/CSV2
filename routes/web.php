@@ -23,11 +23,14 @@ Route::get('/', function () { return view('welcome'); })->name('welcome');
 Route::get('/login', function () { return redirect()->route('welcome'); })->name('login');
 
 // 📡 HIGH-CONVERSION PROGRAMMATIC SEO (pSEO) MARKETING FUNNEL HUB
-// Programmatic SEO Lead-Generation Core Hub & Direct Conversion Handshakes
 Route::get('/free-estimate-generator/{state?}/{city?}/{trade?}', [PublicEstimateController::class, 'showBuilder'])->name('public.estimate.builder');
-Route::post('/free-estimate-generator/submit', [PublicEstimateController::class, 'storeLeadPayload'])->name('public.estimate.submit');
 Route::get('/free-estimate-generator/claim/{token}', [PublicEstimateController::class, 'showClaimPage'])->name('public.estimate.claim.view');
 Route::post('/free-estimate-generator/claim/{token}', [PublicEstimateController::class, 'processClaim'])->name('public.estimate.claim.commit');
+
+// 🛡️ SECURITY GUARD BLOCK: Rate-limited public submit endpoint to isolate mailer queues from spam bots
+Route::post('/free-estimate-generator/submit', [PublicEstimateController::class, 'storeLeadPayload'])
+    ->middleware('throttle:3,60')
+    ->name('public.estimate.submit');
 
 // 🤖 AUTOMATED INFRASTRUCTURE: DYNAMIC XML SITEMAP GENERATOR FOR GOOGLE BOT INDEXING
 Route::get('/sitemap-seo.xml', function() {
@@ -37,10 +40,8 @@ Route::get('/sitemap-seo.xml', function() {
     $xml = '<?xml version="1.0" encoding="UTF-8"?>';
     $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
 
-    // Add baseline general index route
     $xml .= '<url><loc>' . route('public.estimate.builder') . '</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>';
 
-    // Programmatically map every targeted hyper-local vertical combination
     foreach ($cities as $city) {
         foreach ($trades as $trade) {
             $url = url("/free-estimate-generator/nc/{$city}/{$trade}");
