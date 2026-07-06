@@ -69,7 +69,8 @@ Route::post('/login/verify/{token}', [MagicAuthController::class, 'processVerify
 Route::get('/login/two-factor', [MagicAuthController::class, 'showTwoFactorForm'])->name('magic.2fa.view');
 Route::post('/login/two-factor-verify', [MagicAuthController::class, 'verifyTwoFactor'])->name('magic.2fa');
 
-Route::make(['get', 'post'], '/logout', [MagicAuthController::class, 'logout'])->name('logout');
+// 🔄 Fixed: Swapped out broken .make token handle for native .match framework execution
+Route::match(['get', 'post'], '/logout', [MagicAuthController::class, 'logout'])->name('logout');
 
 // Authenticated Contractor Workspace Framework
 Route::middleware(['auth'])->group(function () {
@@ -80,7 +81,6 @@ Route::middleware(['auth'])->group(function () {
     |--------------------------------------------------------------------------
     | These routes remain exempt from the onboarding intercept gate middleware
     | to eliminate cascading infinite loop execution sequences.
-    |
     |
     */
     Route::get('/workspace/setup', [OnboardingController::class, 'showWizard'])->name('onboarding.view');
@@ -96,7 +96,6 @@ Route::middleware(['auth'])->group(function () {
     | The user must possess a valid 'onboarding_completed_at' timestamp token
     | inside database memory to pierce this boundary layer. If incomplete,
     | they are gracefully rerouted back to the workspace configurator.
-    |
     |
     */
     Route::middleware([EnsureOnboardingIsCompleted::class])->group(function () {
