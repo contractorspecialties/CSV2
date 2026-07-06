@@ -28,53 +28,69 @@ class PublicEstimateController extends Controller
         $seoCity = $city ? ucwords(str_replace('-', ' ', $city)) : 'Local';
         $seoTradeSlug = $trade ? strtolower($trade) : 'contractor';
 
+        // Master B2B operational blueprints mapped across multiple service channels
         $tradeMap = [
             'roofing' => [
+                'slug' => 'roofing',
                 'title' => 'Roofing Architecture',
                 'company' => "{$seoCity} Roofing Specialists",
-                'desc' => 'Tear-off, underlayment installation, premium architectural shingles, and flashing integration.',
+                'desc' => 'Tear-off old shingle courses, underlayment installation, premium architectural shingles, and flashing integration.',
                 'rate' => 8450.00
             ],
             'landscaping' => [
+                'slug' => 'landscaping',
                 'title' => 'Landscape Development',
                 'company' => "{$seoCity} Landscape Design",
-                'desc' => 'Complete backyard hardscape grading, retaining wall block laying, and sod delivery.',
+                'desc' => 'Complete backyard hardscape grading, retaining wall block laying, and premium sod delivery runs.',
                 'rate' => 4200.00
             ],
             'lawn-care' => [
+                'slug' => 'lawn-care',
                 'title' => 'Lawn Care Operations',
                 'company' => "{$seoCity} Turf & Lawn Operations",
-                'desc' => 'Seasonal aeration, overseeding, premium fertilizer application, and perimeter weed control.',
+                'desc' => 'Seasonal mechanical aeration, overseeding, premium slow-release fertilizer application, and weed control.',
                 'rate' => 245.00
             ],
+            'handyman' => [
+                'slug' => 'handyman',
+                'title' => 'Handyman Services',
+                'company' => "{$seoCity} Professional Handyman",
+                'desc' => 'Drywall cutout repair, structural backing re-bracing, compound tape finishing, and texture matching passes.',
+                'rate' => 385.00
+            ],
+            'construction' => [
+                'slug' => 'construction',
+                'title' => 'General Construction',
+                'company' => "{$seoCity} Builders & Construction",
+                'desc' => 'Load-bearing timber framing assembly, double structural header setting, and code compliance alignment mapping.',
+                'rate' => 12500.00
+            ],
             'hvac' => [
+                'slug' => 'hvac',
                 'title' => 'HVAC Climatic Systems',
                 'company' => "{$seoCity} Climate Systems",
-                'desc' => 'High-efficiency heat pump installation, digital thermostat calibration, and duct pass verification.',
+                'desc' => 'High-efficiency heat pump installation, digital smart thermostat calibration, and airflow delivery testing.',
                 'rate' => 6800.00
             ],
             'plumbing' => [
+                'slug' => 'plumbing',
                 'title' => 'Plumbing Frameworks',
                 'company' => "{$seoCity} Professional Plumbing",
                 'desc' => 'Tankless water heater conversion, copper manifold tie-in, and structural drain line drop runs.',
                 'rate' => 3100.00
             ],
             'electrical' => [
+                'slug' => 'electrical',
                 'title' => 'Electrical Infrastructure',
                 'company' => "{$seoCity} Power & Electrical",
-                'desc' => '200-Amp service panel upgrade, dedicated equipment circuit runs, and code compliance mapping.',
+                'desc' => '200-Amp residential service panel upgrade, dedicated equipment circuit runs, and arc-fault breaker setting.',
                 'rate' => 2850.00
-            ],
-            'general-contracting' => [
-                'title' => 'General Contracting Management',
-                'company' => "{$seoCity} Builders & Contracting",
-                'desc' => 'Tenant build-out framing, structural header setting, and multi-trade project oversight.',
-                'rate' => 12500.00
             ]
         ];
 
         $activeTrade = $tradeMap[$seoTradeSlug] ?? [
-            'title' => 'Home Service Specialty',
+            'slug' => 'contractor',
+            'title' => 'General Contracting',
             'company' => $city ? "{$seoCity} Specialty Contractors" : 'My Trade Company',
             'desc' => 'Professional field service delivery and materials mobilization package.',
             'rate' => 1250.00
@@ -84,9 +100,7 @@ class PublicEstimateController extends Controller
             ? "Free Pro {$activeTrade['title']} Estimate Template | {$seoCity}, {$seoState}"
             : "Free Professional Estimate Generator & Invoice Builder | ContractorSpecialties";
 
-        $metaDesc = $city
-            ? "Build and send itemized professional project proposals instantly in {$seoCity}, {$seoState}. Customized for local {$activeTrade['title']} businesses. No registration wall required."
-            : "Frictionless B2B invoice and estimate creator canvas tool built specifically for professional trade groups and field dispatch teams.";
+        $metaDesc = "Build and send itemized professional project proposals instantly. Dynamic templates for lawn care, handyman, and roofing options.";
 
         return response("
             <!DOCTYPE html>
@@ -138,7 +152,7 @@ class PublicEstimateController extends Controller
                         </div>
                         <div class=\"flex items-center gap-4\">
                             <span class=\"text-[10px] font-black text-[#f58613] uppercase tracking-widest bg-slate-950 px-3 py-1.5 border border-slate-800/80 rounded-lg shadow-inner hidden sm:inline-block\">
-                                pSEO Engine Node: {$seoCity} / {$seoState}
+                                pSEO Core Stack Enabled
                             </span>
                             <a href=\"/login\" class=\"text-xs font-black text-slate-300 hover:text-white uppercase tracking-wider bg-slate-950 hover:bg-slate-900 border border-slate-800 px-4 py-2.5 rounded-xl transition-all shadow-sm text-decoration-none\">
                                 Sign In &rarr;
@@ -147,24 +161,29 @@ class PublicEstimateController extends Controller
                     </div>
                 </header>
 
-                <main class=\"flex-grow max-w-7xl mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start\">
+                <main class=\"flex-grow max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start\">
 
+                    <!-- LEFT COLUMN: DYNAMIC CONTROL PANEL -->
                     <div class=\"lg:col-span-5 bg-slate-900 border border-slate-800/80 rounded-2xl p-5 md:p-6 space-y-6 shadow-xl max-h-[calc(100vh-140px)] lg:overflow-y-auto\">
                         <div>
-                            <span class=\"text-[10px] font-black uppercase text-[#f58613] tracking-widest\">" . ($city ? "{$seoCity} Pro Tool Sandbox" : "Instant Growth Engine") . "</span>
-                            <h1 class=\"text-xl font-black text-white tracking-tight uppercase mt-0.5\">" . ($city ? "{$activeTrade['title']} Template" : "Free Proposal Generator") . "</h1>
+                            <span class=\"text-[10px] font-black uppercase text-[#f58613] tracking-widest\">" . ($city ? "{$seoCity} Local Pro Sandbox" : "Instant Growth Engine") . "</span>
+                            <h1 class=\"text-xl font-black text-white tracking-tight uppercase mt-0.5\">Multi-Vertical Bid Engine</h1>
                             <p class=\"text-xs text-slate-400 font-medium mt-1 leading-relaxed\">Build and email an itemized proposal to a client in 45 seconds. No credit card, no entry blocks.</p>
+                        </div>
+
+                        <!-- 🛠️ INTERACTIVE VERTICAL SELECTOR DROPDOWN HUB -->
+                        <div class=\"p-4 bg-slate-950 border border-slate-850 rounded-xl space-y-2 shadow-inner\">
+                            <label class=\"block text-[10px] font-black uppercase text-[#f58613] tracking-wider\">Target Industry Template Matrix</label>
+                            <select @change=\"switchVertical($event.target.value)\" class=\"w-full bg-slate-900 border border-slate-800 rounded-xl py-3 px-4 text-xs font-black uppercase tracking-wider text-white focus:outline-none focus:border-[#f58613] cursor-pointer\">
+                                <template x-for=\"(v, k) in verticalMatrix\" :key=\"k\">
+                                    <option :value=\"k\" :selected=\"k === activeVertical\" x-text=\"v.title\"></option>
+                                </template>
+                            </select>
                         </div>
 
                         " . (session()->has('status') ? "
                             <div class=\"p-4 bg-emerald-950/40 border border-emerald-900/60 text-emerald-400 rounded-xl text-xs font-bold shadow-inner flex items-start gap-2.5\">
                                 <span>🚀</span> <div>" . session('status') . "</div>
-                            </div>
-                        " : "") . "
-
-                        " . (session()->has('errors') ? "
-                            <div class=\"p-4 bg-red-950/40 border border-red-900/60 text-red-400 rounded-xl text-xs font-bold shadow-inner\">
-                                🛑 " . session('errors')->first() . "
                             </div>
                         " : "") . "
 
@@ -178,7 +197,7 @@ class PublicEstimateController extends Controller
                                 <div class=\"grid grid-cols-2 gap-3\">
                                     <div>
                                         <label class=\"block text-[9px] font-black uppercase text-slate-500 tracking-wider mb-1\">Company Name</label>
-                                        <input type=\"text\" name=\"company_name\" required x-model=\"companyName\" placeholder=\"e.g., Jack's Lawns\" class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-2.5 px-3 text-xs font-semibold text-white shadow-inner focus:outline-none\">
+                                        <input type=\"text\" name=\"company_name\" required x-model=\"companyName\" class=\"w-full bg-slate-950 border border-slate-800 focus:border-[#f58613] rounded-xl py-2.5 px-3 text-xs font-semibold text-white shadow-inner focus:outline-none\">
                                     </div>
                                     <div>
                                         <label class=\"block text-[9px] font-black uppercase text-slate-500 tracking-wider mb-1\">Your Professional Email</label>
@@ -250,12 +269,13 @@ class PublicEstimateController extends Controller
                                     Dispatch Digital Proposal &rarr;
                                 </button>
                                 <p class=\"text-[10px] text-slate-500 text-center font-bold mt-2.5 leading-normal\">
-                                    ⚠️ Secure Sandbox Mode: Delivery routes directly via email vector. SMS workflows and persistent file archives require validated workspace authorization profiles.
+                                    ⚠️ Secure Sandbox Mode: Delivery routes directly via email vector. SMS workflows and permanent system data archives require validated workspace command deck authorizations.
                                 </p>
                             </div>
                         </form>
                     </div>
 
+                    <!-- RIGHT COLUMN: STANDALONE DIGITAL PORTAL PREVIEW -->
                     <div class=\"lg:col-span-7 bg-slate-900 border border-slate-800/80 rounded-2xl p-1 shadow-2xl flex flex-col max-h-[calc(100vh-140px)] min-h-[500px] overflow-hidden sticky top-24\">
                         <div class=\"bg-slate-950 px-4 py-2.5 flex items-center justify-between text-slate-400 text-[10px] font-black uppercase tracking-wider border-b border-slate-800/80\">
                             <div class=\"flex items-center gap-2\">
@@ -270,7 +290,7 @@ class PublicEstimateController extends Controller
                                 <div class=\"bg-slate-900 p-5 text-white flex justify-between items-start\">
                                     <div class=\"space-y-1\">
                                         <div class=\"text-xs font-black uppercase text-[#f58613] tracking-widest font-mono\">Project Proposal</div>
-                                        <h2 class=\"text-lg font-black tracking-tight uppercase leading-tight\" x-text=\"companyName || '" . addslashes($activeTrade['company']) . "'\"></h2>
+                                        <h2 class=\"text-lg font-black tracking-tight uppercase leading-tight\" x-text=\"companyName || 'My Trade Company'\"></h2>
                                     </div>
                                     <div class=\"text-right font-mono text-[10px] font-bold text-slate-400\">
                                         REF: <span class=\"text-white font-black\">EST-1001</span>
@@ -351,6 +371,8 @@ class PublicEstimateController extends Controller
                 <script>
                     function publicBuilder() {
                         return {
+                            verticalMatrix: " . json_encode($tradeMap) . ",
+                            activeVertical: '" . addslashes($activeTrade['slug']) . "',
                             items: [{
                                 id: Date.now(),
                                 description: '" . addslashes($activeTrade['desc']) . "',
@@ -364,6 +386,18 @@ class PublicEstimateController extends Controller
                             taxRate: 7.25,
                             depositPercentage: 0,
 
+                            switchVertical(key) {
+                                const target = this.verticalMatrix[key];
+                                if (!target) return;
+                                this.activeVertical = key;
+                                this.companyName = target.company;
+                                this.items = [{
+                                    id: Date.now(),
+                                    description: target.desc,
+                                    quantity: 1,
+                                    unit_price: target.rate
+                                }];
+                            },
                             addItem() {
                                 this.items.push({ id: Date.now() + Math.random(), description: '', quantity: 1, unit_price: 0.00 });
                             },
@@ -526,7 +560,7 @@ class PublicEstimateController extends Controller
     }
 
     /**
-     * Unpack the JSON payload data block, commit standard database models, log them in, and destroy the lead row token.
+     * Unpack JSON payload data block, commit standard database models, log user in, and destroy lead row.
      */
     public function processClaim(Request $request, $token)
     {
@@ -540,11 +574,9 @@ class PublicEstimateController extends Controller
 
         $payload = json_decode($lead->lead_payload, true);
 
-        // Extract systemic naming prefix elements
         $userTable = (new User())->getTable();
         $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
 
-        // Secure unique account constraints defensively ahead of transaction pass
         $existingUser = User::where('email', strtolower($payload['contractor_email']))->first();
         if ($existingUser) {
             return redirect()->route('welcome')->withErrors(['security' => 'This contractor email coordinate already has an active workspace configuration file loaded on disk memory. Please log in directly.']);
@@ -553,10 +585,9 @@ class PublicEstimateController extends Controller
         DB::beginTransaction();
 
         try {
-            // 1. Materialize Company File Node
             $companyId = DB::table($prefix . 'companies')->insertGetId([
                 'name'                     => $payload['company_name'],
-                'trade'                    => 'Roofing Architecture', // Fallback baseline initialization state
+                'trade'                    => 'Roofing Architecture',
                 'service_radius_miles'     => 25,
                 'crew_structure'           => 'solo',
                 'invoice_preferences'      => 'digital_only',
@@ -566,25 +597,22 @@ class PublicEstimateController extends Controller
                 'updated_at'               => now(),
             ]);
 
-            // 2. Materialize Core User File Node
             $user = new User();
             $user->company_id = $companyId;
             $user->first_name = 'Contractor';
             $user->last_name = 'Manager';
             $user->email = strtolower($payload['contractor_email']);
-            $user->password = bcrypt(Str::random(32)); // Passwordless token entry architecture standard
+            $user->password = bcrypt(Str::random(32));
             $user->is_admin = false;
-            $user->onboarding_completed_at = null; // Forces them to view onboarding controller if they want to tighten properties
+            $user->onboarding_completed_at = null;
             $user->save();
 
-            // 3. Materialize Client CRM Node
             $client = new Client();
             $client->company_id = $companyId;
             $client->client_name = $payload['client_name'];
             $client->email = strtolower($payload['client_email']);
             $client->save();
 
-            // Calculate precise aggregate math matrices
             $calculatedSubtotal = 0;
             foreach ($payload['items'] as $item) {
                 $calculatedSubtotal += ($item['quantity'] * $item['unit_price']);
@@ -592,12 +620,11 @@ class PublicEstimateController extends Controller
             $calculatedTax = $calculatedSubtotal * ($payload['tax_rate'] / 100);
             $calculatedGrandTotal = $calculatedSubtotal + $calculatedTax;
 
-            // 4. Materialize Estimate Node
             $estimate = new Estimate();
             $estimate->company_id = $companyId;
             $estimate->customer_id = $client->id;
             $estimate->estimate_number = 'EST-1001';
-            $estimate->status = 'sent'; // Sets up within active 'Dispatched' pipeline lane
+            $estimate->status = 'sent';
             $estimate->tax_rate = $payload['tax_rate'];
             $estimate->deposit_amount = $calculatedGrandTotal * ($payload['deposit_percentage'] / 100);
             $estimate->subtotal = $calculatedSubtotal;
@@ -605,7 +632,6 @@ class PublicEstimateController extends Controller
             $estimate->expires_at = now()->addDays(30);
             $estimate->save();
 
-            // 5. Materialize Estimate Row Matrix Elements
             foreach ($payload['items'] as $itemData) {
                 $itemTotal = $itemData['quantity'] * $itemData['unit_price'];
 
@@ -619,12 +645,10 @@ class PublicEstimateController extends Controller
                 $row->save();
             }
 
-            // Scrub the public lead staging row to prevent signature replays
             DB::table($this->getLeadTableName())->where('token', $token)->delete();
 
             DB::commit();
 
-            // Login token bypass pass to launch them into dashboard framework with zero entry friction
             Auth::loginUsingId($user->id);
 
             Log::info("🚀 PLG Growth Hook Converted. Company ID {$companyId} materialized natively from Token {$token}.");
