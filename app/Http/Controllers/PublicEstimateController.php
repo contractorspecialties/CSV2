@@ -28,7 +28,6 @@ class PublicEstimateController extends Controller
         $seoCity = $city ? ucwords(str_replace('-', ' ', $city)) : 'Local';
         $seoTradeSlug = $trade ? strtolower($trade) : 'contractor';
 
-        // Master B2B operational blueprints mapped across multiple service channels
         $tradeMap = [
             'roofing' => [
                 'slug' => 'roofing',
@@ -171,7 +170,6 @@ class PublicEstimateController extends Controller
                             <p class=\"text-xs text-slate-400 font-medium mt-1 leading-relaxed\">Build and email an itemized proposal to a client in 45 seconds. No credit card, no entry blocks.</p>
                         </div>
 
-                        <!-- 🛠️ INTERACTIVE VERTICAL SELECTOR DROPDOWN HUB -->
                         <div class=\"p-4 bg-slate-950 border border-slate-850 rounded-xl space-y-2 shadow-inner\">
                             <label class=\"block text-[10px] font-black uppercase text-[#f58613] tracking-wider\">Target Industry Template Matrix</label>
                             <select @change=\"switchVertical($event.target.value)\" class=\"w-full bg-slate-900 border border-slate-800 rounded-xl py-3 px-4 text-xs font-black uppercase tracking-wider text-white focus:outline-none focus:border-[#f58613] cursor-pointer\">
@@ -180,12 +178,6 @@ class PublicEstimateController extends Controller
                                 </template>
                             </select>
                         </div>
-
-                        " . (session()->has('status') ? "
-                            <div class=\"p-4 bg-emerald-950/40 border border-emerald-900/60 text-emerald-400 rounded-xl text-xs font-bold shadow-inner flex items-start gap-2.5\">
-                                <span>🚀</span> <div>" . session('status') . "</div>
-                            </div>
-                        " : "") . "
 
                         <form action=\"/free-estimate-generator/submit\" method=\"POST\" class=\"space-y-5 m-0\">
                             <input type=\"hidden\" name=\"_token\" value=\"" . csrf_token() . "\">
@@ -464,7 +456,6 @@ class PublicEstimateController extends Controller
             $calculatedTax = $calculatedSubtotal * ($validated['tax_rate'] / 100);
             $calculatedGrandTotal = $calculatedSubtotal + $calculatedTax;
 
-            // Route 1: Dispatch standard proposal package layout to homeowner
             Mail::send([], [], function ($message) use ($payloadObj, $calculatedGrandTotal) {
                 $message->to($payloadObj->client_email)
                     ->subject("New Project Proposal from {$payloadObj->company_name}")
@@ -478,7 +469,6 @@ class PublicEstimateController extends Controller
                     ");
             });
 
-            // Route 2: Dispatch the zero-friction conversion link token loop to the contractor
             Mail::send([], [], function ($message) use ($payloadObj, $secureToken, $calculatedGrandTotal) {
                 $claimUrl = url("/free-estimate-generator/claim/{$secureToken}");
                 $message->to($payloadObj->contractor_email)
@@ -495,7 +485,46 @@ class PublicEstimateController extends Controller
                     ");
             });
 
-            return back()->with('status', "🚀 Proposal successfully compiled and dispatched to {$validated['client_email']}! A claim handshake notification has been dropped into your professional inbox at {$validated['contractor_email']}.");
+            // Return clean high-energy inline HTML response screen directly
+            return response("
+                <!DOCTYPE html>
+                <html lang=\"en\" class=\"h-full bg-slate-950 text-slate-200\">
+                <head>
+                    <meta charset=\"UTF-8\">
+                    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+                    <title>Proposal Dispatched Successfully! | ContractorSpecialties</title>
+                    <script src=\"https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4\"></script>
+                </head>
+                <body class=\"min-h-full font-sans antialiased bg-slate-950 flex flex-col justify-center px-4 py-20\">
+                    <div class=\"w-full max-w-md mx-auto bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-6 md:p-8 space-y-6 text-center\">
+                        <div class=\"space-y-2\">
+                            <span class=\"text-4xl block\">🚀</span>
+                            <span class=\"text-[10px] font-black uppercase text-emerald-400 tracking-widest block bg-emerald-950/50 border border-emerald-900/30 py-1 max-w-[180px] mx-auto rounded-md shadow-inner\">✓ Delivery Complete</span>
+                            <h1 class=\"text-xl font-black text-white tracking-tight uppercase\">Proposal Sent to Client!</h1>
+                            <p class=\"text-xs text-slate-400 font-medium leading-relaxed\">Your itemized document value total of <strong class=\"text-white font-bold\">$" . number_format($calculatedGrandTotal, 2) . "</strong> was compiled and emailed straight over to the homeowner at <span class=\"text-slate-300 font-bold underline\">{$validated['client_email']}</span>.</p>
+                        </div>
+
+                        <div class=\"bg-slate-950 border border-slate-850 p-5 rounded-xl text-left space-y-3 shadow-inner\">
+                            <h4 class=\"text-xs font-black uppercase text-white tracking-wider flex items-center gap-1.5\">
+                                <span>🎁</span> Next Step: Claim Your Workspace
+                            </h4>
+                            <p class=\"text-[11px] text-slate-400 font-medium leading-normal\">
+                                We just dropped a secure workspace claim token link to your business address at <strong class=\"text-slate-200 font-semibold\">{$validated['contractor_email']}</strong>.
+                            </p>
+                            <p class=\"text-[11px] text-slate-400 font-medium leading-normal\">
+                                Tap that link to open your live operational command dashboard, trace client web views, and place this job straight onto your production calendar automatically.
+                            </p>
+                        </div>
+
+                        <div class=\"pt-2\">
+                            <a href=\"/\" class=\"w-full block bg-slate-950 hover:bg-slate-900 text-slate-400 hover:text-white font-black text-xs py-3.5 px-4 rounded-xl uppercase tracking-wider border border-slate-800 transition-colors text-decoration-none shadow-sm\">
+                                &larr; Return to Main Platform
+                            </a>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            ", 200);
 
         } catch (\Exception $e) {
             Log::error("🚨 PLG Lead Generation engine checkpoint failure: " . $e->getMessage());
