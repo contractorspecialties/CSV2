@@ -170,14 +170,21 @@ class PublicEstimateController extends Controller
                             <p class=\"text-xs text-slate-400 font-medium mt-1 leading-relaxed\">Build and email an itemized proposal to a client in 45 seconds. No credit card, no entry blocks.</p>
                         </div>
 
+                        <!-- 🛠️ INTERACTIVE VERTICAL SELECTOR DROPDOWN HUB (Fixed with Backend Variable Escape Slits) -->
                         <div class=\"p-4 bg-slate-950 border border-slate-850 rounded-xl space-y-2 shadow-inner\">
                             <label class=\"block text-[10px] font-black uppercase text-[#f58613] tracking-wider\">Target Industry Template Matrix</label>
-                            <select @change=\"switchVertical($event.target.value)\" class=\"w-full bg-slate-900 border border-slate-800 rounded-xl py-3 px-4 text-xs font-black uppercase tracking-wider text-white focus:outline-none focus:border-[#f58613] cursor-pointer\">
+                            <select @change=\"switchVertical(\$event.target.value)\" class=\"w-full bg-slate-900 border border-slate-800 rounded-xl py-3 px-4 text-xs font-black uppercase tracking-wider text-white focus:outline-none focus:border-[#f58613] cursor-pointer\">
                                 <template x-for=\"(v, k) in verticalMatrix\" :key=\"k\">
                                     <option :value=\"k\" :selected=\"k === activeVertical\" x-text=\"v.title\"></option>
                                 </template>
                             </select>
                         </div>
+
+                        " . (session()->has('status') ? "
+                            <div class=\"p-4 bg-emerald-950/40 border border-emerald-900/60 text-emerald-400 rounded-xl text-xs font-bold shadow-inner flex items-start gap-2.5\">
+                                <span>🚀</span> <div>" . session('status') . "</div>
+                            </div>
+                        " : "") . "
 
                         <form action=\"/free-estimate-generator/submit\" method=\"POST\" class=\"space-y-5 m-0\">
                             <input type=\"hidden\" name=\"_token\" value=\"" . csrf_token() . "\">
@@ -485,7 +492,6 @@ class PublicEstimateController extends Controller
                     ");
             });
 
-            // Return clean high-energy inline HTML response screen directly
             return response("
                 <!DOCTYPE html>
                 <html lang=\"en\" class=\"h-full bg-slate-950 text-slate-200\">
