@@ -69,7 +69,7 @@ Route::post('/login/verify/{token}', [MagicAuthController::class, 'processVerify
 Route::get('/login/two-factor', [MagicAuthController::class, 'showTwoFactorForm'])->name('magic.2fa.view');
 Route::post('/login/two-factor-verify', [MagicAuthController::class, 'verifyTwoFactor'])->name('magic.2fa');
 
-// 🔄 Fixed: Swapped out broken .make token handle for native .match framework execution
+// 🔄 Fixed: Properly implemented native route matching framework
 Route::match(['get', 'post'], '/logout', [MagicAuthController::class, 'logout'])->name('logout');
 
 // Authenticated Contractor Workspace Framework
