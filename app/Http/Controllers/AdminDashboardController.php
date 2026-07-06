@@ -26,9 +26,9 @@ class AdminDashboardController extends Controller
         $globalBookedRevenue = Schema::hasTable($estimatesTable) ? DB::table($estimatesTable)->where('status', 'approved')->sum('grand_total') : 0.00;
         $globalSentBids = Schema::hasTable($estimatesTable) ? DB::table($estimatesTable)->where('status', 'sent')->count() : 0;
 
-        // Trace how many stale un-onboarded ghost profiles are currently polluting the company ledger
-        $ghostProfilesCount = Schema::hasTable($companyTable)
-            ? DB::table($companyTable)->whereNull('onboarding_completed_at')->where('created_at', '<', now()->subHours(24))->count()
+        // Trace how many stale un-onboarded ghost user records are currently polluting the ledger
+        $ghostProfilesCount = Schema::hasTable($userTable)
+            ? DB::table($userTable)->whereNull('onboarding_completed_at')->where('created_at', '<', now()->subHours(24))->count()
             : 0;
 
         $globalTelemetry = [
@@ -54,7 +54,7 @@ class AdminDashboardController extends Controller
                     DB::raw('sum(case when status = "approved" then grand_total else 0 end) as booked_revenue')
                 )
                 ->whereIn('company_id', $companyIds)
-                ->groupIn('company_id')
+                ->groupBy('company_id')
                 ->get()
                 ->keyBy('company_id');
         }
@@ -156,7 +156,7 @@ class AdminDashboardController extends Controller
         $adminId = session()->pull('admin_impersonator_id');
         Auth::loginUsingId($adminId);
 
-        Log::info("🧹 Platform Override Terminated: Reverted session credentials back to Admin Profile ID: {$adminId}");
+        Log::info("🧹 Platform Override Terminaled: Reverted session credentials back to Admin Profile ID: {$adminId}");
 
         return redirect()->route('admin.index')->with('status', '🔒 Terminal hook disconnected. Safely returned to Platform Over-Watch Console.');
     }
@@ -233,17 +233,17 @@ class AdminDashboardController extends Controller
         $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
         $companyTable = $prefix . 'companies';
 
-        if (!Schema::hasTable($companyTable)) {
-            return back()->withErrors(['error' => '🛑 System mapping mismatch: Companies tracking partition table not found on disk memory.']);
+        if (!Schema::hasTable($userTable)) {
+            return back()->withErrors(['error' => '🛑 System mapping mismatch: Users tracking table not discovered on disk.']);
         }
 
-        // Pull company records that abandoned onboarding over 24 hours ago
-        $staleCompanies = DB::table($companyTable)
+        // Target un-onboarded user nodes older than 24 hours to locate ghost profiles
+        $staleUsers = DB::table($userTable)
             ->whereNull('onboarding_completed_at')
             ->where('created_at', '<', now()->subHours(24))
             ->get();
 
-        $companyIds = $staleCompanies->pluck('id')->toArray();
+        $companyIds = $staleUsers->pluck('company_id')->filter()->toArray();
 
         if (empty($companyIds)) {
             return back()->with('status', '🧹 Zero stale un-onboarded bot profiles found inside the 24-hour database retention window.');
@@ -265,7 +265,9 @@ class AdminDashboardController extends Controller
             User::whereIn('company_id', $companyIds)->delete();
 
             // Clear the parent company tables in a single transaction sweep
-            DB::table($companyTable)->whereIn('id', $companyIds)->delete();
+            if (Schema::hasTable($companyTable)) {
+                DB::table($companyTable)->whereIn('id', $companyIds)->delete();
+            }
 
             DB::commit();
 
