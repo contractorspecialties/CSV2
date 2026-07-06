@@ -86,23 +86,23 @@
                                 <span class="text-xl p-2 bg-slate-100 rounded-lg group-hover:bg-white border border-transparent group-hover:border-slate-200 shadow-xs">📅</span>
                                 <div>
                                     <h4 class="text-xs font-black text-slate-950 uppercase tracking-wide group-hover:text-[#f58613]">Scheduling Calendar</h4>
-                                    <p class=\"text-[11px] text-slate-500 font-bold leading-normal mt-0.5\">Lock down dispatch density. Track field runs and route assignments.</p>
+                                    <p class="text-[11px] text-slate-500 font-bold leading-normal mt-0.5">Lock down dispatch density. Track field runs and route assignments.</p>
                                 </div>
                             </a>
 
                             <a href="/capabilities#photos" class="group flex items-start gap-3 p-2 rounded-xl hover:bg-slate-50 text-decoration-none transition-colors">
-                                <span class=\"text-xl p-2 bg-slate-100 rounded-lg group-hover:bg-white border border-transparent group-hover:border-slate-200 shadow-xs\">📸</span>
+                                <span class="text-xl p-2 bg-slate-100 rounded-lg group-hover:bg-white border border-transparent group-hover:border-slate-200 shadow-xs">📸</span>
                                 <div>
-                                    <h4 class=\"text-xs font-black text-slate-950 uppercase tracking-wide group-hover:text-[#f58613]\">Job Site Photos</h4>
-                                    <p class=\"text-[11px] text-slate-500 font-bold leading-normal mt-0.5\">Snap photos, markup issues, and log details straight to estimates.</p>
+                                    <h4 class="text-xs font-black text-slate-950 uppercase tracking-wide group-hover:text-[#f58613]">Job Site Photos</h4>
+                                    <p class="text-[11px] text-slate-500 font-bold leading-normal mt-0.5">Snap photos, markup issues, and log details straight to estimates.</p>
                                 </div>
                             </a>
 
                             <a href="/capabilities#reviews" class="group flex items-start gap-3 p-2 rounded-xl hover:bg-slate-50 text-decoration-none transition-colors">
                                 <span class="text-xl p-2 bg-slate-100 rounded-lg group-hover:bg-white border border-transparent group-hover:border-slate-200 shadow-xs">📈</span>
                                 <div>
-                                    <h4 class=\"text-xs font-black text-slate-950 uppercase tracking-wide group-hover:text-[#f58613]\">Review Automated Engine</h4>
-                                    <p class=\"text-[11px] text-slate-500 font-bold leading-normal mt-0.5\">Boost your local Google search footprint on job completion automatically.</p>
+                                    <h4 class="text-xs font-black text-slate-950 uppercase tracking-wide group-hover:text-[#f58613]">Review Automated Engine</h4>
+                                    <p class="text-[11px] text-slate-500 font-bold leading-normal mt-0.5">Boost your local Google search footprint on job completion automatically.</p>
                                 </div>
                             </a>
                         </div>
@@ -211,53 +211,6 @@
                 </div>
             </div>
 
-        </div>
-    </section>
-
-    <!-- 📍 PROGRAMMATIC SEO LOCAL INDUSTRY TEMPLATE LAUNCHPAD -->
-    <section class="bg-slate-900 border-b border-slate-950 px-4 py-16 text-center select-none">
-        <div class="max-w-7xl mx-auto space-y-8">
-            <div class="space-y-2">
-                <span class="text-xs font-black uppercase text-[#f58613] tracking-widest font-mono block">North Carolina Core Regional Hubs</span>
-                <h2 class="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">Select Your Local Industry Template Matrix</h2>
-                <p class="text-xs text-slate-400 font-bold max-w-md mx-auto mt-1">Launch a specialized free estimate generator pre-populated with realistic local market operational pricing parameters.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto pt-2">
-
-                <!-- Raleigh Hub Module -->
-                <div class="bg-slate-950 border-2 border-slate-800 rounded-2xl p-5 text-left space-y-4 shadow-xl">
-                    <div class="flex items-center justify-between border-b border-slate-900 pb-2.5">
-                        <h3 class="text-base font-black text-white uppercase tracking-wide flex items-center gap-2">
-                            <span>📍</span> Raleigh Regional Market
-                        </h3>
-                        <span class="text-[9px] font-black uppercase bg-slate-900 text-slate-400 border border-slate-800 px-2 py-1 rounded">Wake County</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 text-xs font-mono font-black uppercase">
-                        <a href="/free-estimate-generator/nc/raleigh/roofing" class="bg-slate-900 hover:bg-[#f58613] text-slate-300 hover:text-white border border-slate-800 hover:border-[#f58613] p-2.5 rounded-xl text-decoration-none transition-all truncate">🔨 Raleigh Roofing</a>
-                        <a href="/free-estimate-generator/nc/raleigh/lawn-care" class="bg-slate-900 hover:bg-[#f58613] text-slate-300 hover:text-white border border-slate-800 hover:border-[#f58613] p-2.5 rounded-xl text-decoration-none transition-all truncate"> 🌱 Raleigh Lawn Care</a>
-                        <a href="/free-estimate-generator/nc/raleigh/handyman" class="bg-slate-900 hover:bg-[#f58613] text-slate-300 hover:text-white border border-slate-800 hover:border-[#f58613] p-2.5 rounded-xl text-decoration-none transition-all truncate">🔧 Raleigh Handyman</a>
-                        <a href="/free-estimate-generator/nc/raleigh/landscaping" class="bg-slate-900 hover:bg-[#f58613] text-slate-300 hover:text-white border border-slate-800 hover:border-[#f58613] p-2.5 rounded-xl text-decoration-none transition-all truncate">🌲 Raleigh Landscape</a>
-                    </div>
-                </div>
-
-                <!-- Charlotte Hub Module -->
-                <div class="bg-slate-950 border-2 border-slate-800 rounded-2xl p-5 text-left space-y-4 shadow-xl">
-                    <div class="flex items-center justify-between border-b border-slate-900 pb-2.5">
-                        <h3 class="text-base font-black text-white uppercase tracking-wide flex items-center gap-2">
-                            <span>📍</span> Charlotte Regional Market
-                        </h3>
-                        <span class="text-[9px] font-black uppercase bg-slate-900 text-slate-400 border border-slate-800 px-2 py-1 rounded">Mecklenburg</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2 text-xs font-mono font-black uppercase">
-                        <a href="/free-estimate-generator/nc/charlotte/roofing" class="bg-slate-900 hover:bg-[#f58613] text-slate-300 hover:text-white border border-slate-800 hover:border-[#f58613] p-2.5 rounded-xl text-decoration-none transition-all truncate">🔨 Charlotte Roofing</a>
-                        <a href="/free-estimate-generator/nc/charlotte/lawn-care" class="bg-slate-900 hover:bg-[#f58613] text-slate-300 hover:text-white border border-slate-800 hover:border-[#f58613] p-2.5 rounded-xl text-decoration-none transition-all truncate"> 🌱 Charlotte Lawn Care</a>
-                        <a href="/free-estimate-generator/nc/charlotte/handyman" class="bg-slate-900 hover:bg-[#f58613] text-slate-300 hover:text-white border border-slate-800 hover:border-[#f58613] p-2.5 rounded-xl text-decoration-none transition-all truncate">🔧 Charlotte Handyman</a>
-                        <a href="/free-estimate-generator/nc/charlotte/landscaping" class="bg-slate-900 hover:bg-[#f58613] text-slate-300 hover:text-white border border-slate-800 hover:border-[#f58613] p-2.5 rounded-xl text-decoration-none transition-all truncate">🌲 Charlotte Landscape</a>
-                    </div>
-                </div>
-
-            </div>
         </div>
     </section>
 
@@ -458,6 +411,53 @@
 
             <div class="max-w-xl mx-auto p-4 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-500 italic leading-relaxed shadow-xs">
                 "And yes — <span class="text-slate-950 font-black not-italic">if you don’t use it that month, it’s free</span>. It’s our policy. Not a sales pitch."
+            </div>
+        </div>
+    </section>
+
+    <!-- 📍 PROGRAMMATIC SEO LOCAL INDUSTRY TEMPLATE LAUNCHPAD (Moved Down for Premium Authority Strategy) -->
+    <section class="bg-slate-900 border-b border-slate-950 px-4 py-16 text-center select-none">
+        <div class="max-w-7xl mx-auto space-y-8">
+            <div class="space-y-2">
+                <span class="text-xs font-black uppercase text-[#f58613] tracking-widest font-mono block">North Carolina Core Regional Hubs</span>
+                <h2 class="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">Select Your Local Industry Template Matrix</h2>
+                <p class="text-xs text-slate-400 font-bold max-w-md mx-auto mt-1">Launch a specialized free estimate generator pre-populated with realistic local market operational pricing parameters.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto pt-2">
+
+                <!-- Raleigh Hub Module -->
+                <div class="bg-slate-950 border-2 border-slate-800 rounded-2xl p-5 text-left space-y-4 shadow-xl">
+                    <div class="flex items-center justify-between border-b border-slate-900 pb-2.5">
+                        <h3 class="text-base font-black text-white uppercase tracking-wide flex items-center gap-2">
+                            <span>📍</span> Raleigh Regional Market
+                        </h3>
+                        <span class="text-[9px] font-black uppercase bg-slate-900 text-slate-400 border border-slate-800 px-2 py-1 rounded">Wake County</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-xs font-mono font-black uppercase">
+                        <a href="/free-estimate-generator/nc/raleigh/roofing" class="bg-slate-900 hover:bg-[#f58613] text-slate-300 hover:text-white border border-slate-800 hover:border-[#f58613] p-2.5 rounded-xl text-decoration-none transition-all truncate">🔨 Raleigh Roofing</a>
+                        <a href="/free-estimate-generator/nc/raleigh/lawn-care" class="bg-slate-900 hover:bg-[#f58613] text-slate-300 hover:text-white border border-slate-800 hover:border-[#f58613] p-2.5 rounded-xl text-decoration-none transition-all truncate"> 🌱 Raleigh Lawn Care</a>
+                        <a href="/free-estimate-generator/nc/raleigh/handyman" class="bg-slate-900 hover:bg-[#f58613] text-slate-300 hover:text-white border border-slate-800 hover:border-[#f58613] p-2.5 rounded-xl text-decoration-none transition-all truncate">🔧 Raleigh Handyman</a>
+                        <a href="/free-estimate-generator/nc/raleigh/landscaping" class="bg-slate-900 hover:bg-[#f58613] text-slate-300 hover:text-white border border-slate-800 hover:border-[#f58613] p-2.5 rounded-xl text-decoration-none transition-all truncate">🌲 Raleigh Landscape</a>
+                    </div>
+                </div>
+
+                <!-- Charlotte Hub Module -->
+                <div class="bg-slate-950 border-2 border-slate-800 rounded-2xl p-5 text-left space-y-4 shadow-xl">
+                    <div class="flex items-center justify-between border-b border-slate-900 pb-2.5">
+                        <h3 class="text-base font-black text-white uppercase tracking-wide flex items-center gap-2">
+                            <span>📍</span> Charlotte Regional Market
+                        </h3>
+                        <span class="text-[9px] font-black uppercase bg-slate-900 text-slate-400 border border-slate-800 px-2 py-1 rounded">Mecklenburg</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-xs font-mono font-black uppercase">
+                        <a href="/free-estimate-generator/nc/charlotte/roofing" class="bg-slate-900 hover:bg-[#f58613] text-slate-300 hover:text-white border border-slate-800 hover:border-[#f58613] p-2.5 rounded-xl text-decoration-none transition-all truncate">🔨 Charlotte Roofing</a>
+                        <a href="/free-estimate-generator/nc/charlotte/lawn-care" class="bg-slate-900 hover:bg-[#f58613] text-slate-300 hover:text-white border border-slate-800 hover:border-[#f58613] p-2.5 rounded-xl text-decoration-none transition-all truncate"> 🌱 Charlotte Lawn Care</a>
+                        <a href="/free-estimate-generator/nc/charlotte/handyman" class="bg-slate-900 hover:bg-[#f58613] text-slate-300 hover:text-white border border-slate-800 hover:border-[#f58613] p-2.5 rounded-xl text-decoration-none transition-all truncate">🔧 Charlotte Handyman</a>
+                        <a href="/free-estimate-generator/nc/charlotte/landscaping" class="bg-slate-900 hover:bg-[#f58613] text-slate-300 hover:text-white border border-slate-800 hover:border-[#f58613] p-2.5 rounded-xl text-decoration-none transition-all truncate">🌲 Charlotte Landscape</a>
+                    </div>
+                </div>
+
             </div>
         </div>
     </section>
