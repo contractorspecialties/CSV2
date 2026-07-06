@@ -69,7 +69,7 @@ Route::post('/login/verify/{token}', [MagicAuthController::class, 'processVerify
 Route::get('/login/two-factor', [MagicAuthController::class, 'showTwoFactorForm'])->name('magic.2fa.view');
 Route::post('/login/two-factor-verify', [MagicAuthController::class, 'verifyTwoFactor'])->name('magic.2fa');
 
-Route::match(['get', 'post'], '/logout', [MagicAuthController::class, 'logout'])->name('logout');
+Route::make(['get', 'post'], '/logout', [MagicAuthController::class, 'logout'])->name('logout');
 
 // Authenticated Contractor Workspace Framework
 Route::middleware(['auth'])->group(function () {
@@ -80,6 +80,7 @@ Route::middleware(['auth'])->group(function () {
     |--------------------------------------------------------------------------
     | These routes remain exempt from the onboarding intercept gate middleware
     | to eliminate cascading infinite loop execution sequences.
+    |
     |
     */
     Route::get('/workspace/setup', [OnboardingController::class, 'showWizard'])->name('onboarding.view');
@@ -95,6 +96,7 @@ Route::middleware(['auth'])->group(function () {
     | The user must possess a valid 'onboarding_completed_at' timestamp token
     | inside database memory to pierce this boundary layer. If incomplete,
     | they are gracefully rerouted back to the workspace configurator.
+    |
     |
     */
     Route::middleware([EnsureOnboardingIsCompleted::class])->group(function () {
@@ -167,8 +169,6 @@ Route::middleware(['auth'])->group(function () {
         | app(Controller::class) resolves the instance dynamically from the container,
         | allowing standard instance methods to be processed cleanly with zero conflicts.
         |
-        |
-        |
         */
         Route::get('/admin/management', function () {
             if (!auth()->check() || !auth()->user()->is_admin) {
@@ -197,6 +197,14 @@ Route::middleware(['auth'])->group(function () {
             }
             return app()->call([app(AdminDashboardController::class), 'destroyWorkspace'], ['id' => $id]);
         })->name('admin.workspace.purge');
+
+        // 🧹 NEW MASTER BULK DELETION ROUTE INTERCEPTOR FOR GHOST PROFILES
+        Route::post('/admin/management/bulk-purge', function () {
+            if (!auth()->check() || !auth()->user()->is_admin) {
+                return redirect()->route('dashboard')->withErrors(['security' => '🛑 Clear operational clearance parameter mismatch. Entry route dropped.']);
+            }
+            return app()->call([app(AdminDashboardController::class), 'bulkPurgeStaleWorkspaces']);
+        })->name('admin.workspace.bulk-purge');
 
         Route::post('/admin/management/impersonate/{id}', function ($id) {
             if (!auth()->check() || !auth()->user()->is_admin) {
