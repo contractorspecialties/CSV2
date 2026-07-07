@@ -105,13 +105,14 @@ class MagicAuthController extends Controller
 
         // Evaluate the contractor's cell area code to choose the matching active 10DLC campaign number
         $fromLine = $this->determineOutboundLine($cleanE164, null);
+        $apiKey = config('services.telnyx.api_key', env('TELNYX_API_KEY'));
 
         // OFFLOAD OUTBOUND CARRIER DISPATCH ASYNC TO ELIMINATE USER WEB BUFFERING LATENCY
-        if (!empty($fromLine)) {
-            dispatch(function () use ($fromLine, $cleanE164, $validated, $securityCode, $slug) {
+        if (!empty($fromLine) && !empty($apiKey)) {
+            dispatch(function () use ($fromLine, $cleanE164, $validated, $securityCode, $slug, $apiKey) {
                 try {
                     Http::withHeaders([
-                        'Authorization' => 'Bearer ' . env('TELNYX_API_KEY'),
+                        'Authorization' => 'Bearer ' . $apiKey,
                         'Content-Type'  => 'application/json',
                     ])->post('https://api.telnyx.com/v2/messages', [
                         'from' => $fromLine,
@@ -124,6 +125,8 @@ class MagicAuthController extends Controller
                     Log::error("🚨 Registration activation text failed transmission sequence: " . $e->getMessage());
                 }
             })->afterResponse();
+        } else {
+            Log::error("🚨 Outbound SMS abort sequence tripped: Telnyx configuration credentials unmapped inside active server environment.");
         }
 
         return redirect()->route('magic.2fa.view');
@@ -345,13 +348,14 @@ class MagicAuthController extends Controller
 
         // Evaluate company settings and phone attributes to route the code from the right local campaign line
         $fromLine = $this->determineOutboundLine($user->phone_2fa, $companySmsNumber);
+        $apiKey = config('services.telnyx.api_key', env('TELNYX_API_KEY'));
 
         // OFFLOAD THE TELNYX OUTBOUND DISPATCH NETWORK PORT TRANSACTION ASYNC
-        if (!empty($fromLine)) {
-            dispatch(function () use ($fromLine, $user, $companyName, $securityCode) {
+        if (!empty($fromLine) && !empty($apiKey)) {
+            dispatch(function () use ($fromLine, $user, $companyName, $securityCode, $apiKey) {
                 try {
                     Http::withHeaders([
-                        'Authorization' => 'Bearer ' . env('TELNYX_API_KEY'),
+                        'Authorization' => 'Bearer ' . $apiKey,
                         'Content-Type'  => 'application/json',
                     ])->post('https://api.telnyx.com/v2/messages', [
                         'from' => $fromLine,
@@ -362,6 +366,8 @@ class MagicAuthController extends Controller
                     Log::error("🚨 Text security verification gateway could not send code: " . $e->getMessage());
                 }
             })->afterResponse();
+        } else {
+            Log::error("🚨 Outbound SMS abort sequence tripped: Telnyx configuration credentials unmapped inside active server environment.");
         }
 
         return redirect()->route('magic.2fa.view');
@@ -512,14 +518,12 @@ class MagicAuthController extends Controller
         }
 
         // 📡 Charlotte Hub Cluster Mapping Pass
-        // 704/980 (Charlotte Metro), 336/743 (Greensboro/Winston-Salem Triad), 828 (Western NC Mountains)
         if (in_array($areaCode, ['704', '980', '336', '743', '828'])) {
             Log::info("🎯 Pre-Onboarding 10DLC Match: Mapping login token via Charlotte 704 active profile pipeline for area code {$areaCode}.");
             return env('TELNYX_CHARLOTTE_NUMBER', '+17043175354');
         }
 
         // 📡 Raleigh Hub Cluster Mapping Pass
-        // 984/919 (Triangle Base), 252 (Eastern NC Coast), 910 (Southeastern NC / Wilmington / Fayetteville)
         if (in_array($areaCode, ['919', '984', '252', '910'])) {
             Log::info("🎯 Pre-Onboarding 10DLC Match: Mapping login token via Raleigh 984 active profile pipeline for area code {$areaCode}.");
             return env('TELNYX_RALEIGH_NUMBER', '+19842181204');
