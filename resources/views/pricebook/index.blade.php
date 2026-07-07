@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pricebook Matrix | ContractorSpecialties</title>
+    <title>Price Book | ContractorSpecialties</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
@@ -32,17 +32,17 @@
         </div>
     </header>
 
-    <main class="flex-grow max-w-5xl w-full mx-auto px-4 py-8 space-y-6">
+    <main class="flex-grow max-w-4xl w-full mx-auto px-4 py-8 space-y-6">
 
         <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-slate-200 pb-5">
             <div>
-                <h1 class="text-3xl font-black text-slate-950 uppercase tracking-tight">Pricebook Matrix</h1>
-                <p class="text-base text-slate-500 font-bold mt-1">Manage base production costs and automatically calculate retail client pricing parameters.</p>
+                <h1 class="text-3xl font-black text-slate-950 uppercase tracking-tight">Price Book</h1>
+                <p class="text-base text-slate-500 font-bold mt-1">Set your standard company costs and markups. The system calculates your final customer prices automatically.</p>
             </div>
             <div>
                 <button @click="showAddModal = true"
                         class="w-full sm:w-auto bg-[#f58613] hover:bg-orange-600 text-white font-black text-sm py-4 px-6 rounded-2xl uppercase tracking-wider transition-all shadow-xl active:scale-95 cursor-pointer border-0 outline-none">
-                    + Add Item Row
+                    + Add New Item
                 </button>
             </div>
         </div>
@@ -57,12 +57,12 @@
             <table class="w-full text-left text-sm border-collapse">
                 <thead>
                     <tr class="bg-slate-900 text-slate-300 text-[11px] uppercase tracking-wider font-mono font-black border-b border-slate-950">
-                        <th class="py-4 px-5">Service / Material Parameter</th>
-                        <th class="py-4 px-4">Category Group</th>
-                        <th class="py-4 px-4 text-center">Unit Type Matrix</th>
-                        <th class="py-4 px-4 text-right">Corporate Base Cost</th>
+                        <th class="py-4 px-5">Item Name & Details</th>
+                        <th class="py-4 px-4">Category</th>
+                        <th class="py-4 px-4 text-center">How You Charge</th>
+                        <th class="py-4 px-4 text-right">Your Cost</th>
                         <th class="py-4 px-4 text-center">Markup</th>
-                        <th class="py-4 px-4 text-right">Retail Calculation Price</th>
+                        <th class="py-4 px-4 text-right">Customer Price</th>
                         <th class="py-4 px-5 text-center">Actions</th>
                     </tr>
                 </thead>
@@ -83,8 +83,8 @@
                             <td class="py-4 px-4 text-center text-slate-500 uppercase tracking-tight text-xs font-black">
                                 @switch($item->unit_type)
                                     @case('flat_rate') Flat Rate @break
-                                    @case('sqft') Sq. Ft. @break
-                                    @case('linear_ft') Linear Ft. @break
+                                    @case('sqft') Square Foot (SF) @break
+                                    @case('linear_ft') Linear Foot (LF) @break
                                     @case('hourly') Per Hour @break
                                     @default {{ $item->unit_type }}
                                 @endswitch
@@ -107,7 +107,7 @@
                                             class="text-xs font-black text-slate-600 hover:text-white bg-slate-100 hover:bg-slate-800 border border-slate-300 px-3 py-2 rounded-xl transition-colors cursor-pointer uppercase tracking-wider outline-none">
                                         Edit
                                     </button>
-                                    <form action="/pricebook/{{ $item->id }}" method="POST" onsubmit="return confirm('Permanently delete this row from your price book portfolio?');">
+                                    <form action="/pricebook/{{ $item->id }}" method="POST" onsubmit="return confirm('Permanently delete this item from your price book?');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-xs font-black text-red-500 hover:text-white bg-red-50 hover:bg-red-600 border border-red-200 px-3 py-2 rounded-xl transition-colors cursor-pointer uppercase tracking-wider border-0 outline-none">
@@ -139,7 +139,7 @@
                                     class="bg-slate-100 border-2 border-slate-200 text-slate-700 font-black p-2.5 rounded-xl text-sm transition-colors border-0 cursor-pointer outline-none">
                                 ✏️
                             </button>
-                            <form action="/pricebook/{{ $item->id }}" method="POST" onsubmit="return confirm('Permanently delete this row?');">
+                            <form action="/pricebook/{{ $item->id }}" method="POST" onsubmit="return confirm('Permanently delete this item?');">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="bg-red-50 border-2 border-red-200 text-red-600 font-black p-2.5 rounded-xl text-sm transition-colors border-0 cursor-pointer outline-none">
@@ -155,7 +155,7 @@
 
                     <div class="grid grid-cols-2 gap-2.5 bg-slate-50 p-4 border border-slate-200 rounded-2xl font-mono text-xs">
                         <div class="space-y-1">
-                            <span class="block text-[9px] font-sans font-black text-slate-400 uppercase tracking-wide">Base Cost Parameters</span>
+                            <span class="block text-[9px] font-sans font-black text-slate-400 uppercase tracking-wide">Your Base Cost</span>
                             <span class="block text-slate-900 font-bold">${{ number_format($item->base_unit_cost, 2) }} / @switch($item->unit_type)
                                 @case('flat_rate') Job @break
                                 @case('sqft') SF @break
@@ -165,11 +165,11 @@
                             @endswitch</span>
                         </div>
                         <div class="space-y-1 text-right">
-                            <span class="block text-[9px] font-sans font-black text-slate-400 uppercase tracking-wide">Applied Markup Surcharge</span>
+                            <span class="block text-[9px] font-sans font-black text-slate-400 uppercase tracking-wide">Profit Markup</span>
                             <span class="inline-block text-orange-600 font-black">+{{ number_format($item->markup_percentage, 1) }}%</span>
                         </div>
-                        <div class="col-span-2 pt-2 border-t border-slate-200 flex justify-between items-baseline mt-1">
-                            <span class="text-[10px] font-sans font-black text-slate-800 uppercase tracking-wider">Retail Customer Price:</span>
+                        <div class="col-span-2 pt-2 border-t border-slate-200 Fly-row flex justify-between items-baseline mt-1">
+                            <span class="text-[10px] font-sans font-black text-slate-800 uppercase tracking-wider">Price to Customer:</span>
                             <span class="text-lg font-black text-emerald-600">${{ number_format($item->base_unit_cost * (1 + ($item->markup_percentage / 100)), 2) }}</span>
                         </div>
                     </div>
@@ -180,10 +180,10 @@
         @if($items->isEmpty())
             <div class="py-20 bg-white rounded-3xl border-4 border-dashed border-slate-300 text-center px-4 shadow-sm">
                 <div class="text-4xl select-none mb-3">📋</div>
-                <h3 class="text-2xl font-black text-slate-900 uppercase">Pricing Portfolio Empty</h3>
-                <p class="text-slate-600 text-base font-bold max-w-sm mx-auto mt-1 mb-8">Pre-program standard services here to unlock fast, dynamic rows inside your quote builder workspace.</p>
+                <h3 class="text-2xl font-black text-slate-900 uppercase">Your Price Book is Empty</h3>
+                <p class="text-slate-600 text-base font-bold max-w-sm mx-auto mt-1 mb-8">Add your standard jobs and materials here to pick them instantly when building estimates.</p>
                 <button @click="showAddModal = true" class="bg-slate-900 hover:bg-black text-white font-black py-4 px-8 rounded-2xl text-base shadow-xl border-0 cursor-pointer outline-none">
-                    Configure First Price Entry
+                    Add Your First Item
                 </button>
             </div>
         @endif
@@ -194,31 +194,31 @@
         <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity" @click="showAddModal = false"></div>
         <div class="bg-white border-4 border-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl relative z-10 max-h-[92vh] overflow-y-auto" x-transition>
             <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-5">
-                <h3 class="text-lg font-black uppercase text-slate-950 tracking-tight font-mono flex items-center gap-1.5"><span>📊</span> Create Entry</h3>
+                <h3 class="text-lg font-black uppercase text-slate-950 tracking-tight font-mono flex items-center gap-1.5"><span>📊</span> Add New Item</h3>
                 <button type="button" @click="showAddModal = false" class="text-slate-400 hover:text-slate-900 font-bold text-base bg-transparent border-0 cursor-pointer outline-none">✕</button>
             </div>
             <form action="/pricebook" method="POST" x-data="{ baseCost: 0, markupPercent: 0 }" class="space-y-5">
                 @csrf
                 <div>
-                    <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Service / Item Catalog Title *</label>
-                    <input type="text" name="name" required placeholder="e.g. Standard Framing Repair Run" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3 px-4 text-base font-bold focus:outline-none focus:border-slate-900 text-slate-900">
+                    <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Item Name *</label>
+                    <input type="text" name="name" required placeholder="e.g. Roof Patching Repair" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3 px-4 text-base font-bold focus:outline-none focus:border-slate-900 text-slate-900">
                 </div>
                 <div>
-                    <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Category Group *</label>
-                    <input type="text" name="category" required placeholder="e.g. Carpentry Work" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3 px-4 text-base font-bold focus:outline-none focus:border-slate-900 text-slate-900">
+                    <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Category *</label>
+                    <input type="text" name="category" required placeholder="e.g. Service Labor" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3 px-4 text-base font-bold focus:outline-none focus:border-slate-900 text-slate-900">
                 </div>
                 <div>
-                    <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Metric Calculation Basis *</label>
+                    <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">How do you charge for this? *</label>
                     <select name="unit_type" required class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3.5 px-4 text-base font-bold focus:outline-none focus:border-slate-900 cursor-pointer bg-white text-slate-900">
-                        <option value="flat_rate">Fixed Flat Rate Price</option>
-                        <option value="sqft">Square Footage (Sq. Ft.)</option>
-                        <option value="linear_ft">Linear Foot Run</option>
-                        <option value="hourly">Hourly Labor Rate</option>
+                        <option value="flat_rate">Flat Rate (Per Job)</option>
+                        <option value="sqft">Square Foot (SF)</option>
+                        <option value="linear_ft">Linear Foot (LF)</option>
+                        <option value="hourly">Hourly Rate (HR)</option>
                     </select>
                 </div>
                 <div class="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
                     <div>
-                        <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Base Cost ($) *</label>
+                        <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Your Cost ($) *</label>
                         <input type="number" name="base_unit_cost" step="0.01" min="0" required x-model.number="baseCost" placeholder="0.00" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3 px-4 text-base font-mono font-black focus:outline-none focus:border-slate-900 text-slate-900">
                     </div>
                     <div>
@@ -227,16 +227,16 @@
                     </div>
                 </div>
                 <div class="bg-slate-950 text-white p-4 rounded-2xl space-y-2 font-mono text-xs border border-slate-900">
-                    <div class="flex justify-between font-bold"><span class="text-slate-400">Net Surcharge Margin:</span><span class="text-orange-500 font-black" x-text="'+$' + ((baseCost || 0) * ((markupPercent || 0) / 100)).toFixed(2)">+$0.00</span></div>
-                    <div class="flex justify-between items-baseline pt-2 border-t border-slate-800 mt-2"><span class="text-[10px] font-sans font-black text-slate-200">Customer Retail Price:</span><span class="text-2xl font-black text-emerald-400" x-text="'$' + ((baseCost || 0) * (1 + ((markupPercent || 0) / 100))).toFixed(2)">$0.00</span></div>
+                    <div class="flex justify-between font-bold"><span class="text-slate-400">Your Profit Margin:</span><span class="text-orange-500 font-black" x-text="'+$' + ((baseCost || 0) * ((markupPercent || 0) / 100)).toFixed(2)">+$0.00</span></div>
+                    <div class="flex justify-between items-baseline pt-2 border-t border-slate-800 mt-2"><span class="text-[10px] font-sans font-black text-slate-200">Price to Customer:</span><span class="text-2xl font-black text-emerald-400" x-text="'$' + ((baseCost || 0) * (1 + ((markupPercent || 0) / 100))).toFixed(2)">$0.00</span></div>
                 </div>
                 <div>
-                    <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Scope Notes (Internal Only)</label>
-                    <textarea name="description" rows="2" placeholder="Describe standard material specs..." class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl p-3 text-sm font-medium focus:outline-none focus:border-slate-900 text-slate-900"></textarea>
+                    <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Internal Notes (Customers won't see this)</label>
+                    <textarea name="description" rows="2" placeholder="List standard tools, material requirements, or sizes..." class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl p-3 text-sm font-medium focus:outline-none focus:border-slate-900 text-slate-900"></textarea>
                 </div>
                 <div class="pt-2 flex justify-end gap-3">
                     <button type="button" @click="showAddModal = false" class="bg-slate-100 text-slate-700 font-black text-xs py-3.5 px-5 rounded-xl uppercase tracking-wider border-0 cursor-pointer outline-none">Cancel</button>
-                    <button type="submit" class="bg-[#f58613] text-white font-black text-xs py-3.5 px-6 rounded-xl uppercase tracking-wider border-0 cursor-pointer outline-none">Log To Pricebook</button>
+                    <button type="submit" class="bg-[#f58613] text-white font-black text-xs py-3.5 px-6 rounded-xl uppercase tracking-wider border-0 cursor-pointer outline-none">Save to Price Book</button>
                 </div>
             </form>
         </div>
@@ -246,31 +246,31 @@
         <div class="absolute inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity" @click="showEditModal = false"></div>
         <div class="bg-white border-4 border-slate-900 rounded-3xl max-w-md w-full p-6 shadow-2xl relative z-10 max-h-[92vh] overflow-y-auto shadow-black/40" x-transition>
             <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-5">
-                <h3 class="text-lg font-black uppercase text-slate-950 tracking-tight font-mono flex items-center gap-1.5"><span>🔄</span> Modify Pricebook Record</h3>
+                <h3 class="text-lg font-black uppercase text-slate-950 tracking-tight font-mono flex items-center gap-1.5"><span>🔄</span> Edit Item</h3>
                 <button type="button" @click="showEditModal = false" class="text-slate-400 hover:text-slate-900 font-bold text-base bg-transparent border-0 cursor-pointer outline-none">✕</button>
             </div>
             <form :action="'/pricebook/update/' + editItem.id" method="POST" class="space-y-5">
                 @csrf
                 <div>
-                    <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Service / Item Catalog Title *</label>
+                    <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Item Name *</label>
                     <input type="text" name="name" required x-model="editItem.name" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3 px-4 text-base font-bold focus:outline-none focus:border-slate-900 text-slate-900">
                 </div>
                 <div>
-                    <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Category Group *</label>
+                    <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Category *</label>
                     <input type="text" name="category" required x-model="editItem.category" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3 px-4 text-base font-bold focus:outline-none focus:border-slate-900 text-slate-900">
                 </div>
                 <div>
-                    <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Metric Calculation Basis *</label>
+                    <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">How do you charge for this? *</label>
                     <select name="unit_type" required x-model="editItem.unit_type" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3.5 px-4 text-base font-bold focus:outline-none focus:border-slate-900 cursor-pointer bg-white text-slate-900">
-                        <option value="flat_rate">Fixed Flat Rate Price</option>
-                        <option value="sqft">Square Footage (Sq. Ft.)</option>
-                        <option value="linear_ft">Linear Foot Run</option>
-                        <option value="hourly">Hourly Labor Rate</option>
+                        <option value="flat_rate">Flat Rate (Per Job)</option>
+                        <option value="sqft">Square Foot (SF)</option>
+                        <option value="linear_ft">Linear Foot (LF)</option>
+                        <option value="hourly">Hourly Rate (HR)</option>
                     </select>
                 </div>
                 <div class="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100">
                     <div>
-                        <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Base Cost ($) *</label>
+                        <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Your Cost ($) *</label>
                         <input type="number" name="base_unit_cost" step="0.01" min="0" required x-model.number="editItem.base_unit_cost" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl py-3 px-4 text-base font-mono font-black focus:outline-none focus:border-slate-900 text-slate-900">
                     </div>
                     <div>
@@ -279,11 +279,11 @@
                     </div>
                 </div>
                 <div class="bg-slate-950 text-white p-4 rounded-2xl space-y-2 font-mono text-xs border border-slate-900">
-                    <div class="flex justify-between font-bold"><span class="text-slate-400">Net Surcharge Margin:</span><span class="text-orange-500 font-black" x-text="'+$' + ((parseFloat(editItem.base_unit_cost) || 0) * ((parseFloat(editItem.markup_percentage) || 0) / 100)).toFixed(2)">+$0.00</span></div>
-                    <div class="flex justify-between items-baseline pt-2 border-t border-slate-800 mt-2"><span class="text-[10px] font-sans font-black text-slate-200">Customer Retail Price:</span><span class="text-2xl font-black text-emerald-400" x-text="'$' + ((parseFloat(editItem.base_unit_cost) || 0) * (1 + ((parseFloat(editItem.markup_percentage) || 0) / 100))).toFixed(2)">$0.00</span></div>
+                    <div class="flex justify-between font-bold"><span class="text-slate-400">Your Profit Margin:</span><span class="text-orange-500 font-black" x-text="'+$' + ((parseFloat(editItem.base_unit_cost) || 0) * ((parseFloat(editItem.markup_percentage) || 0) / 100)).toFixed(2)">+$0.00</span></div>
+                    <div class="flex justify-between items-baseline pt-2 border-t border-slate-800 mt-2"><span class="text-[10px] font-sans font-black text-slate-200">Price to Customer:</span><span class="text-2xl font-black text-emerald-400" x-text="'$' + ((parseFloat(editItem.base_unit_cost) || 0) * (1 + ((parseFloat(editItem.markup_percentage) || 0) / 100))).toFixed(2)">$0.00</span></div>
                 </div>
                 <div>
-                    <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Scope Notes (Internal Only)</label>
+                    <label class="block text-xs font-black uppercase text-slate-500 tracking-wider mb-2">Internal Notes (Customers won't see this)</label>
                     <textarea name="description" rows="2" x-model="editItem.description" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl p-3 text-sm font-medium focus:outline-none focus:border-slate-900 text-slate-900"></textarea>
                 </div>
                 <div class="pt-2 flex justify-end gap-3">
