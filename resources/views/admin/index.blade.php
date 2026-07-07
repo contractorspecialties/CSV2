@@ -119,7 +119,7 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
                         @forelse($users as $row)
-                            <tr class="hover:bg-slate-50/80 transition-colors" x-data TYPE_UNSPECIFIED="{ openPanel: null }">
+                            <tr class="hover:bg-slate-50/80 transition-colors" x-data="{ openPanel: null }">
                                 <td class="p-3.5">
                                     <div class="font-black text-slate-950 text-base">
                                         {{ $row->company->name ?? 'Unprovisioned Organization' }}
