@@ -103,7 +103,8 @@ class MagicAuthController extends Controller
             'auth_2fa_expires_at' => time() + (60 * 10), // Valid for exactly 10 minutes
         ]);
 
-        $fromLine = env('TELNYX_DEFAULT_FROM');
+        // 📡 Evaluate the contractor's cell area code to choose the matching active 10DLC campaign number
+        $fromLine = $this->determineOutboundLine($cleanE164, null);
 
         // OFFLOAD OUTBOUND CARRIER DISPATCH ASYNC TO ELIMINATE USER WEB BUFFERING LATENCY
         if (!empty($fromLine)) {
@@ -118,7 +119,7 @@ class MagicAuthController extends Controller
                         'text' => "Welcome to ContractorSpecialties! Your 6-digit activation code to verify your mobile line and activate your new company workspace is: {$securityCode}. This code expires in 10 minutes.",
                     ])->throw();
 
-                    Log::info("🏗️ Fresh company workspace provisioned for {$validated['email']} with phone link {$cleanE164} and slug identifier: {$slug}");
+                    Log::info("🏗️ Fresh company workspace provisioned for {$validated['email']} with phone link {$cleanE164} and slug identifier: {$slug} dispatched via line {$fromLine}");
                 } catch (\Exception $e) {
                     Log::error("🚨 Registration activation text failed transmission sequence: " . $e->getMessage());
                 }
@@ -340,7 +341,10 @@ class MagicAuthController extends Controller
 
         $company = DB::table($prefix . 'companies')->where('id', $user->company_id)->first();
         $companyName = $company->name ?? 'ContractorSpecialties';
-        $fromLine = $company->sms_phone_number ?? env('TELNYX_DEFAULT_FROM');
+        $companySmsNumber = $company->sms_phone_number ?? null;
+
+        // 📡 Evaluate company settings and phone attributes to route the code from the right local campaign line
+        $fromLine = $this->determineOutboundLine($user->phone_2fa, $companySmsNumber);
 
         // OFFLOAD THE TELNYX OUTBOUND DISPATCH NETWORK PORT TRANSACTION ASYNC
         if (!empty($fromLine)) {
@@ -360,7 +364,7 @@ class MagicAuthController extends Controller
             })->afterResponse();
         }
 
-        return redirect()->route('magic.2fa.view');
+        return redirect()->route('auth.2fa.view');
     }
 
     /**
@@ -448,12 +452,29 @@ class MagicAuthController extends Controller
 
         // Establish core session authentication variables cleanly
         Auth::login($user, true);
-        $request->session()->regenerate();
+        $userTable = (new User())->getTable();
+        $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
 
+        // Check onboarding completion step status to choose routing direction
+        $onboardingCompleted = !empty($user->onboarding_completed_at);
+        if (!$onboardingCompleted) {
+            $company = DB::table($prefix . 'companies')->where('id', $user->company_id)->first();
+            if ($company && !empty($company->onboarding_completed_at)) {
+                $onboardingCompleted = true;
+                $user->onboarding_completed_at = $company->onboarding_completed_at;
+                $user->save();
+            }
+        }
+
+        $request->session()->regenerate();
         $request->session()->put('auth.password_confirmed_at', time());
         $request->session()->save();
 
         session()->forget(['auth_2fa_user_id', 'auth_2fa_code', 'auth_2fa_expires_at']);
+
+        if (!$onboardingCompleted) {
+            return redirect()->route('onboarding.view')->with('status', '⚡ Authenticated. Please complete your company operational profile calibration layout.');
+        }
 
         return redirect()->route('dashboard')->with('status', '⚡ Verified successfully. Welcome back to your company workspace!');
     }
@@ -468,5 +489,41 @@ class MagicAuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('welcome');
+    }
+
+    /**
+     * Internal utility method to dynamically evaluate phone characteristics and area codes to route outbound texts from verified 10DLC channels.
+     */
+    private function determineOutboundLine(?string $destinationPhone, ?string $companyPhone): string
+    {
+        // If a company profile already has a locked geographic phone channel, respect it explicitly
+        if (!empty($companyPhone)) {
+            return $companyPhone;
+        }
+
+        $cleanDestination = preg_replace('/[^0-9]/', '', $destinationPhone ?? '');
+
+        // Isolate the 3-digit North American area code sequence
+        $areaCode = '';
+        if (strlen($cleanDestination) === 10) {
+            $areaCode = substr($cleanDestination, 0, 3);
+        } elseif (strlen($cleanDestination) === 11 && str_starts_with($cleanDestination, '1')) {
+            $areaCode = substr($cleanDestination, 1, 3);
+        }
+
+        // 📡 Charlotte Campaign Mapping Pass (704 / 980)
+        if ($areaCode === '704' || $areaCode === '980') {
+            Log::info("🎯 Pre-Onboarding 10DLC Match: Mapping login token via Charlotte 704 active profile pipeline.");
+            return env('TELNYX_CHARLOTTE_NUMBER', '+17043175354');
+        }
+
+        // 📡 Raleigh Campaign Mapping Pass (919 / 984)
+        if ($areaCode === '919' || $areaCode === '984') {
+            Log::info("🎯 Pre-Onboarding 10DLC Match: Mapping login token via Raleigh 984 active profile pipeline.");
+            return env('TELNYX_RALEIGH_NUMBER', '+19842181204');
+        }
+
+        // Standard System Base Pipeline Carrier Handle Fallback
+        return env('TELNYX_DEFAULT_FROM', '+19842181204');
     }
 }
