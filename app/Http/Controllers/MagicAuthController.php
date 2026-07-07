@@ -103,7 +103,7 @@ class MagicAuthController extends Controller
             'auth_2fa_expires_at' => time() + (60 * 10), // Valid for exactly 10 minutes
         ]);
 
-        // 📡 Evaluate the contractor's cell area code to choose the matching active 10DLC campaign number
+        // Evaluate the contractor's cell area code to choose the matching active 10DLC campaign number
         $fromLine = $this->determineOutboundLine($cleanE164, null);
 
         // OFFLOAD OUTBOUND CARRIER DISPATCH ASYNC TO ELIMINATE USER WEB BUFFERING LATENCY
@@ -343,7 +343,7 @@ class MagicAuthController extends Controller
         $companyName = $company->name ?? 'ContractorSpecialties';
         $companySmsNumber = $company->sms_phone_number ?? null;
 
-        // 📡 Evaluate company settings and phone attributes to route the code from the right local campaign line
+        // Evaluate company settings and phone attributes to route the code from the right local campaign line
         $fromLine = $this->determineOutboundLine($user->phone_2fa, $companySmsNumber);
 
         // OFFLOAD THE TELNYX OUTBOUND DISPATCH NETWORK PORT TRANSACTION ASYNC
@@ -364,7 +364,7 @@ class MagicAuthController extends Controller
             })->afterResponse();
         }
 
-        return redirect()->route('auth.2fa.view');
+        return redirect()->route('magic.2fa.view');
     }
 
     /**
@@ -511,15 +511,17 @@ class MagicAuthController extends Controller
             $areaCode = substr($cleanDestination, 1, 3);
         }
 
-        // 📡 Charlotte Campaign Mapping Pass (704 / 980)
-        if ($areaCode === '704' || $areaCode === '980') {
-            Log::info("🎯 Pre-Onboarding 10DLC Match: Mapping login token via Charlotte 704 active profile pipeline.");
+        // 📡 Charlotte Hub Cluster Mapping Pass
+        // 704/980 (Charlotte Metro), 336/743 (Greensboro/Winston-Salem Triad), 828 (Western NC Mountains)
+        if (in_array($areaCode, ['704', '980', '336', '743', '828'])) {
+            Log::info("🎯 Pre-Onboarding 10DLC Match: Mapping login token via Charlotte 704 active profile pipeline for area code {$areaCode}.");
             return env('TELNYX_CHARLOTTE_NUMBER', '+17043175354');
         }
 
-        // 📡 Raleigh Campaign Mapping Pass (919 / 984)
-        if ($areaCode === '919' || $areaCode === '984') {
-            Log::info("🎯 Pre-Onboarding 10DLC Match: Mapping login token via Raleigh 984 active profile pipeline.");
+        // 📡 Raleigh Hub Cluster Mapping Pass
+        // 984/919 (Triangle Base), 252 (Eastern NC Coast), 910 (Southeastern NC / Wilmington / Fayetteville)
+        if (in_array($areaCode, ['919', '984', '252', '910'])) {
+            Log::info("🎯 Pre-Onboarding 10DLC Match: Mapping login token via Raleigh 984 active profile pipeline for area code {$areaCode}.");
             return env('TELNYX_RALEIGH_NUMBER', '+19842181204');
         }
 
