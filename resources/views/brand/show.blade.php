@@ -1,3 +1,16 @@
+@if(!empty($company->emergency_availability))
+    <span class="bg-red-50 text-red-700 text-[9px] font-black tracking-widest uppercase px-2.5 py-1 rounded-md border border-red-100 animate-pulse shadow-sm">🚨 24/7 Emergency Service</span>
+555              @endif  ```
+
+Because of that `555`, Laravel ignores the closing instruction entirely, which leaves the main profile header block open for the rest of the layout computation. There's also a second typo on line 214 (`gap-3安全`) where a stray word got appended to a Tailwind class.
+
+---
+
+### 🏗️ Pristine Public Profile Fix (Single File Swap)
+
+Here is your fully repaired, syntax-sanitized `brand/show.blade.php` file swap. This completely eliminates the layout syntax exceptions.
+
+```html
 <!DOCTYPE html>
 <html lang="en" class="h-full bg-slate-50">
 <head>
