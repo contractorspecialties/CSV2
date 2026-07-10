@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <!-- SEO Meta Rows -->
     <title>{{ $company->name }} | Verified {{ $company->computed_trade }} Portfolio</title>
     <meta name="description" content="{{ $company->computed_bio_short }}">
     <link rel="canonical" href="{{ url()->current() }}">
@@ -17,6 +18,7 @@
         $cleanPhoneSchema = preg_replace('/[^0-9+]/', '', $routingLine);
     @endphp
 
+    <!-- LOCAL BUSINESS JSON-LD SCHEMA STRINGS -->
     <script type="application/ld+json">
     {
         "@context": "https://schema.org",
@@ -277,6 +279,7 @@
         </div>
     </div>
 
+    <!-- LIGHTBOX SYSTEM VIEW FRAME -->
     <div x-show="lightboxOpen"
          x-cloak
          class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/95 backdrop-blur-md p-4 sm:p-6 select-none"
