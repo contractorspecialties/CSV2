@@ -4,17 +4,17 @@
     $tradeTitle = e($company->computed_trade ?? 'General Contractor');
     $shortBio = e($company->computed_bio_short ?? 'Verified professional contractor portfolio.');
     $longBio = $company->computed_bio_long ?? '';
-    
+
     $locationArr = array_filter([$company->city ?? '', strtoupper($company->state ?? '')]);
     $displayLocation = count($locationArr) > 0 ? implode(', ', $locationArr) : 'Local Service Area';
-    
+
     $routingLine = $company->monetization_routing_phone ?? $company->business_phone ?? '';
     $cleanPhoneSchema = preg_replace('/[^0-9+]/', '', $routingLine);
 
     // 2. Decode Collection Arrays
     $serviceTags = !empty($company->service_tags) ? json_decode($company->service_tags, true) : [];
     $serviceTags = is_array($serviceTags) ? array_filter($serviceTags) : [];
-    
+
     $socialLinks = !empty($company->social_links) ? json_decode($company->social_links, true) : [];
     $socialLinks = is_array($socialLinks) ? array_filter($socialLinks) : [];
 
@@ -80,9 +80,7 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 py-10 text-slate-100">
 
-        {{-- ========================================== --}}
-        {{-- SYSTEM ALERTS (Errors & Success Banners)  --}}
-        {{-- ========================================== --}}
+        {{-- SYSTEM ALERTS --}}
         @if(session('success'))
             <div class="mb-8 bg-emerald-600 text-white px-6 py-4 rounded-2xl font-bold shadow-[0_10px_25px_rgba(16,185,129,0.25)] flex items-center gap-4">
                 <div class="bg-white/20 p-2 rounded-full">
@@ -95,11 +93,9 @@
             </div>
         @endif
 
-        {{-- ========================================== --}}
-        {{-- ASYMMETRICAL SPLIT PRO HERO PANEL BLOCK   --}}
-        {{-- ========================================== --}}
+        {{-- ASYMMETRICAL SPLIT PRO HERO PANEL BLOCK --}}
         <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden flex flex-col lg:flex-row shadow-2xl mb-12">
-            
+
             <div class="relative w-full lg:w-3/5 min-h-[450px] lg:min-h-[520px] flex flex-col justify-end p-6 md:p-10 border-b lg:border-b-0 lg:border-r border-slate-800/80">
                 @if(!empty($company->cover_photo_path))
                     <img src="{{ asset($company->cover_photo_path) }}" alt="{{ $companyName }} - {{ $displayLocation }} Profile Cover" class="absolute inset-0 w-full h-full object-cover">
@@ -107,7 +103,7 @@
                     <div class="absolute inset-0 bg-slate-950 flex items-center justify-center overflow-hidden opacity-90">
                         <div class="absolute inset-0 opacity-10 bg-[linear-gradient(to_right,#4f4f4f_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f_1px,transparent_1px)] bg-[size:24px_24px]"></div>
                         <div class="absolute w-72 h-72 bg-orange-600/10 rounded-full blur-3xl animate-pulse"></div>
-                        @if($company->latitude && $company->longitude)
+                        @if(!empty($company->latitude) && !empty($company->longitude))
                             <div id="hero-static-map" class="absolute inset-0 w-full h-full opacity-40 mix-blend-luminosity"></div>
                         @else
                             <div class="relative z-10 text-center space-y-2 p-6">
@@ -117,9 +113,9 @@
                         @endif
                     </div>
                 @endif
-                
+
                 <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
-                
+
                 <div class="relative z-10 backdrop-blur-md bg-slate-950/60 border border-slate-800 rounded-2xl p-6 shadow-2xl max-w-xl flex items-center gap-5">
                     <div class="w-16 h-16 rounded-xl border border-slate-800 bg-slate-900 flex items-center justify-center p-1.5 shrink-0 overflow-hidden shadow-inner">
                         @if(!empty($company->logo_path))
@@ -153,7 +149,7 @@
                             <span>🏢</span> {!! $displayLocation !!}
                         </p>
                     </div>
-                    
+
                     @if(count($serviceTags) > 0)
                         <div>
                             <h4 class="text-[9px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2.5">Focus Disciplines</h4>
@@ -202,9 +198,9 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 lg:gap-10">
-            
+
             <div class="lg:col-span-3 space-y-12">
-                
+
                 <div class="space-y-6">
                     <h2 class="text-2xl md:text-3xl font-black italic text-white uppercase tracking-tight flex items-center gap-3.5">
                         <span class="w-6 h-1.5 bg-orange-600 rounded-full"></span> About Our Workspace
@@ -258,7 +254,7 @@
                         <span class="w-6 h-1.5 bg-orange-600 rounded-full"></span> Profile FAQ
                     </h2>
                     <div class="space-y-3">
-                        
+
                         <details class="bg-slate-900 border border-slate-800 rounded-2xl shadow-sm group overflow-hidden">
                             <summary class="flex items-center justify-between font-bold text-sm text-white p-5 cursor-pointer list-none select-none uppercase tracking-tight">
                                 <span>Do you service areas surrounding {!! $company->city ?? 'my location' !!}?</span>
@@ -291,9 +287,9 @@
             </div>
 
             <div class="lg:col-span-1 space-y-6">
-                
+
                 <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-xl border border-slate-800">
-                    @if($company->latitude && $company->longitude)
+                    @if(!empty($company->latitude) && !empty($company->longitude))
                         <div id="map" style="width: 100%; height: 230px; background-color: #0f172a;" class="mix-blend-luminosity border-b border-slate-800"></div>
                     @else
                         <div class="w-full h-48 bg-slate-950 flex flex-col items-center justify-center text-slate-500 text-[10px] font-black uppercase tracking-widest text-center p-6 border-b border-slate-800 leading-normal">
@@ -343,12 +339,10 @@
         </div>
     </div>
 
-    {{-- ========================================== --}}
     {{-- PERSISTENT ALPINE LIGHTBOX MODAL CONTAINER --}}
-    {{-- ========================================== --}}
     <div x-show="lightboxOpen" x-cloak class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-950/95 backdrop-blur-md p-4 select-none" x-transition>
         <div class="absolute inset-0 z-10" @click="lightboxOpen = false"></div>
-        
+
         <button type="button" @click="lightboxOpen = false" class="absolute top-6 right-6 text-white/70 hover:text-white transition-colors z-50 bg-slate-900 border border-slate-800 p-2 rounded-xl cursor-pointer">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
@@ -364,22 +358,20 @@
                 &rarr;
             </button>
         </div>
-        
+
         <div class="mt-4 text-slate-400 font-mono text-[10px] font-black uppercase tracking-widest bg-slate-900 border border-slate-800 px-3 py-1 rounded-md">
             Image <span x-text="activeIndex + 1" class="text-white"></span> / <span x-text="imagePool.length"></span>
         </div>
     </div>
 
-    {{-- ========================================== --}}
-    {{-- ASYNC GOOGLE MAPS API EXECUTION SCRIPTS   --}}
-    {{-- ========================================== --}}
-    @if($company->latitude && $company->longitude)
+    {{-- ASYNC GOOGLE MAPS API EXECUTION SCRIPTS --}}
+    @if(!empty($company->latitude) && !empty($company->longitude))
         <script>
             function initProfileMap() {
-                var lat = {{ $company->latitude }};
-                var lng = {{ $company->longitude }};
+                var lat = {{ $company->latitude ?? 0 }};
+                var lng = {{ $company->longitude ?? 0 }};
                 var coords = { lat: lat, lng: lng };
-                
+
                 // Map Element Layout Loader
                 var primaryMapEl = document.getElementById("map");
                 if (primaryMapEl) {
