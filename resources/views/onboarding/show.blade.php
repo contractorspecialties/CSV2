@@ -5,18 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Company Profile Setup | ContractorSpecialties</title>
 
-    <!-- Client Runtime Core Engines -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-    <!-- Cropper CSS Layout Anchor for forced image calibration -->
+    <!-- Premium Forced Aspect Ratio Cropping Engine Assets -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.css">
     <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.1/dist/cropper.min.js"></script>
-
-    <style>
-        [x-cloak] { display: none !important; }
-        .cropper-view-box, .cropper-face { border-radius: 1rem; }
-    </style>
+    <style>[x-cloak] { display: none !important; }</style>
 </head>
 <body class="flex flex-col justify-center min-h-full font-sans antialiased bg-slate-50 px-4 py-12 selection:bg-[#f58613] selection:text-white">
 
@@ -24,15 +19,18 @@
          x-data="{
             aiLoading: false,
             bulletPoints: '',
-            generateAIProfile() {
-                if(!this.bulletPoints) return alert('Please input bullet points first.');
+            cropModalOpen: false,
+            currentCropTarget: '',
+            cropperInstance: null,
+
+            triggerAICopy() {
+                if(!this.bulletPoints) return alert('Please key in bullet parameters first.');
                 this.aiLoading = true;
 
-                // Asynchronous bridge to your localized AI generation matrix
                 fetch('/api/ai/generate-profile-bio', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-                    body: JSON.stringify({ prompts: this.bulletPoints, trade: document.getElementById('primary_specialty')?.value || 'Contractor' })
+                    body: JSON.stringify({ prompts: this.bulletPoints, trade: document.getElementById('primary_specialty')?.value || 'Contracting' })
                 })
                 .then(res => res.json())
                 .then(data => {
@@ -41,31 +39,72 @@
                     this.aiLoading = false;
                 })
                 .catch(() => {
-                    // Failover fallback simulation for fast onboarding flow
-                    document.getElementById('company_bio_short').value = 'Premium ' + (document.getElementById('primary_specialty')?.value || 'Contracting') + ' specialties serving local property grids.';
-                    document.getElementById('company_bio_long').value = 'With years of verified structural experience, our crew delivers high-compliance operations. We manage project footprints from phase assessment up to deployment runs, ensuring absolute warranty security.';
+                    // Optimized tactical copywriting engine failover backup fallback strings
+                    document.getElementById('company_bio_short').value = 'Top-tier ' + (document.getElementById('primary_specialty')?.value || 'Contracting') + ' operations built on structural reliability.';
+                    document.getElementById('company_bio_long').value = 'Our team provides verified corporate workflow solutions for local projects. Backed by years of field competency, we execute dispatch matrices with extreme transparency and full warranty parameters.';
                     this.aiLoading = false;
                 });
+            },
+
+            initializeImageCrop(event, targetType) {
+                const file = event.target.files[0];
+                if (!file) return;
+                this.currentCropTarget = targetType;
+                this.cropModalOpen = true;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const el = document.getElementById('cropper-target-image');
+                    el.src = e.target.result;
+
+                    if(this.cropperInstance) this.cropperInstance.destroy();
+
+                    // Enforce square matching on logos vs widescreen banners on layout frames
+                    const targetRatio = targetType === 'logo' ? 1 : 16 / 9;
+                    this.cropperInstance = new Cropper(el, {
+                        aspectRatio: targetRatio,
+                        viewMode: 1,
+                        background: false
+                    });
+                };
+                reader.readAsDataURL(file);
+            },
+
+            commitCroppedOutput() {
+                if(!this.cropperInstance) return;
+                const canvas = this.cropperInstance.getCroppedCanvas();
+                canvas.toBlob((blob) => {
+                    // Generate data pipeline wrapper file to override typical field arrays
+                    const croppedFile = new File([blob], 'cropped_' + this.currentCropTarget + '.jpg', { type: 'image/jpeg' });
+                    const container = new DataTransfer();
+                    container.items.add(croppedFile);
+
+                    const inputElement = document.getElementById(this.currentCropTarget + '_file');
+                    if(inputElement) inputElement.files = container.files;
+
+                    this.cropModalOpen = false;
+                    alert(this.currentCropTarget.toUpperCase() + ' image processing locked inside form stack.');
+                }, 'image/jpeg', 0.9);
             }
          }">
 
-        <!-- Progress Track Module -->
+        <!-- Progress Track Line Header -->
         <div class="space-y-2">
-            <div class="flex justify-between items-center text-[10px] font-black uppercase text-slate-400 tracking-widest">
-                <span>Setup Progress</span>
-                <span class="text-[#f58613] font-mono font-black">Step {{ $step }} of 5</span>
+            <div class="flex justify-between items-center text-[10px] font-black uppercase text-slate-400 tracking-wider">
+                <span>Setup Progress Map</span>
+                <span class="text-[#f58613] font-mono">Step {{ $step }} of 5</span>
             </div>
             <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden flex gap-1">
                 @for ($i = 1; $i <= 5; $i++)
-                    <div class="h-full flex-1 transition-all duration-500 {{ $i <= $step ? 'bg-[#f58613]' : 'bg-slate-200' }}"></div>
+                    <div class="h-full flex-1 transition-all duration-300 {{ $i <= $step ? 'bg-[#f58613]' : 'bg-slate-200' }}"></div>
                 @endfor
             </div>
         </div>
 
         @if($errors->any())
-            <div class="p-4 bg-red-50 text-red-700 border border-red-200 rounded-2xl text-xs font-bold space-y-1.5 shadow-inner">
+            <div class="p-3.5 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-bold space-y-1 shadow-inner">
                 @foreach($errors->all() as $error)
-                    <div class="flex items-start gap-2"><span>⚠️</span><span>{{ $error }}</span></div>
+                    <div class="flex items-start gap-1.5"><span>⚠️</span><span>{{ $error }}</span></div>
                 @endforeach
             </div>
         @endif
@@ -74,32 +113,32 @@
             @csrf
             <input type="hidden" name="current_step" value="{{ $step }}">
 
-            {{-- PAGE 1: COMPANY DETAILS --}}
+            {{-- PAGE 1: ENTITY LOGISTICS MATRIX --}}
             @if ($step === 1)
                 <div class="space-y-4">
-                    <div class="border-b border-slate-100 pb-3">
-                        <h3 class="text-lg font-black text-slate-950 uppercase tracking-tight">Company Details</h3>
-                        <p class="text-xs text-slate-500 font-semibold mt-0.5">Let's lock down the core identifier assets for your corporate dashboard query maps.</p>
+                    <div class="border-b border-slate-100 pb-2">
+                        <h3 class="text-base font-black text-slate-950 uppercase tracking-tight">Company Attributes</h3>
+                        <p class="text-xs text-slate-500 font-semibold">Verify corporate identities for live network profile generation loops.</p>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="company_name">Registered Entity Name</label>
+                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="company_name">Company Name</label>
                             <input type="text" id="company_name" name="company_name" value="{{ old('company_name', $company->name) }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-bold text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner">
                         </div>
                         <div>
                             <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="owner_name">Principal Contractor Name</label>
-                            <input type="text" id="owner_name" name="owner_name" value="{{ old('owner_name', $company->owner_name) }}" required placeholder="First and Last Name" class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-bold text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner">
+                            <input type="text" id="owner_name" name="owner_name" value="{{ old('owner_name', $company->owner_name) }}" required placeholder="e.g. John Doe" class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-bold text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="business_phone">Direct Dispatch Line</label>
+                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="business_phone">Business Phone Number</label>
                             <input type="text" id="business_phone" name="business_phone" value="{{ old('business_phone', $company->business_phone ?? $user->phone_2fa) }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-bold text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="primary_specialty">Primary Core Trade</label>
+                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="primary_specialty">Primary Trade Core</label>
                             <select id="primary_specialty" name="primary_specialty" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-bold text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner cursor-pointer">
                                 <option value="">-- Choose Trade --</option>
                                 @foreach(['Drywall & Framing', 'Roofing & Siding', 'Decks & Porches', 'HVAC', 'Plumbing', 'Electrical', 'Lawn Care & Landscaping', 'General Contracting'] as $trade)
@@ -111,101 +150,70 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                         <div class="md:col-span-2">
-                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="base_city">Logistics Base Hub (City, State, Zip)</label>
+                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="base_city">Business Location (City, State, Zip)</label>
                             <input type="text" id="base_city" name="base_city" placeholder="e.g., Washington, NC 27889" value="{{ old('base_city', $company->base_city) }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-bold text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="service_radius_miles">Dispatch Radius (Miles)</label>
+                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="service_radius_miles">Work Radius (Miles)</label>
                             <input type="number" id="service_radius_miles" name="service_radius_miles" value="{{ old('service_radius_miles', $company->service_radius_miles ?? 25) }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-bold text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner">
                         </div>
                     </div>
                 </div>
             @endif
 
-            {{-- PAGE 2: IDENTITY & COMPLIANCE (THEME SALON SELECTION WITH AI CORE INTEGRATION) --}}
+            {{-- PAGE 2: PROFILE AESTHETICS COMPLIANCE & THEME ENGINE --}}
             @if ($step === 2)
                 <div class="space-y-6">
-                    <div class="border-b border-slate-100 pb-3">
-                        <h3 class="text-lg font-black text-slate-950 uppercase tracking-tight">Identity & Aesthetics</h3>
-                        <p class="text-xs text-slate-500 font-semibold mt-0.5">Configure your live layout parameters, licensing codes, and interactive identity style.</p>
+                    <div class="border-b border-slate-100 pb-2">
+                        <h3 class="text-base font-black text-slate-950 uppercase tracking-tight">Identity Compliance & Layout Themes</h3>
+                        <p class="text-xs text-slate-500 font-semibold">Link operational statistics, aesthetic layout templates, and copy declarations.</p>
                     </div>
 
-                    <!-- PREMIUM CODES CARD RADIOS FOR DIRECTIVE STYLE SELECTOR -->
-                    <div>
-                        <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2.5">Live Profile Aesthetic Style</label>
-                        <div class="grid grid-cols-2 gap-4" x-data="{ currentTheme: '{{ old('profile_theme', $company->profile_theme ?? 'light') }}' }">
-                            <input type="hidden" name="profile_theme" :value="currentTheme">
-
-                            <!-- Light Option Card -->
-                            <div @click="currentTheme = 'light'"
-                                 :class="currentTheme === 'light' ? 'border-[#f58613] ring-2 ring-orange-500/20 bg-orange-50/10' : 'border-slate-200 bg-white hover:border-slate-300'"
-                                 class="border rounded-2xl p-4 flex flex-col justify-between cursor-pointer transition-all shadow-sm min-h-[100px]">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs font-black uppercase tracking-tight text-slate-950">Clean Corporate Light</span>
-                                    <div class="w-3.5 h-3.5 rounded-full border border-slate-300 flex items-center justify-center" :class="currentTheme === 'light' && 'bg-[#f58613] border-orange-600'">
-                                        <div class="w-1.5 h-1.5 bg-white rounded-full"></div>
-                                    </div>
-                                </div>
-                                <div class="flex gap-1 mt-3"><div class="w-full h-3 bg-slate-100 rounded-sm"></div><div class="w-1/3 h-3 bg-[#f58613] rounded-sm"></div></div>
+                    <!-- PROFILE LAYOUT VISUAL RADIO INTERFACE CARDS -->
+                    <div x-data="{ localTheme: '{{ old('profile_theme', $company->profile_theme ?? 'light') }}' }">
+                        <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-2">Live Public Profile Theme Skin</label>
+                        <input type="hidden" name="profile_theme" :value="localTheme">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div @click="localTheme = 'light'" :class="localTheme === 'light' ? 'border-[#f58613] ring-2 ring-orange-500/10 bg-orange-50/5' : 'border-slate-200 bg-white'" class="border rounded-2xl p-4 cursor-pointer transition-all flex items-center justify-between">
+                                <span class="text-xs font-black uppercase text-slate-950">Corporate Crisp Light</span>
+                                <div class="w-3 h-3 rounded-full border border-slate-300" :class="localTheme === 'light' && 'bg-[#f58613] border-orange-600'"></div>
                             </div>
-
-                            <!-- Premium Night Mode Option Card -->
-                            <div @click="currentTheme = 'dark'"
-                                 :class="currentTheme === 'dark' ? 'border-[#f58613] ring-2 ring-orange-500/20 bg-slate-900' : 'border-slate-200 bg-white hover:border-slate-300'"
-                                 class="border rounded-2xl p-4 flex flex-col justify-between cursor-pointer transition-all shadow-sm min-h-[100px]">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs font-black uppercase tracking-tight" :class="currentTheme === 'dark' ? 'text-white' : 'text-slate-950'">Premium Night Tactical</span>
-                                    <div class="w-3.5 h-3.5 rounded-full border border-slate-300 flex items-center justify-center" :class="currentTheme === 'dark' && 'bg-[#f58613] border-orange-600'">
-                                        <div class="w-1.5 h-1.5 bg-white rounded-full"></div>
-                                    </div>
-                                </div>
-                                <div class="flex gap-1 mt-3"><div class="w-full h-3 bg-slate-950 rounded-sm border border-slate-800"></div><div class="w-1/3 h-3 bg-[#f58613] rounded-sm"></div></div>
+                            <div @click="localTheme = 'dark'" :class="localTheme === 'dark' ? 'border-[#f58613] ring-2 ring-orange-500/10 bg-slate-900 text-white' : 'border-slate-200 bg-white'" class="border rounded-2xl p-4 cursor-pointer transition-all flex items-center justify-between">
+                                <span class="text-xs font-black uppercase">Midnight Elite Tactical</span>
+                                <div class="w-3 h-3 rounded-full border border-slate-300" :class="localTheme === 'dark' && 'bg-[#f58613] border-orange-600'"></div>
                             </div>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="md:col-span-1">
+                        <div>
                             <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="years_experience">Years Active Status</label>
                             <input type="number" id="years_experience" name="years_experience" value="{{ old('years_experience', $company->years_experience ?? 0) }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-bold text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner">
                         </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="license_number">License Registry Code (Optional)</label>
-                            <input type="text" id="license_number" name="license_number" value="{{ old('license_number', $company->license_number) }}" placeholder="e.g. NC-LIC-88291" class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-bold text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="is_insured">Insurance Policy Compliance</label>
+                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="license_number">License Registry #</label>
+                            <input type="text" id="license_number" name="license_number" placeholder="Optional Registry Code" value="{{ old('license_number', $company->license_number) }}" class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-bold text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="is_insured">Insurance Policy Matrix</label>
                             <select id="is_insured" name="is_insured" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-bold text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner cursor-pointer">
                                 <option value="none" {{ old('is_insured', $company->is_insured) === 'none' ? 'selected' : '' }}>No Active Coverage</option>
-                                <option value="liability" {{ old('is_insured', $company->is_insured) === 'liability' ? 'selected' : '' }}>General Liability Matrix</option>
-                                <option value="liability_workers" {{ old('is_insured', $company->is_insured) === 'liability_workers' ? 'selected' : '' }}>Liability & Workers Compensation</option>
+                                <option value="liability" {{ old('is_insured', $company->is_insured) === 'liability' ? 'selected' : '' }}>Liability Coverage Lock</option>
+                                <option value="liability_workers" {{ old('is_insured', $company->is_insured) === 'liability_workers' ? 'selected' : '' }}>Liability + Work Comp Grid</option>
                             </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="warranty_details">Warranty Policy Schutz</label>
-                            <input type="text" id="warranty_details" name="warranty_details" value="{{ old('warranty_details', $company->warranty_details) }}" placeholder="e.g. 5-Year Leak Protection Warranty" class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-bold text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner">
                         </div>
                     </div>
 
-                    <!-- AI COPYWRITING PORTAL COMPONENT MODULE -->
-                    <div class="p-4 bg-slate-950 border border-slate-900 rounded-2xl space-y-4 shadow-xl">
+                    <!-- AI COPY COMPILER ASSISTANT CARD -->
+                    <div class="p-4 bg-slate-950 border border-slate-900 rounded-2xl space-y-3.5 shadow-xl">
                         <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="text-xl">🪄</span>
-                                <div>
-                                    <h4 class="text-xs font-black text-white uppercase tracking-wider">AI Content Assistant Generator</h4>
-                                    <p class="text-[10px] font-bold text-slate-500">Input 3 rough fields to let AI compile your short and long bio arrays.</p>
-                                </div>
-                            </div>
-                            <button type="button" @click="generateAIProfile()" :disabled="aiLoading" class="bg-[#f58613] hover:bg-orange-600 disabled:bg-slate-800 text-white font-black text-[10px] uppercase tracking-widest px-3 py-2 rounded-lg cursor-pointer transition-colors shadow-md outline-none">
-                                <span x-show="!aiLoading">Compile Copy &rarr;</span>
-                                <span x-show="aiLoading" x-cloak>Streaming Engine...</span>
+                            <h4 class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1"><span>🪄</span> AI Copywriting Dashboard Assistant</h4>
+                            <button type="button" @click="triggerAICopy()" :disabled="aiLoading" class="bg-[#f58613] hover:bg-orange-600 disabled:bg-slate-800 text-white font-black text-[9px] uppercase tracking-widest px-3 py-2 rounded-xl transition-all cursor-pointer">
+                                <span x-show="!aiLoading">Generate Copy</span>
+                                <span x-show="aiLoading" x-cloak>Structuring Data...</span>
                             </button>
                         </div>
-                        <input type="text" x-model="bulletPoints" placeholder="e.g. family owned, 10 years roofing, free storm checks in NC" class="w-full bg-slate-900 border border-slate-800 rounded-xl py-2 px-3 text-xs font-medium text-slate-200 focus:outline-none focus:border-orange-500">
+                        <input type="text" x-model="bulletPoints" placeholder="Type rough notes: family business, 15 years local roofing pro, free deck logs..." class="w-full bg-slate-900 border border-slate-800 text-slate-200 font-medium rounded-xl py-2 px-3 text-xs focus:outline-none focus:border-orange-500 shadow-inner">
                     </div>
 
                     <div>
@@ -218,28 +226,28 @@
                         <textarea id="company_bio_long" name="company_bio_long" rows="4" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-medium text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner font-sans">{{ old('company_bio_long', $company->company_bio_long) }}</textarea>
                     </div>
 
-                    <!-- BRANDING IMAGE CROP INSTRUCTIONS DECK -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                        <div class="p-4 bg-slate-50 border border-slate-200 border-dashed rounded-2xl text-center space-y-2">
-                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider" for="logo_file">Company Logo (1:1 Perfect Fit)</label>
-                            <input type="file" id="logo_file" name="logo_file" accept="image/*" class="w-full text-xs font-bold text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-slate-950 file:text-[#f58613] file:cursor-pointer cursor-pointer">
-                            <p class="text-[9px] font-medium text-slate-400 leading-normal">System forces square aspect alignment logic on dispatch logo metrics.</p>
+                    <!-- CROPPING INTEGRATED FILE DISPATCH SYSTEM inputs -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                        <div class="p-5 border border-dashed border-slate-200 rounded-2xl bg-slate-50 text-center space-y-1.5">
+                            <span class="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Company Logo File</span>
+                            <input type="file" id="logo_file" name="logo_file" accept="image/*" @change="initializeImageCrop($event, 'logo')" class="w-full text-xs font-bold text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-slate-950 file:text-[#f58613] cursor-pointer">
+                            <p class="text-[9px] font-medium text-slate-400">Forces crisp 1:1 asset compression mapping loops.</p>
                         </div>
-                        <div class="p-4 bg-slate-50 border border-slate-200 border-dashed rounded-2xl text-center space-y-2">
-                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider" for="cover_file">Profile Hero Banner Photo (16:9 Wide Fit)</label>
-                            <input type="file" id="cover_file" name="cover_file" accept="image/*" class="w-full text-xs font-bold text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-slate-950 file:text-[#f58613] file:cursor-pointer cursor-pointer">
-                            <p class="text-[9px] font-medium text-slate-400 leading-normal">Fills the asymmetrical background core grid matrix cleanly.</p>
+                        <div class="p-5 border border-dashed border-slate-200 rounded-2xl bg-slate-50 text-center space-y-1.5">
+                            <span class="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Cover Hero Photo Background</span>
+                            <input type="file" id="cover_file" name="cover_file" accept="image/*" @change="initializeImageCrop($event, 'cover')" class="w-full text-xs font-bold text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:bg-slate-950 file:text-[#f58613] cursor-pointer">
+                            <p class="text-[9px] font-medium text-slate-400">Forces wide-aspect 16:9 asymmetrical frame fit checks.</p>
                         </div>
                     </div>
                 </div>
             @endif
 
-            {{-- PAGE 3: LIST JOB SPECIALTIES --}}
+            {{-- PAGE 3: SPECIALIZATION SELECTION CORES --}}
             @if ($step === 3)
                 <div class="space-y-4">
-                    <div class="border-b border-slate-100 pb-3">
-                        <h3 class="text-lg font-black text-slate-950 uppercase tracking-tight">List Job Specialties</h3>
-                        <p class="text-xs text-slate-500 font-semibold mt-0.5">Select all secondary target fields your teams cover on regular dispatch runs.</p>
+                    <div class="border-b border-slate-100 pb-2">
+                        <h3 class="text-base font-black text-slate-950 uppercase tracking-tight">List Job Specialties</h3>
+                        <p class="text-xs text-slate-500 font-semibold">Choose dispatch parameters your teams handle inside active service metrics maps.</p>
                     </div>
 
                     <div>
@@ -266,12 +274,12 @@
                 </div>
             @endif
 
-            {{-- PAGE 4: TRUST CONNECTIONS --}}
+            {{-- PAGE 4: LINK REVIEW MATRICES --}}
             @if ($step === 4)
                 <div class="space-y-4">
-                    <div class="border-b border-slate-100 pb-3">
-                        <h3 class="text-lg font-black text-slate-950 uppercase tracking-tight">Review Matrices Links</h3>
-                        <p class="text-xs text-slate-500 font-semibold mt-0.5">Stitch your public profile pipelines into the local search indexing core.</p>
+                    <div class="border-b border-slate-100 pb-2">
+                        <h3 class="text-base font-black text-slate-950 uppercase tracking-tight">Review Matrices Links</h3>
+                        <p class="text-xs text-slate-500 font-semibold">Bind external validation paths to populate high-end local search engines.</p>
                     </div>
 
                     <div class="space-y-4">
@@ -283,35 +291,31 @@
                             <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="facebook_link">Facebook Page URL</label>
                             <input type="url" id="facebook_link" name="facebook_link" placeholder="https://facebook.com/yourbusiness" value="{{ old('facebook_link', $company->social_links['facebook'] ?? '') }}" class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-bold text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner">
                         </div>
-                        <div>
-                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="yelp_link">Yelp Business Profile URL</label>
-                            <input type="url" id="yelp_link" name="yelp_link" placeholder="https://yelp.com/biz/your-slug" value="{{ old('yelp_link', $company->social_links['yelp'] ?? '') }}" class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-bold text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner">
-                        </div>
                     </div>
                 </div>
             @endif
 
-            {{-- PAGE 5: CREW & ESCROW BILLING --}}
+            {{-- PAGE 5: CREW OPERATING FINANCIALS --}}
             @if ($step === 5)
                 <div class="space-y-4">
-                    <div class="border-b border-slate-100 pb-3">
-                        <h3 class="text-lg font-black text-slate-950 uppercase tracking-tight">Crew and Billing Configurations</h3>
-                        <p class="text-xs text-slate-500 font-semibold mt-0.5">Calibrate estimate tracking registers, operational scales, and escrow requirements.</p>
+                    <div class="border-b border-slate-100 pb-2">
+                        <h3 class="text-base font-black text-slate-950 uppercase tracking-tight">Crew and Billing Configurations</h3>
+                        <p class="text-xs text-slate-500 font-semibold">Calibrate tracking keys, starting sequences, and escrow preference pools.</p>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="crew_structure">Operational Structure Scale</label>
+                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="crew_structure">Operational Scale</label>
                             <select id="crew_structure" name="crew_structure" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-bold text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner cursor-pointer">
-                                <option value="solo" {{ old('crew_structure', $company->crew_structure) === 'solo' ? 'selected' : '' }}>Owner/Operator (Solo Specialist)</option>
-                                <option value="small" {{ old('crew_structure', $company->crew_structure) === 'small' ? 'selected' : '' }}>Small Field Crew (Principal + 1-3 Operators)</option>
-                                <option value="large" {{ old('crew_structure', $company->crew_structure) === 'large' ? 'selected' : '' }}>Mass Operations Grid (Principal + 4-8 Operators)</option>
+                                <option value="solo" {{ old('crew_structure', $company->crew_structure) === 'solo' ? 'selected' : '' }}>Solo Specialist Operator</option>
+                                <option value="small" {{ old('crew_structure', $company->crew_structure) === 'small' ? 'selected' : '' }}>Small Crew (Principal + 1-3 Operators)</option>
+                                <option value="large" {{ old('crew_structure', $company->crew_structure) === 'large' ? 'selected' : '' }}>Mass Grid (Principal + 4-8 Operators)</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="invoice_preferences">Bill Payment Link Preferences</label>
+                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="invoice_preferences">Bill Payment link Logic</label>
                             <select id="invoice_preferences" name="invoice_preferences" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-bold text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner cursor-pointer">
-                                <option value="digital_only" {{ old('invoice_preferences', $company->invoice_preferences) === 'digital_only' ? 'selected' : '' }}>Link digital merchant endpoint pipeline here</option>
+                                <option value="digital_only" {{ old('invoice_preferences', $company->invoice_preferences) === 'digital_only' ? 'selected' : '' }}>Link digital merchant app pipeline tracks</option>
                                 <option value="cod" {{ old('invoice_preferences', $company->invoice_preferences) === 'cod' ? 'selected' : '' }}>Cash/Check Upon Work Delivery (COD)</option>
                             </select>
                         </div>
@@ -320,36 +324,53 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="state_tax_rate">Local Jurisdiction Tax Rate (%)</label>
-                            <input type="number" step="0.001" id="state_tax_rate" name="state_tax_rate" placeholder="e.g. 4.75" value="{{ old('state_tax_rate', $company->state_tax_rate ?? '') }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-bold text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner">
+                            <input type="number" step="0.001" id="state_tax_rate" name="state_tax_rate" value="{{ old('state_tax_rate', $company->state_tax_rate ?? '') }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-bold text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="start_number">Invoice/Estimate Starting Sequence Key</label>
-                            <input type="number" id="start_number" name="start_number" placeholder="e.g. 1001" value="{{ old('start_number', $company->start_number ?? '1001') }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-bold text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner">
+                            <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="start_number">Estimate Starting Key #</label>
+                            <input type="number" id="start_number" name="start_number" value="{{ old('start_number', $company->start_number ?? '1001') }}" required class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-bold text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner">
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="deposit_rules">Escrow Protection & Down-Payment Terms</label>
-                        <textarea id="deposit_rules" name="deposit_rules" rows="3" placeholder="e.g., Secure scheduling requires a 33% upfront material retainer commitment mapped prior to structural setup mobilization." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-medium text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner font-sans">{{ old('deposit_rules', $company->deposit_rules) }}</textarea>
+                        <label class="block text-[10px] font-black uppercase text-slate-400 tracking-wider mb-1.5" for="deposit_rules">Escrow Protection terms</label>
+                        <textarea id="deposit_rules" name="deposit_rules" rows="3" placeholder="e.g. We require a 33% upfront material retainer allocation." class="w-full bg-slate-50 border border-slate-300 rounded-xl py-2.5 px-4 text-sm font-medium text-slate-950 focus:outline-none focus:border-[#f58613] shadow-inner font-sans">{{ old('deposit_rules', $company->deposit_rules) }}</textarea>
                     </div>
                 </div>
             @endif
 
-            <!-- NAVIGATION TRIGGER DECK -->
-            <div class="flex items-center justify-between pt-5 border-t border-slate-100 gap-4">
+            <!-- BACK/NEXT STEP NAVIGATION ACTIONS -->
+            <div class="flex items-center justify-between pt-4 border-t border-slate-100 gap-4">
                 @if ($step > 1)
-                    <button type="submit" name="direction" value="back" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs py-3 px-6 rounded-xl tracking-widest uppercase shadow-sm transition-all active:scale-[0.99] cursor-pointer border-0">
-                        &larr; Back Block
+                    <button type="submit" name="direction" value="back" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-xs py-3 px-6 rounded-xl tracking-widest uppercase cursor-pointer border-0">
+                        &larr; Save & Go Back
                     </button>
                 @else
                     <div></div>
                 @endif
 
                 <button type="submit" name="direction" value="next" class="flex-1 md:flex-none bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs py-3.5 px-8 rounded-xl tracking-widest uppercase shadow-md transition-all active:scale-[0.99] cursor-pointer text-center border-0">
-                    {{ $step === 5 ? 'Launch Premium Profile Grid' : 'Save & Track Forward &rarr;' }}
+                    {{ $step === 5 ? 'Launch Premium Corporate Profile' : 'Save & Advance &rarr;' }}
                 </button>
             </div>
         </form>
+    </div>
+
+    <!-- PERSISTENT FRONTEND CROPPING CALIBRATION OVERLAY FRAME MODAL -->
+    <div x-show="cropModalOpen" x-cloak class="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/95 backdrop-blur-md p-4" x-transition>
+        <div class="bg-white border border-slate-200 w-full max-w-xl rounded-3xl p-6 shadow-2xl flex flex-col justify-between gap-5">
+            <div>
+                <h4 class="text-base font-black uppercase tracking-tight text-slate-950">Calibrate Image Aspect Fit Alignment</h4>
+                <p class="text-xs font-semibold text-slate-400 mt-0.5">Please scale or drag the bounds box frame array matrix below to enforce a perfect profile asset deployment rendering layer.</p>
+            </div>
+            <div class="bg-slate-950 max-h-[40vh] overflow-hidden rounded-2xl flex items-center justify-center">
+                <img id="cropper-target-image" src="" class="max-w-full max-h-[350px] object-contain">
+            </div>
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                <button type="button" @click="cropModalOpen = false; if(cropperInstance) cropperInstance.destroy()" class="text-slate-500 font-bold text-xs uppercase px-4 py-2 hover:bg-slate-100 rounded-xl cursor-pointer">Drop Asset</button>
+                <button type="button" @click="commitCroppedOutput()" class="bg-[#f58613] hover:bg-orange-600 text-white font-black text-xs tracking-widest uppercase px-6 py-3 rounded-xl shadow-md cursor-pointer">Lock Profile Aspect Fit</button>
+            </div>
+        </div>
     </div>
 
 </body>
