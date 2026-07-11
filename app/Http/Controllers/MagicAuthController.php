@@ -134,6 +134,7 @@ class MagicAuthController extends Controller
 
     /**
      * Generate a secure token with an embedded timestamp and email the link to the user.
+     * Upgraded to catch unregistered users and route them directly to onboarding pipelines.
      */
     public function sendLink(Request $request)
     {
@@ -155,8 +156,23 @@ class MagicAuthController extends Controller
         // Increment rate limit attempts bucket token (5 Minute Expiration Window)
         RateLimiter::hit($throttleKey, 300);
 
+        // INTERCEPT LEAK: Reroute unregistered contractors to onboarding with pre-filled payload parameters
         if (!$user) {
-            return back()->with('status', '📨 If your business email is registered, your secure login link has been sent.');
+            $signupUrl = route('welcome', ['email' => $validated['email']]);
+
+            dispatch(function () use ($validated, $signupUrl) {
+                try {
+                    Mail::raw("Hello,\n\nYou recently tried logging into ContractorSpecialties, but this email address is not registered to an active workspace profile yet.\n\nClick the direct link below to provision your company profile and setup your workspace dashboard frame instantly:\n\n{$signupUrl}\n\nIf you did not request this, you can safely ignore this email link.", function ($message) use ($validated) {
+                        $message->to($validated['email'])
+                                ->subject('🏗️ Set Up Your ContractorSpecialties Workspace Profile');
+                    });
+                    Log::info("📨 Unregistered user rerouted from login node to signup invitation track: {$validated['email']}");
+                } catch (\Exception $e) {
+                    Log::error("🚨 Registration email pipeline failed transmission sequence: " . $e->getMessage());
+                }
+            })->afterResponse();
+
+            return back()->with('status', '📨 That business email address is not registered to a profile yet. Check your inbox for a direct signup invitation link!');
         }
 
         // Embed expiration using a bulletproof pipe (|) delimiter to protect against alphanumeric string collisions
@@ -457,9 +473,10 @@ class MagicAuthController extends Controller
         $user->save();
 
         // Establish core session authentication variables cleanly
-        Auth::login($user, true);
         $userTable = (new User())->getTable();
         $prefix = str_contains($userTable, '_') ? explode('_', $userTable)[0] . '_' : 'sc_';
+
+        Auth::login($user, true);
 
         // Check onboarding completion step status to choose routing direction
         $onboardingCompleted = !empty($user->onboarding_completed_at);
@@ -502,14 +519,12 @@ class MagicAuthController extends Controller
      */
     private function determineOutboundLine(?string $destinationPhone, ?string $companyPhone): string
     {
-        // If a company profile already has a locked geographic phone channel, respect it explicitly
         if (!empty($companyPhone)) {
             return $companyPhone;
         }
 
         $cleanDestination = preg_replace('/[^0-9]/', '', $destinationPhone ?? '');
 
-        // Isolate the 3-digit North American area code sequence
         $areaCode = '';
         if (strlen($cleanDestination) === 10) {
             $areaCode = substr($cleanDestination, 0, 3);
@@ -517,19 +532,16 @@ class MagicAuthController extends Controller
             $areaCode = substr($cleanDestination, 1, 3);
         }
 
-        // 📡 Charlotte Hub Cluster Mapping Pass
         if (in_array($areaCode, ['704', '980', '336', '743', '828'])) {
             Log::info("🎯 Pre-Onboarding 10DLC Match: Mapping login token via Charlotte 704 active profile pipeline for area code {$areaCode}.");
             return env('TELNYX_CHARLOTTE_NUMBER', '+17043175354');
         }
 
-        // 📡 Raleigh Hub Cluster Mapping Pass
         if (in_array($areaCode, ['919', '984', '252', '910'])) {
             Log::info("🎯 Pre-Onboarding 10DLC Match: Mapping login token via Raleigh 984 active profile pipeline for area code {$areaCode}.");
             return env('TELNYX_RALEIGH_NUMBER', '+19842181204');
         }
 
-        // Standard System Base Pipeline Carrier Handle Fallback
         return env('TELNYX_DEFAULT_FROM', '+19842181204');
     }
 }
