@@ -18,33 +18,58 @@
         ⚡ Built for Field Crews &bull; Zero Glass Conference Room Fluff
     </div>
 
-    <!-- MAIN HERO MATRIX CONTAINER -->
-    <div class="max-w-5xl mx-auto px-4 pt-16 pb-12 text-center space-y-8">
+    <!-- MAIN HERO CONTENT SECTION (RESPONSIVE ASYMMETRICAL SPLIT) -->
+    <div class="max-w-6xl mx-auto px-4 pt-10 pb-16">
+        <div class="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
 
-        <!-- The Main Frame Hooks -->
-        <div class="space-y-4">
-            <span class="bg-orange-500/10 text-[#f58613] text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-orange-500/20 shadow-sm">
-                Operational Command Center
-            </span>
-            <h1 class="text-4xl sm:text-6xl font-black italic tracking-tighter uppercase leading-none text-white max-w-4xl mx-auto">
-                One Tool. 83.4% Fewer Headaches. <span class="text-[#f58613]">Zero Corporate Nonsense.</span>
-            </h1>
-            <p class="text-slate-400 font-medium text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
-                Running a service business shouldn’t feel like juggling chainsaws while answering texts from customers who <span class="text-white italic font-bold">“just have one more question.”</span>
-            </p>
-        </div>
+            <!-- Left Side (Desktop) / Top (Mobile): Action Media Frame -->
+            <div class="w-full lg:w-1/2 shrink-0">
+                <div class="relative rounded-3xl overflow-hidden border border-slate-800 bg-slate-900 aspect-video lg:aspect-[4/3] shadow-2xl shadow-orange-500/5 group">
 
-        <!-- Stupidly Simple Capability Cloud Grid -->
-        <div class="max-w-3xl mx-auto">
-            <p class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4">We built the tool that handles the admin chaos you hate</p>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                @foreach(['Estimates', 'Invoices', 'Scheduling', 'Job Photos', 'Client Messages', 'Fast Payments', 'Customer Updates', 'Crew Sync'] as $feature)
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs font-black uppercase tracking-tight text-slate-200 shadow-inner flex items-center justify-center gap-2">
-                        <span class="text-[#f58613]">✓</span> <span>{{ $feature }}</span>
+                    <!-- Core Asset Target Drop Frame -->
+                    <!-- Pro tip: Replace this image path with a local mp4 video track loop if preferred later today -->
+                    <img src="{{ asset('images/hero-contractor.jpg') }}"
+                         fallback-src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=1200"
+                         alt="Contractor building field estimates on a mobile phone on-site"
+                         class="w-full h-full object-cover mix-blend-luminosity group-hover:mix-blend-normal transition-all duration-500 transform scale-100 group-hover:scale-[1.01]">
+
+                    <!-- Ambient Grid Overlay Elements -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
+                    <div class="absolute bottom-4 left-4 bg-slate-950/80 backdrop-blur border border-slate-800 rounded-xl px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400 select-none">
+                        📸 Field Sandbox Preview Loop
                     </div>
-                @endforeach
+                </div>
             </div>
-            <p class="text-xs text-slate-500 font-bold mt-4">All in one place. All stupidly simple. Built for real contractors — not software committees.</p>
+
+            <!-- Right Side (Desktop) / Bottom (Mobile): Text Hook Content Block -->
+            <div class="w-full lg:w-1/2 space-y-6 text-center lg:text-left">
+                <div class="space-y-3">
+                    <span class="inline-block bg-orange-500/10 text-[#f58613] text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-orange-500/20 shadow-sm">
+                        Operational Command Center
+                    </span>
+                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black italic tracking-tighter uppercase leading-none text-white">
+                        One Tool. 83.4% Fewer Headaches. <span class="text-[#f58613]">Zero Corporate Nonsense.</span>
+                    </h1>
+                </div>
+
+                <p class="text-slate-400 font-medium text-sm sm:text-base leading-relaxed">
+                    Running a service business shouldn’t feel like juggling chainsaws while answering texts from customers who <span class="text-white italic font-bold">“just have one more question.”</span>
+                </p>
+
+                <p class="text-xs text-slate-500 font-bold">
+                    So we built the tool that handles the admin chaos you hate: all in one clean place, all stupidly simple, all built for real contractors.
+                </p>
+
+                <div class="pt-2 flex flex-wrap justify-center lg:justify-start gap-3">
+                    <a href="#terminal" class="bg-gradient-to-r from-amber-500 to-[#f58613] hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs py-3.5 px-6 rounded-xl tracking-widest uppercase shadow-lg transition-transform active:scale-[0.99] text-decoration-none">
+                        Get Started Free &rarr;
+                    </a>
+                    <a href="/quick-estimate" class="bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 font-bold text-xs py-3.5 px-6 rounded-xl transition-all text-decoration-none">
+                        Test Drive Simulator
+                    </a>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -63,49 +88,24 @@
 
             <!-- Features Grid -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                @php
+                    $featuresList = [
+                        ['📄', 'Estimates That Look Elite', 'Build sharp, professional proposals in 45 seconds. No spreadsheets. No guesswork. No “I’ll send that text tonight.”'],
+                        ['💳', 'Invoices That Get Paid', 'Clear totals, clean structural item formatting, and direct mobile payment links customers actually click immediately.'],
+                        ['📅', 'Zero Group Chat Chaos', 'Assign project scopes, update deployment coordinates, and keep crews synced without 14 phone alerts asking “what time tomorrow?”'],
+                        ['📸', 'Photos Without the Mess', 'Every structural project log, every field image, every site document — automatically organized and bound directly to the account profile.'],
+                        ['💬', 'Professional Client Messaging', 'Keep your customer updates clean, tracked, and isolated. No more frantic texts hitting your personal cell number at 9:47 PM.'],
+                        ['👷', 'Soul-Saving Crew Flow', 'Everyone sees their assigned tracking routes on site layout sheets. No more morning log delays or missing field parameters.']
+                    ];
+                @endphp
 
-                <!-- Card 1 -->
-                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-2.5">
-                    <div class="text-xl select-none">📄</div>
-                    <h4 class="font-black text-sm uppercase text-white tracking-tight">Estimates That Look Elite</h4>
-                    <p class="text-xs text-slate-400 font-medium leading-relaxed">Build sharp, professional proposals in 45 seconds. No spreadsheets. No guesswork. No “I’ll send that text tonight.”</p>
-                </div>
-
-                <!-- Card 2 -->
-                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-2.5">
-                    <div class="text-xl select-none">💳</div>
-                    <h4 class="font-black text-sm uppercase text-white tracking-tight">Invoices That Get Paid</h4>
-                    <p class="text-xs text-slate-400 font-medium leading-relaxed">Clear totals, clean structural item formatting, and direct mobile payment links customers actually click immediately.</p>
-                </div>
-
-                <!-- Card 3 -->
-                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-2.5">
-                    <div class="text-xl select-none">📅</div>
-                    <h4 class="font-black text-sm uppercase text-white tracking-tight">Zero Group Chat Chaos</h4>
-                    <p class="text-xs text-slate-400 font-medium leading-relaxed">Assign project scopes, update deployment coordinates, and keep crews synced without 14 phone alerts asking “what time tomorrow?”</p>
-                </div>
-
-                <!-- Card 4 -->
-                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-2.5">
-                    <div class="text-xl select-none">📸</div>
-                    <h4 class="font-black text-sm uppercase text-white tracking-tight">Photos That Aren't a Dumpster Fire</h4>
-                    <p class="text-xs text-slate-400 font-medium leading-relaxed">Every structural project log, every field image, every site document — automatically organized and bound directly to the account profile.</p>
-                </div>
-
-                <!-- Card 5 -->
-                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-2.5">
-                    <div class="text-xl select-none">💬</div>
-                    <h4 class="font-black text-sm uppercase text-white tracking-tight">Professional Client Messaging</h4>
-                    <p class="text-xs text-slate-400 font-medium leading-relaxed">Keep your customer updates clean, tracked, and isolated. No more frantic texts hitting your personal cell number at 9:47 PM.</p>
-                </div>
-
-                <!-- Card 6 -->
-                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-2.5">
-                    <div class="text-xl select-none">👑</div>
-                    <h4 class="font-black text-sm uppercase text-white tracking-tight">Soul-Saving Crew Flow</h4>
-                    <p class="text-xs text-slate-400 font-medium leading-relaxed">Everyone sees their assigned tracking routes on site layout sheets. No more morning log delays or missing field parameters.</p>
-                </div>
-
+                @foreach($featuresList as $item)
+                    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-2.5">
+                        <div class="text-xl select-none">{{ $item[0] }}</div>
+                        <h4 class="font-black text-sm uppercase text-white tracking-tight">{{ $item[1] }}</h4>
+                        <p class="text-xs text-slate-400 font-medium leading-relaxed">{{ $item[2] }}</p>
+                    </div>
+                @endforeach
             </div>
         </div>
     </div>
@@ -137,7 +137,7 @@
                         <li>• Premium Profile Directory Node</li>
                     </ul>
                 </div>
-                <a href="#terminal" class="block w-full text-center bg-slate-800 hover:bg-slate-700 text-white font-black text-[11px] uppercase tracking-widest py-3 rounded-xl transition-all">Select Solo Command</a>
+                <a href="#terminal" class="block w-full text-center bg-slate-800 hover:bg-slate-700 text-white font-black text-[11px] uppercase tracking-widest py-3 rounded-xl transition-all text-decoration-none">Select Solo Command</a>
             </div>
 
             <!-- Crew Tier -->
@@ -156,20 +156,19 @@
                         <li>• Field Photo Vault Storage</li>
                     </ul>
                 </div>
-                <a href="#terminal" class="block w-full text-center bg-gradient-to-r from-amber-500 to-[#f58613] text-white font-black text-[11px] uppercase tracking-widest py-3 rounded-xl transition-all shadow-md">Select Crew Command</a>
+                <a href="#terminal" class="block w-full text-center bg-gradient-to-r from-amber-500 to-[#f58613] text-white font-black text-[11px] uppercase tracking-widest py-3 rounded-xl transition-all shadow-md text-decoration-none">Select Crew Command</a>
             </div>
 
         </div>
     </div>
 
-    <!-- UNIFIED INTAKE TERMINAL (SAFERCARRY FUNNEL TRACKER) -->
+    <!-- UNIFIED INTAKE TERMINAL CONTAINER -->
     <div id="terminal" class="max-w-md mx-auto px-4 pb-20"
          x-data="{
             intent: 'register',
             get formAction() {
                 if (this.intent === 'estimate') return '/quick-estimate';
 
-                // Defensive fallback tracking checks to eliminate name mismatch exceptions
                 @if(Route::has('magic.auth.send')) return '{{ route('magic.auth.send') }}';
                 @elseif(Route::has('magic.link.send')) return '{{ route('magic.link.send') }}';
                 @elseif(Route::has('magic.send')) return '{{ route('magic.send') }}';
