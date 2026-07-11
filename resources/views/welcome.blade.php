@@ -61,7 +61,7 @@
                 </p>
             </div>
 
-            <!-- Features Array Grid -->
+            <!-- Features Grid -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
                 <!-- Card 1 -->
@@ -101,7 +101,7 @@
 
                 <!-- Card 6 -->
                 <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-2.5">
-                    <div class="text-xl select-none">👷</div>
+                    <div class="text-xl select-none">👑</div>
                     <h4 class="font-black text-sm uppercase text-white tracking-tight">Soul-Saving Crew Flow</h4>
                     <p class="text-xs text-slate-400 font-medium leading-relaxed">Everyone sees their assigned tracking routes on site layout sheets. No more morning log delays or missing field parameters.</p>
                 </div>
@@ -110,7 +110,7 @@
         </div>
     </div>
 
-    <!-- SECTION: PRICING MATRIX TIERS -->
+    <!-- SECTION: PRICING TIERS -->
     <div class="max-w-4xl mx-auto px-4 py-16 text-center space-y-10">
         <div class="space-y-2">
             <h2 class="text-3xl font-black italic uppercase text-white tracking-tight">Straightforward Monthly Pricing</h2>
@@ -162,16 +162,18 @@
         </div>
     </div>
 
-    <!-- ========================================== --//
-    // UNIFIED INTAKE TERMINAL (SAFERCARRY ENGINE)  //
-    // ========================================== -->
+    <!-- UNIFIED INTAKE TERMINAL (SAFERCARRY FUNNEL TRACKER) -->
     <div id="terminal" class="max-w-md mx-auto px-4 pb-20"
          x-data="{
             intent: 'register',
             get formAction() {
-                return this.intent === 'register'
-                    ? '{{ route('magic.auth.send') }}'
-                    : '/quick-estimate';
+                if (this.intent === 'estimate') return '/quick-estimate';
+
+                // Defensive fallback tracking checks to eliminate name mismatch exceptions
+                @if(Route::has('magic.auth.send')) return '{{ route('magic.auth.send') }}';
+                @elseif(Route::has('magic.link.send')) return '{{ route('magic.link.send') }}';
+                @elseif(Route::has('magic.send')) return '{{ route('magic.send') }}';
+                @else return '/login'; @endif
             },
             get buttonText() {
                 return this.intent === 'register'
@@ -187,7 +189,7 @@
                 <p class="text-[11px] text-slate-400 font-semibold leading-normal">Choose your target intent configuration to arm your data pipeline.</p>
             </div>
 
-            <!-- Track Selector Split Radios -->
+            <!-- Track Radio Split Buttons -->
             <div class="space-y-2">
                 <div @click="intent = 'register'" :class="intent === 'register' ? 'border-[#f58613] bg-orange-500/5' : 'border-slate-800 bg-slate-950/40'" class="border rounded-xl p-3 flex items-center justify-between cursor-pointer transition-all select-none">
                     <div class="text-left">
@@ -206,12 +208,11 @@
                 </div>
             </div>
 
-            <!-- Unified Form Element Node -->
+            <!-- Unified Form Action Node -->
             <form :action="formAction" :method="intent === 'register' ? 'POST' : 'GET'" class="space-y-4">
                 @csrf
                 <input type="hidden" name="system_verification_token" value="">
 
-                <!-- Autofill Capture Parameter Hooked into Request Variable queries -->
                 <div>
                     <label class="block text-[9px] font-black uppercase text-slate-500 tracking-wider mb-1" for="email">Business Email Address</label>
                     <input type="email" id="email" name="email" value="{{ request('email') }}" required placeholder="name@yourcompany.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl py-2.5 px-4 text-xs font-bold text-white focus:outline-none focus:border-[#f58613] shadow-inner">
