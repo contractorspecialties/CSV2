@@ -28,7 +28,7 @@
 
                     <!-- Core Asset Target Drop Frame -->
                     <!-- Pro tip: Replace this image path with a local mp4 video track loop if preferred later today -->
-                    <img src="{{ asset('images/hero-contractor.jpg') }}"
+                    <img src="{{ asset('images/hero-CS1.webp') }}"
                          fallback-src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=1200"
                          alt="Contractor building field estimates on a mobile phone on-site"
                          class="w-full h-full object-cover mix-blend-luminosity group-hover:mix-blend-normal transition-all duration-500 transform scale-100 group-hover:scale-[1.01]">
